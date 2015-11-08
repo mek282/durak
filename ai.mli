@@ -1,6 +1,8 @@
 open Game
 open Cards
 
+(*** Calculate an AI player's moves in response to current game state ***)
+
 (*Gives an AI's response to a first attack, in which it may have the
 * option to take, pass, or deflect*)
 val first_attack_response : state -> card -> command
