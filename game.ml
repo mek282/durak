@@ -40,11 +40,29 @@ let split (s : string) : (string * string option) =
     (fst , Some lst')
   else (str, None)
 
-(* Takes in a string of form "[Rank]" and returns the corresponding integer
- * The rank may be a number, such as "7", a number word, like "eleven", or a
- * facecard rank, like "King" *)
+(* Takes in a string of form "[rank]" and returns the corresponding integer
+ * The rank may be a number, such as "7", a number word, like "ten", or a
+ * facecard rank, like "king"
+ * precondition: all letters must be lowercase. The string must be composed
+ * of either one number in range [6,10], a word corresponding to one of those
+ * numbers, or one of the following: "jack", "queen", "king", "ace" *)
 let parse_rank (s : string) : int =
-  failwith "unimplemented"
+  match s with
+  | "jack" -> 11
+  | "queen" -> 12
+  | "king" -> 13
+  | "ace" -> 14
+  | "six" -> 6
+  | "seven" -> 7
+  | "eight" -> 8
+  | "nine" -> 9
+  | "ten" -> 10
+  | "6" -> 6
+  | "7" -> 7
+  | "8" -> 8
+  | "9" -> 9
+  | "10" -> 10
+  | _ -> raise (Cannot_parse "rank")
 
 (* Takes in a string of form "[Suit]" and returns a suit object *)
 let parse_suit (s : string) : suit =
@@ -85,8 +103,26 @@ let test_split () =
   assert (split f = e');
   ()
 
+let test_parse_rank () =
+  assert (parse_rank "ace" = 14);
+  assert (parse_rank "queen" = 12);
+  assert (parse_rank "king" = 13);
+  assert (parse_rank "jack" = 11);
+  assert (parse_rank "ten" = 10);
+  assert (parse_rank "nine" = 9);
+  assert (parse_rank "eight" = 8);
+  assert (parse_rank "seven" = 7);
+  assert (parse_rank "six" = 6);
+  assert (parse_rank "6" = 6);
+  assert (parse_rank "10" = 10);
+  assert (parse_rank "9" = 9);
+  assert (parse_rank "8" = 8);
+  assert (parse_rank "7" = 7);
+  ()
+
 let run_tests () =
   test_split ();
+  test_parse_rank ();
   print_endline "all tests pass";
   ()
 
