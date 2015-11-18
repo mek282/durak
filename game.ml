@@ -1,10 +1,19 @@
 open Cards
 
+
 (* Used in parsing to identify invalid user inputs *)
 exception Cannot_parse of string
 
+
+(* Correspond to user inputs:
+ * "Attack with [card]"
+ * "Defend against [card] with [card]"
+ * "Take"
+ * "Pass"
+ * "Deflect against [card] with [card]" *)
 type command = | Attack of card | Defend of (card * card) | Take | Pass
                | Deflect of (card * card)
+
 
 type state = { deck: deck;
                trump: suit;
@@ -16,15 +25,18 @@ type state = { deck: deck;
                winners: player list;
               }
 
+
 (* Creates a randomized 52-card deck in which each card is different.
  * The suit of the last card, which is the trump suit, is stored in the pair *)
 let init_deck _ =
   failwith "unimplemented"
 
+
 (* Creates an initial state for the game in which all cards have been passed
  * out *)
 let init_game_state _ =
   failwith "unimplemented"
+
 
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
@@ -39,6 +51,19 @@ let split (s : string) : (string * string option) =
     let lst' = String.trim lst in
     (fst , Some lst')
   else (str, None)
+
+
+(* Splits a string so that the first three words go in one string and the
+ * rest in the string option *)
+let split3 (s : string) : (string * string option) =
+  match split s with
+  | (_,None) -> raise (Cannot_parse s)
+  | (w1, Some r) -> (
+    match split r with
+    | (_,None) -> raise (Cannot_parse s)
+    | (w2, Some r2) -> let (w3, r3) = split r2 in (w1^" "^w2^" "^w3,r3)
+  )
+
 
 (* Takes in a string of form "[rank]" and returns the corresponding integer
  * The rank may be a number, such as "7", a number word, like "ten", or a
@@ -62,7 +87,8 @@ let parse_rank (s : string) : int =
   | "8" -> 8
   | "9" -> 9
   | "10" -> 10
-  | _ -> raise (Cannot_parse "rank")
+  | _ -> raise (Cannot_parse s)
+
 
 (* Takes in a string of form "[Suit]" and returns a suit object
  * Precondition: s must be composed only of lowercase letters *)
@@ -72,28 +98,59 @@ let parse_suit (s : string) : suit =
   | "clubs" -> Club
   | "spades" -> Spade
   | "diamonds" -> Diamond
-  | _ -> raise (Cannot_parse "suit")
+  | _ -> raise (Cannot_parse s)
+
 
 (* Takes in a string of form "[Rank] of [Suit]", returns corresponding card.
  * Example strings include: "Ace of Spades", "12 of Hearts", "Six of Clubs"
  * Case does not matter. Numbers may be written out in letters or digits.*)
 let parse_card (s : string) : card =
   match split s with
-  | (_ , None) -> raise (Cannot_parse "card")
+  | (_ , None) -> raise (Cannot_parse s)
   | (fst, Some snd) -> begin
       match split snd with
-      | (_, None) -> raise (Cannot_parse "card")
+      | (_, None) -> raise (Cannot_parse s)
       | (_, Some lst) -> (parse_suit lst, parse_rank fst)
     end
 
+
 (* Interprets user inputs as commands. Case does not matter. *)
 let parse (s : string) : command =
-  (*let s' = String.lowercase s in*)
-  failwith "unimplemented"
+  let str = String.lowercase s in
+  match split str with
+  | ("take",_) -> Take
+  | ("pass",_) -> Pass
+  | ("attack",Some s') -> begin
+    match split s' with
+    | (_,Some c) -> Attack (parse_card c)
+    | _ -> raise (Cannot_parse s)
+  end
+  | (com,Some s') -> begin
+    match split s' with (*s' is "against [card] with [card]"*)
+    | (_,Some s'') -> ( (*s'' is "[card] with [card]"*)
+      match split3 s'' with
+      | (c1,Some s''') -> ( (*s''' is "with [card]"*)
+        match split s''' with
+        | (_,Some c2) -> (
+          let c1' = parse_card c1 in
+          let c2' = parse_card c2 in
+          if com = "defend" then Defend (c1',c2')
+          else if com = "deflect" then Deflect (c1',c2')
+          else raise (Cannot_parse s)
+        )
+        | _ -> raise (Cannot_parse s)
+      )
+      | _ -> raise (Cannot_parse s)
+    )
+    | _ -> raise (Cannot_parse s)
+  end
+  | _ -> raise (Cannot_parse s)
+
 
 (* Calls itself recursively to update the state in response to commands *)
 let repl g c =
   failwith "unimplemented"
+
 
 (*TEST CASES*)
 
@@ -146,11 +203,30 @@ let test_parse_card () =
   assert (parse_card "ace of clubs" = (Club,14));
   ()
 
+let test_parse () =
+  let a = "AtTack with 8 of CLUBS" in
+  let a' = Attack (Club,8) in
+  let b = "take" in
+  let b' = Take in
+  let c = "Defend  aGAINST ace of hearts with six of spades " in
+  let c' = Defend ((Heart,14),(Spade,6)) in
+  let d = "   pAss" in
+  let d' = Pass in
+  let e = " deflect against 10 of diamonds with jack of   hearts " in
+  let e' = Deflect ((Diamond,10),(Heart,11)) in
+  assert (parse a = a');
+  assert (parse b = b');
+  assert (parse c = c');
+  assert (parse d = d');
+  assert (parse e = e');
+  ()
+
 let run_tests () =
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
+  test_parse ();
   print_endline "all tests pass";
   ()
 
