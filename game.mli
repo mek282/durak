@@ -15,7 +15,7 @@ open Cards
     their own Six of Hearts.
 *)
 type command = | Attack of card | Defend of (card * card) | Take | Pass
-               | Deflect of (card, card)
+               | Deflect of (card * card)
 
 
 (* Stores information about the state of the game.
@@ -42,11 +42,11 @@ type state = { deck: deck;
 
 (* Creates a randomized 52-card deck in which each card is different.
  * The suit of the last card, which is the trump suit, is stored in the pair *)
-val init_deck : () -> (suit, deck)
+val init_deck : unit -> (suit * deck)
 
 (* Creates an initial state for the game in which all cards have been passed
  * out *)
-val init_game_state : () -> state
+val init_game_state : unit -> state
 
 (* Interprets user inputs as commands *)
 val parse : string -> command
