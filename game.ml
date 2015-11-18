@@ -64,15 +64,27 @@ let parse_rank (s : string) : int =
   | "10" -> 10
   | _ -> raise (Cannot_parse "rank")
 
-(* Takes in a string of form "[Suit]" and returns a suit object *)
+(* Takes in a string of form "[Suit]" and returns a suit object
+ * Precondition: s must be composed only of lowercase letters *)
 let parse_suit (s : string) : suit =
-  failwith "unimplemented"
+  match s with
+  | "hearts" -> Heart
+  | "clubs" -> Club
+  | "spades" -> Spade
+  | "diamonds" -> Diamond
+  | _ -> raise (Cannot_parse "suit")
 
 (* Takes in a string of form "[Rank] of [Suit]", returns corresponding card.
  * Example strings include: "Ace of Spades", "12 of Hearts", "Six of Clubs"
  * Case does not matter. Numbers may be written out in letters or digits.*)
 let parse_card (s : string) : card =
-  failwith "unimplemented"
+  match split s with
+  | (_ , None) -> raise (Cannot_parse "card")
+  | (fst, Some snd) -> begin
+      match split snd with
+      | (_, None) -> raise (Cannot_parse "card")
+      | (_, Some lst) -> (parse_suit lst, parse_rank fst)
+    end
 
 (* Interprets user inputs as commands. Case does not matter. *)
 let parse (s : string) : command =
@@ -120,9 +132,25 @@ let test_parse_rank () =
   assert (parse_rank "7" = 7);
   ()
 
+let test_parse_suit () =
+  assert (parse_suit "hearts" = Heart);
+  assert (parse_suit "spades" = Spade);
+  assert (parse_suit "clubs" = Club);
+  assert (parse_suit "diamonds" = Diamond);
+  ()
+
+let test_parse_card () =
+  assert (parse_card "six of hearts" = (Heart,6));
+  assert (parse_card "7 of spades" = (Spade,7));
+  assert (parse_card "jack of diamonds" = (Diamond,11));
+  assert (parse_card "ace of clubs" = (Club,14));
+  ()
+
 let run_tests () =
   test_split ();
   test_parse_rank ();
+  test_parse_suit ();
+  test_parse_card ();
   print_endline "all tests pass";
   ()
 
