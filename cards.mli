@@ -6,7 +6,7 @@ type suit = | Heart | Club | Spade | Diamond
 (* Represents a state of player.
  * Human is the human player interacting with the game through the repl
  * CPU of [int] is the computer intelligence defined by Ai, with difficulty set
- * to [int]. Higher x represents a harder difficulty. *)
+ * to [int]. Higher [int] represents a harder difficulty. *)
 type player_state = | Human | CPU of int
 
 (* card = [suit] * [int] represents a common playing card with
