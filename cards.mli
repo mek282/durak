@@ -24,8 +24,47 @@ type player = { state : player_state;
                 name: string
               }
 
+
+(* Representation of player moves.
+  - Attack (Heart, 6) represents an attack with a Six of Hearts
+  - Defend ((Heart, 6), (Heart, 8)) represents a player defending
+    Attack (Heart, 6) with an Eight of Hearts
+  - Take represents a player choosing to take the cards on the table rather
+    than defend.
+  - Pass represents a player passing when given the opportunity to attack
+    the current defender.
+  - Deflect ((Six, Diamonds), (Six, Hearts)) represents a player choosing
+    to pass along an Attack (Six, Diamonds) to the next player by adding
+    their own Six of Hearts.
+*)
+type command = | Attack of card | Defend of (card * card) | Take | Pass
+               | Deflect of (card * card)
+
+
 val print_card : card -> unit
 
 val print_deck : suit -> deck -> unit
 
 val print_suit : suit -> unit
+
+(* Stores information about the state of the game.
+ * deck is the cards that haven't been drawn yet
+ * trump is the trump suit
+ * attackers index 0 primary attacker index lst next to be attacked
+ * defender is the player currently being attacked
+ * attackers index 0 represents primary attacker, last index represents the
+ * next player to be attacked
+ * table is a list of pairs where the first element is an "attacking card" and
+ * the second element is None or Some "defending card"
+ * active is the player whose turn it is
+ * discard represents the discard pile
+ * winners is the list of players who are out of the game *)
+type state = { deck: deck;
+               trump: suit;
+               attackers: player list;
+               defender: player;
+               table: (card * card option) list;
+               active: player;
+               discard: deck;
+               winners: player list;
+              }
