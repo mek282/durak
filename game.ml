@@ -93,13 +93,32 @@ let init_deck _ =
     else deck ) in
   (choose_trump (), shuffle_deck num_shuffles d)
 
-
+let deal_hand d =
+  match d with
+  | c1::c2::c3::c4::c5::c6::tl -> ([c1; c2; c3; c4; c5; c6], tl)
+  | _ -> failwith "The deck is too small - only 4 players max!"
 
 (* Creates an initial state for the game in which all cards have been passed
  * out *)
-let init_game_state _ =
-  failwith "unimplemented"
-
+let init_game_state d1 d2 d3 =
+  let start_deck = init_deck () in
+  let h1 = deal_hand (snd start_deck) in
+  let p1 = {state = Human; hand = (fst h1)} in
+  let h2 = deal_hand (snd h1) in
+  let p2 = {state = CPU d1; hand = (fst h2)} in
+  let h3 = deal_hand (snd h2) in
+  let p3 = {state = CPU d2; hand = (fst h3)} in
+  let h4 = deal_hand (snd h3) in
+  let p4 = {state = CPU d3; hand = (fst h4)} in
+  { deck = (snd h4);
+    trump = (fst start_deck);
+    attackers = [p1; p3; p4];
+    defender = p2;
+    table = [];
+    active = p1;
+    discard = [];
+    winners = [];
+  }
 
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
@@ -305,6 +324,14 @@ let test_init_deck () =
   print_deck (fst d6) (snd d6);
   ()
 
+let test_init_game_state () =
+  let g1 = init_game_state 1 2 3 in
+  assert (List.length (g1.deck) = 12);
+  assert ((g1.defender).state = CPU 1);
+  assert (List.length ((g1.defender).hand) = 6);
+  assert ((g1.active).state = Human);
+  assert (List.length ((g1.active).hand) = 6);
+  ()
 
 let run_tests () =
   test_split ();
