@@ -20,12 +20,8 @@ type deck = card list
 (* Represents a player of the game. The state distinguishes between human
  * and CPU players. hand determines the deck of cards each player holds. *)
 type player = { state : player_state;
-<<<<<<< HEAD
                 hand : deck;
                 name: string
-              }
-=======
-                hand : deck
               }
 
 val print_card : card -> unit
@@ -33,4 +29,3 @@ val print_card : card -> unit
 val print_deck : suit -> deck -> unit
 
 val print_suit : suit -> unit
->>>>>>> dc38dc35a6cc0ed548938569c9f072f6e430d2d9
