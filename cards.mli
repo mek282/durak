@@ -20,11 +20,6 @@ type deck = card list
 (* Represents a player of the game. The state distinguishes between human
  * and CPU players. hand determines the deck of cards each player holds. *)
 type player = { state : player_state;
-<<<<<<< HEAD
-                hand : deck;
-                name: string
-              }
-=======
                 hand : deck
               }
 
@@ -33,4 +28,25 @@ val print_card : card -> unit
 val print_deck : suit -> deck -> unit
 
 val print_suit : suit -> unit
->>>>>>> dc38dc35a6cc0ed548938569c9f072f6e430d2d9
+
+(* Stores information about the state of the game.
+ * deck is the cards that haven't been drawn yet
+ * trump is the trump suit
+ * attackers index 0 primary attacker index lst next to be attacked
+ * defender is the player currently being attacked
+ * attackers index 0 represents primary attacker, last index represents the
+ * next player to be attacked
+ * table is a list of pairs where the first element is an "attacking card" and
+ * the second element is None or Some "defending card"
+ * active is the player whose turn it is
+ * discard represents the discard pile
+ * winners is the list of players who are out of the game *)
+type state = { deck: deck;
+               trump: suit;
+               attackers: player list;
+               defender: player;
+               table: (card * card option) list;
+               active: player;
+               discard: deck;
+               winners: player list;
+              }

@@ -16,17 +16,6 @@ type command = | Attack of card | Defend of (card * card) | Take | Pass
                | Deflect of (card * card)
 
 
-type state = { deck: deck;
-               trump: suit;
-               attackers: player list;
-               defender: player;
-               table: (card * card option) list;
-               active: player;
-               discard: deck;
-               winners: player list;
-              }
-
-
 (* Prints title and instructions *)
 let title_screen () =
   Printf.printf "\n\n  DURAK \n
