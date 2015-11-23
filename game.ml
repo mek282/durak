@@ -57,10 +57,42 @@ let title_screen () =
   Press 'Enter' to begin. \n";
   let s = read_line () in (fun x -> ()) s
 
-(* Creates a randomized 52-card deck in which each card is different.
+let rec unshuffled_deck d n =
+  if n < 15
+  then let new_d = List.append d [(Heart, n); (Diamond, n);
+                                 (Spade, n); (Club, n)] in
+        unshuffled_deck new_d (n+1)
+  else d
+
+let rec shuffle l1 l2 l3 =
+  match l1 with
+  | e1::e2::tl -> shuffle tl (e1::l2) (e2::l3)
+  | e1::tl -> shuffle tl l2 (e1::l3)
+  | [] -> (l2, l3)
+
+let choose_trump () =
+  let n = Random.int 4 in
+  if n = 0 then Heart
+    else if n = 1 then Diamond
+    else if n = 2 then Spade
+  else Club
+
+(* Creates a randomized 36 card deck in which each card is different. The deck
+ * is a standard deck with twos, threes, fours, and fives removed.
  * The suit of the last card, which is the trump suit, is stored in the pair *)
 let init_deck _ =
-  failwith "unimplemented"
+  let d = unshuffled_deck [] 6 in
+  let num_shuffles = 7 + (Random.int 20) in
+  let rec shuffle_deck n deck = (
+    if n >= 0 then
+      let shuffled = shuffle deck [] [] in
+        if (Random.int 2) = 1 then
+          shuffle_deck (n-1) (List.append (snd shuffled) (fst shuffled))
+        else
+          shuffle_deck (n-1) (List.append (fst shuffled) (snd shuffled))
+    else deck ) in
+  (choose_trump (), shuffle_deck num_shuffles d)
+
 
 
 (* Creates an initial state for the game in which all cards have been passed
@@ -252,12 +284,35 @@ let test_parse () =
   assert (parse e = e');
   ()
 
+let test_init_deck () =
+  Printf.printf "\n\nDECK 1 TEST:\n\n";
+  let d1 = init_deck () in
+  print_deck (fst d1) (snd d1);
+  Printf.printf "\n\nDECK 2 TEST:\n\n";
+  let d2 = init_deck () in
+  print_deck (fst d2) (snd d2);
+  Printf.printf "\n\nDECK 3 TEST:\n\n";
+  let d3 = init_deck () in
+  print_deck (fst d3) (snd d3);
+  Printf.printf "\n\nDECK 4 TEST:\n\n";
+  let d4 = init_deck () in
+  print_deck (fst d4) (snd d4);
+  Printf.printf "\n\nDECK 5 TEST:\n\n";
+  let d5 = init_deck () in
+  print_deck (fst d5) (snd d5);
+  Printf.printf "\n\nDECK 6 TEST:\n\n";
+  let d6 = init_deck () in
+  print_deck (fst d6) (snd d6);
+  ()
+
+
 let run_tests () =
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
   test_parse ();
+(*   test_init_deck (); *)
   print_endline "all tests pass";
   ()
 

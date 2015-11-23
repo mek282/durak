@@ -22,3 +22,9 @@ type deck = card list
 type player = { state : player_state;
                 hand : deck
               }
+
+val print_card : card -> unit
+
+val print_deck : suit -> deck -> unit
+
+val print_suit : suit -> unit
