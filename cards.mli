@@ -23,6 +23,23 @@ type player = { state : player_state;
                 hand : deck
               }
 
+
+(* Representation of player moves.
+  - Attack (Heart, 6) represents an attack with a Six of Hearts
+  - Defend ((Heart, 6), (Heart, 8)) represents a player defending
+    Attack (Heart, 6) with an Eight of Hearts
+  - Take represents a player choosing to take the cards on the table rather
+    than defend.
+  - Pass represents a player passing when given the opportunity to attack
+    the current defender.
+  - Deflect ((Six, Diamonds), (Six, Hearts)) represents a player choosing
+    to pass along an Attack (Six, Diamonds) to the next player by adding
+    their own Six of Hearts.
+*)
+type command = | Attack of card | Defend of (card * card) | Take | Pass
+               | Deflect of (card * card)
+
+
 val print_card : card -> unit
 
 val print_deck : suit -> deck -> unit

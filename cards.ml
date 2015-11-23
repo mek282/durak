@@ -11,6 +11,15 @@ type player = { state : player_state;
               }
 
 
+(* Correspond to user inputs:
+ * "Attack with [card]"
+ * "Defend against [card] with [card]"
+ * "Take"
+ * "Pass"
+ * "Deflect against [card] with [card]" *)
+type command = | Attack of card | Defend of (card * card) | Take | Pass
+               | Deflect of (card * card)
+
 let print_suit s =
   match s with
   | Heart -> Printf.printf "Heart"

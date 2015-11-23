@@ -6,16 +6,6 @@ exception Cannot_parse of string
 exception Invalid_action of string
 
 
-(* Correspond to user inputs:
- * "Attack with [card]"
- * "Defend against [card] with [card]"
- * "Take"
- * "Pass"
- * "Deflect against [card] with [card]" *)
-type command = | Attack of card | Defend of (card * card) | Take | Pass
-               | Deflect of (card * card)
-
-
 (* Prints title and instructions *)
 let title_screen () =
   Printf.printf "\n\n  DURAK \n
@@ -362,14 +352,20 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
   end
 
 
+(* Draws and prompts the user*)
+let draw (g : state) (prompt : string) : string =
+  Gui.draw g;
+  print_endline prompt;
+  read_line ()
+
+
 (* Prompts the user for a response until the user types a valid input *)
 let rec parse_no_fail (p0 : string) (p1 : string) g : command =
-  let r = Gui.draw g p1 in
+  let r = draw g p1 in
   try parse r with
   | Cannot_parse _ ->
       let m = "I couldn't understand \"" ^ r ^ "\".\nPlease try again\n" ^ p0 in
       parse_no_fail p0 m g
-
 
 
 (* Calls itself recursively to update the state in response to commands *)
@@ -387,7 +383,12 @@ let rec repl g = function
   end
 
 
+
+
 (*TEST CASES*)
+
+let test_remove_last () =
+  ()
 
 let test_players_eq () =
   ()
