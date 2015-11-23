@@ -2,6 +2,7 @@ open Game
 open Cards
 
 (* ================================HELPERS====================================*)
+let clear_screen () = ignore (Sys.command "clear")
 
 let suit_to_string (suit: suit) : string =
   match suit with
@@ -20,6 +21,21 @@ let rank_to_string (rank: int) : string =
 
 let create_string_list (lst: 'a list) (f: 'a -> string) : string =
   String.concat "" (List.map f lst)
+
+let draw_deck (deck: deck) : unit =
+  let n = List.length deck in
+  let num = if n < 10 then
+              "0" ^ string_of_int n
+            else
+              string_of_int n
+  in
+  Printf.printf
+"  _______
+ |       |
+ | Cards |
+ | Left: |
+ | %s    |
+ |_______|\n%!" num
 
 let draw_card (card: card) : unit =
   let rank = rank_to_string (snd card) in
@@ -66,10 +82,15 @@ let rec draw_table (cplist : (card * card option) list) : unit =
 (* =================================MAIN======================================*)
 
 let draw (s: state) : unit =
+  clear_screen ();
   Printf.printf "YOUR HAND\n%!";
   draw_hand s.active.hand;
   Printf.printf "\nTHE TABLE\n%!";
-  draw_table s.table
+  draw_table s.table;
+  Printf.printf "\nTHE DECK\n%!";
+  draw_deck (s.deck);
+  Printf.printf "\nWhat will you do?:\n%!"
+
 
 (* ================================TESTING====================================*)
 
