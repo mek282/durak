@@ -7,5 +7,6 @@ type card = suit * int
 type deck = card list
 
 type player = { state : player_state;
-                hand : deck
+                hand : deck;
+                name : string;
               }

@@ -3,6 +3,7 @@ open Cards
 
 (* Used in parsing to identify invalid user inputs *)
 exception Cannot_parse of string
+exception Invalid_action of string
 
 
 (* Correspond to user inputs:
@@ -147,12 +148,199 @@ let parse (s : string) : command =
   | _ -> raise (Cannot_parse s)
 
 
-(* Calls itself recursively to update the state in response to commands *)
-let repl g c =
+(* returns the string representation of card (s,r)*)
+let string_of_card (s,r) : string =
+  failwith "unimplemented"
+
+(* play_card p c removes card c from the hand of player p and returns a new
+ * player object. Raises Invalid_action if the card is not in p's hand*)
+let play_card (p : player) (c : card) : player =
   failwith "unimplemented"
 
 
+(* returns a new gamestate in which the active player has played card c *)
+let game_play_card (g : state) (c : card) : state =
+  let p = play_card g.active c in
+  let replace = fun x -> if x = g.active then p else x in
+  let attackers' = List.map replace g.attackers in
+  let defender' = if g.defender = g.active then p else g.defender in
+  { deck = g.deck;
+   trump = g.trump;
+   attackers = attackers';
+   defender = defender';
+   table = g.table;
+   active = g.active;
+   discard = g.discard;
+   winners = g.winners;
+  }
+
+
+(* returns true iff d is a valid defense to attack a *)
+let valid_defense (a : card) (d : card) : bool =
+  failwith "unimplemented"
+
+(* returns a new gamestate in which all attackers have been dealt cards
+ * from the deck until everyone has 6 cards or the deck in empty *)
+let deal (g : state) : state =
+  failwith "unimplemented"
+
+(* returns the last element of a list. Raises Invalid_action if the list is empty*)
+let rec last_attacker = function
+  | [] -> raise (Invalid_action "the game is over")
+  | h::[] -> h
+  | h::t -> last_attacker t
+
+
+(* removes the last element of a list.  Leaves the empty list unchanged *)
+let rec remove_last = function
+  | [] -> []
+  | _::[] -> []
+  | h::t -> h::(remove_last t)
+
+
+(* returns true iff two players have all the same attributes *)
+let players_eq p1 p2 =
+  p1.state = p2.state && p1.hand = p2.hand && p2.name = p1.name
+
+
+(* returns a new state in which d is the defender, and the attackers have
+ * been changed accordingly *)
+let new_turn g (d : player) : state =
+  let a = g.defender::(remove_last g.attackers) in
+  let a' = if players_eq d (last_attacker g.attackers)
+    then a
+    else (last_attacker g.attackers)::(remove_last a)
+    in
+  { deck = g.deck;
+   trump = g.trump;
+   attackers = a';
+   defender = d;
+   table = g.table;
+   active = g.active;
+   discard = g.discard;
+   winners = g.winners;
+  }
+
+(* returns a new gamestate with attack c added to the table *)
+let add_attack g (c : card) : state =
+  { deck = g.deck;
+   trump = g.trump;
+   attackers = g.attackers;
+   defender = g.defender;
+   table = (c,None)::g.table;
+   active = g.active;
+   discard = g.discard;
+   winners = g.winners;
+  }
+
+
+(* returns true iff all the attacks on the table have rank r and have no
+ * defending card *)
+let rec deflectable (r : int) = function
+  | [] -> true
+  | ((_,r'),None)::t -> r = r' && deflectable r t
+  | _ -> false
+
+
+(* changes active player to p. Does not change any other field *)
+let rec change_active g (p : player) =
+  { deck = g.deck;
+   trump = g.trump;
+   attackers = g.attackers;
+   defender = g.defender;
+   table = g.table;
+   active = p;
+   discard = g.discard;
+   winners = g.winners;
+  }
+
+
+(* makes player p a winner. Prereq: p must be an attacker *)
+let do_win (g : state) (p : player) : state =
+  { deck = g.deck;
+   trump = g.trump;
+   attackers = List.filter (fun x -> x<>p) g.attackers;
+   defender = g.defender;
+   table = g.table;
+   active = g.active;
+   discard = g.discard;
+   winners = p::(g.winners);
+  }
+
+
+(* carry out the command "deflect against c1 with c2"
+ * raise Invalid_action if appropriate
+ * returns the new gamestate and {active player won} *)
+let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
+  if r1 <> r2
+  then raise (Invalid_action "You must deflect with a card of the same rank")
+  else match g.table with
+  | [] -> raise (Invalid_action "There is no attack to deflect!")
+  | l -> begin
+    if deflectable r1 l
+    then
+      let g''' = game_play_card g (s2,r2) in
+      let won = g'''.active.hand = [] in
+      let active = g'''.active in
+      let next_p = last_attacker g'''.attackers in
+      let g' = new_turn g''' next_p in
+      let g'' = add_attack g' (s2,r2) in
+      let g'''' = if won then do_win g'' active else g'' in
+      (change_active g'''' next_p,won)
+    else raise (Invalid_action "Can't deflect")
+  end
+
+
+(* Prompts the user for a response until the user types a valid input *)
+let rec parse_no_fail (p0 : string) (p1 : string) g : command =
+  let r = Gui.draw g p1 in
+  try parse r with
+  | Cannot_parse _ ->
+      let m = "I couldn't understand \"" ^ r ^ "\".\nPlease try again\n" ^ p0 in
+      parse_no_fail p0 m g
+
+
+
+(* Calls itself recursively to update the state in response to commands *)
+let rec repl g = function
+  | Attack c -> failwith "unimplemented"
+  | Defend (c1,c2) -> failwith "unimplemented"
+  | Take -> failwith "unimplemented"
+  | Pass -> failwith "unimplemented"
+  | Deflect (c1,c2) -> begin
+      let g' = deflect g c1 c2 in
+      if g'.active.state = Human
+      then
+        let prompt = g.active.name ^ " deflected. You can deflect, take, or defend." in
+        let c' = parse_no_fail prompt prompt g in repl g' c'
+  end
+
+
 (*TEST CASES*)
+
+let test_players_eq () =
+  ()
+
+let test_new_turn () =
+  ()
+
+let test_add_attack () =
+  ()
+
+let test_deflectable () =
+  ()
+
+let test_change_active () =
+  ()
+
+let test_do_win () =
+  ()
+
+let test_deflect () =
+  ()
+
+let test_parse_no_fail () =
+  ()
 
 let test_split () =
   let a = "one two" in
