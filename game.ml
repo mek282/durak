@@ -27,17 +27,99 @@ type state = { deck: deck;
               }
 
 
-(* Creates a randomized 52-card deck in which each card is different.
+(* Prints title and instructions *)
+let title_screen () =
+  Printf.printf "\n\n  DURAK \n
+  Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
+  Welcome to Durak. The object of the game is to get rid of all your cards
+  before your opponents do the same. There are no winners, only one loser:
+  the 'DURAK', or Idiot!
+  You will receive a hand of six cards from a standard deck with all cards
+  numbered five or below removed. Aces are high. A random suit will be chosen
+  and known as the 'trump suit.'
+  When it is your turn to attack the next player, choose a card from your hand
+  and type 'attack with [value] of [suit]'.
+  The defender may 'deflect' an initial attack by placing down a card of the
+  same value: 'deflect [attack value] of [attack suit] with [deflect value] of
+  [deflect suit]'.
+  Alternatively, the defender may play a card of the same suit as and a higher
+  value than the attacking card. In addition, any card of the trump suit can
+  defend against any card not of the trump suit. To defend, type 'defend against
+  [attack value] of [attack suit] with [defense value] of [defense suit]'.
+  The defender's final option is to take all cards on the table. This includes
+  those they have already defended. If the defender cannot defend or deflect an
+  attack, their only option is to 'take'.
+  If the defender chooses to defend against the first attack, then all players
+  will have a chance to attack the defender each round until there
+  are a maximum of six attacks in play. Each new attacker may only attack with
+  cards of the same values already in play. For example, if the initial attack
+  is a six of hearts and this is defended with a seven of hearts, the next
+  attacker may only attack with either a six or a seven.\n
+  Press 'Enter' to begin. \n";
+  let s = read_line () in (fun x -> ()) s
+
+let rec unshuffled_deck d n =
+  if n < 15
+  then let new_d = List.append d [(Heart, n); (Diamond, n);
+                                 (Spade, n); (Club, n)] in
+        unshuffled_deck new_d (n+1)
+  else d
+
+let rec shuffle l1 l2 l3 =
+  match l1 with
+  | e1::e2::tl -> shuffle tl (e1::l2) (e2::l3)
+  | e1::tl -> shuffle tl l2 (e1::l3)
+  | [] -> (l2, l3)
+
+let choose_trump () =
+  let n = Random.int 4 in
+  if n = 0 then Heart
+    else if n = 1 then Diamond
+    else if n = 2 then Spade
+  else Club
+
+(* Creates a randomized 36 card deck in which each card is different. The deck
+ * is a standard deck with twos, threes, fours, and fives removed.
  * The suit of the last card, which is the trump suit, is stored in the pair *)
 let init_deck _ =
-  failwith "unimplemented"
+  let d = unshuffled_deck [] 6 in
+  let num_shuffles = 7 + (Random.int 20) in
+  let rec shuffle_deck n deck = (
+    if n >= 0 then
+      let shuffled = shuffle deck [] [] in
+        if (Random.int 2) = 1 then
+          shuffle_deck (n-1) (List.append (snd shuffled) (fst shuffled))
+        else
+          shuffle_deck (n-1) (List.append (fst shuffled) (snd shuffled))
+    else deck ) in
+  (choose_trump (), shuffle_deck num_shuffles d)
 
+let deal_hand d =
+  match d with
+  | c1::c2::c3::c4::c5::c6::tl -> ([c1; c2; c3; c4; c5; c6], tl)
+  | _ -> failwith "The deck is too small - only 4 players max!"
 
 (* Creates an initial state for the game in which all cards have been passed
  * out *)
-let init_game_state _ =
-  failwith "unimplemented"
-
+let init_game_state d1 d2 d3 =
+  let start_deck = init_deck () in
+  let h1 = deal_hand (snd start_deck) in
+  let p1 = {state = Human; hand = (fst h1)} in
+  let h2 = deal_hand (snd h1) in
+  let p2 = {state = CPU d1; hand = (fst h2)} in
+  let h3 = deal_hand (snd h2) in
+  let p3 = {state = CPU d2; hand = (fst h3)} in
+  let h4 = deal_hand (snd h3) in
+  let p4 = {state = CPU d3; hand = (fst h4)} in
+  { deck = (snd h4);
+    trump = (fst start_deck);
+    attackers = [p1; p3; p4];
+    defender = p2;
+    table = [];
+    active = p1;
+    discard = [];
+    winners = [];
+  }
 
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
@@ -409,13 +491,47 @@ let test_parse () =
   assert (parse e = e');
   ()
 
+let test_init_deck () =
+  Printf.printf "\n\nDECK 1 TEST:\n\n";
+  let d1 = init_deck () in
+  print_deck (fst d1) (snd d1);
+  Printf.printf "\n\nDECK 2 TEST:\n\n";
+  let d2 = init_deck () in
+  print_deck (fst d2) (snd d2);
+  Printf.printf "\n\nDECK 3 TEST:\n\n";
+  let d3 = init_deck () in
+  print_deck (fst d3) (snd d3);
+  Printf.printf "\n\nDECK 4 TEST:\n\n";
+  let d4 = init_deck () in
+  print_deck (fst d4) (snd d4);
+  Printf.printf "\n\nDECK 5 TEST:\n\n";
+  let d5 = init_deck () in
+  print_deck (fst d5) (snd d5);
+  Printf.printf "\n\nDECK 6 TEST:\n\n";
+  let d6 = init_deck () in
+  print_deck (fst d6) (snd d6);
+  ()
+
+let test_init_game_state () =
+  let g1 = init_game_state 1 2 3 in
+  assert (List.length (g1.deck) = 12);
+  assert ((g1.defender).state = CPU 1);
+  assert (List.length ((g1.defender).hand) = 6);
+  assert ((g1.active).state = Human);
+  assert (List.length ((g1.active).hand) = 6);
+  ()
+
 let run_tests () =
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
   test_parse ();
+(*   test_init_deck (); *)
+  test_init_game_state ();
   print_endline "all tests pass";
   ()
 
-let _ = run_tests ()
+let _ =
+  title_screen ();
+  run_tests ()
