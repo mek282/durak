@@ -8,6 +8,7 @@ type deck = card list
 
 type player = { state : player_state;
                 hand : deck;
+                name : string;
               }
 
 

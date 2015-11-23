@@ -104,10 +104,10 @@ let ptest_draw () : unit =
   let trump = Heart in
 
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
-  let player1 = {state = Human; hand = hand1} in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
 
   let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
-  let player2 = {state= CPU(1); hand = hand2} in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
 
   let attackers = [player2] in
   let defender = player1 in
