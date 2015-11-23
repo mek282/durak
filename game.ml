@@ -259,16 +259,11 @@ let rec remove_last = function
   | h::t -> h::(remove_last t)
 
 
-(* returns true iff two players have all the same attributes *)
-let players_eq p1 p2 =
-  p1.state = p2.state && p1.hand = p2.hand && p2.name = p1.name
-
-
 (* returns a new state in which d is the defender, and the attackers have
  * been changed accordingly *)
 let new_turn g (d : player) : state =
   let a = g.defender::(remove_last g.attackers) in
-  let a' = if players_eq d (last_attacker g.attackers)
+  let a' = if d = (last_attacker g.attackers)
     then a
     else (last_attacker g.attackers)::(remove_last a)
     in
@@ -353,7 +348,7 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
 
 
 (* Draws and prompts the user*)
-let draw (g : state) (prompt : string) : string =
+let game_draw (g : state) (prompt : string) : string =
   Gui.draw g;
   print_endline prompt;
   read_line ()
@@ -361,7 +356,7 @@ let draw (g : state) (prompt : string) : string =
 
 (* Prompts the user for a response until the user types a valid input *)
 let rec parse_no_fail (p0 : string) (p1 : string) g : command =
-  let r = draw g p1 in
+  let r = game_draw g p1 in
   try parse r with
   | Cannot_parse _ ->
       let m = "I couldn't understand \"" ^ r ^ "\".\nPlease try again\n" ^ p0 in
@@ -375,10 +370,11 @@ let rec repl g = function
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
   | Deflect (c1,c2) -> begin
-      let g' = deflect g c1 c2 in
+      let (g',won) = deflect g c1 c2 in
+      (*TODO: take into account winning*)
       if g'.active.state = Human
       then
-        let prompt = g.active.name ^ " deflected. You can deflect, take, or defend." in
+        let prompt = (*g.active.name ^*) " deflected. You can deflect, take, or defend." in
         let c' = parse_no_fail prompt prompt g in repl g' c'
   end
 
@@ -388,9 +384,6 @@ let rec repl g = function
 (*TEST CASES*)
 
 let test_remove_last () =
-  ()
-
-let test_players_eq () =
   ()
 
 let test_new_turn () =
