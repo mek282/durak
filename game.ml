@@ -311,8 +311,15 @@ let rec change_active g (p : player) =
   }
 
 
+(* Terminates everything and prints either a positive or negative message
+ * depending on whether the player won or is a Durak. *)
+let end_game (g : state) : state =
+  failwith "unimplemented"
+
+
 (* makes player p a winner. Prereq: p must be an attacker *)
 let do_win (g : state) (p : player) : state =
+  if List.length g.attackers = 1 then end_game g else
   { deck = g.deck;
    trump = g.trump;
    attackers = List.filter (fun x -> x<>p) g.attackers;
@@ -354,13 +361,37 @@ let game_draw (g : state) (prompt : string) : string =
   read_line ()
 
 
-(* Prompts the user for a response until the user types a valid input *)
-let rec parse_no_fail (p0 : string) (p1 : string) g : command =
+(* Prompts the user for a response until the user types a valid input.
+ * p0 is the original prompt.  p1 is the prompt with additional feedback. *)
+let rec parse_no_fail' (p0 : string) (p1 : string) g : command =
   let r = game_draw g p1 in
   try parse r with
   | Cannot_parse _ ->
       let m = "I couldn't understand \"" ^ r ^ "\".\nPlease try again\n" ^ p0 in
-      parse_no_fail p0 m g
+      parse_no_fail' p0 m g
+
+
+(* Prompts the user for a response until the user types a valid input. *)
+let parse_no_fail (p : string) (g : state) : command = parse_no_fail' p p g
+
+
+(* returns a new gamestate in which all cards on the table have been added
+ * to the hand of the active player *)
+let take_all (g : state) : state =
+  failwith "unimplemented"
+
+
+(* if c1 is on the table, and if c2 is a valid defense, return a new gamestate
+ * with c2 paired to c1 on the table.  Raise Invalid_action otherwise. *)
+let place_defense (g : state) (c1 : card) (c2 : card) : state =
+  (* implementation tip: Use valid_defense as a helper *)
+  failwith "unimplemented"
+
+
+(* returns true iff the table is empty or at least one of the cards on the table
+ * has the same rank as c *)
+let valid_attack (g : state) (c : card) : bool =
+  failwith "unimplemented"
 
 
 (* Calls itself recursively to update the state in response to commands *)
@@ -371,17 +402,35 @@ let rec repl g = function
   | Pass -> failwith "unimplemented"
   | Deflect (c1,c2) -> begin
       let (g',won) = deflect g c1 c2 in
-      (*TODO: take into account winning*)
       if g'.active.state = Human
       then
-        let prompt = (*g.active.name ^*) " deflected. You can deflect, take, or defend." in
-        let c' = parse_no_fail prompt prompt g in repl g' c'
+        let prev_player = "" (*g.active.name*) in
+        let prompt = prev_player ^ " deflected. You can deflect, take, or defend." in
+        let prompt' = if won then prev_player ^ " is out of the game. " ^ prompt
+                    else prompt in
+        let c' = parse_no_fail prompt' g in repl g' c'
   end
 
 
-
-
 (*TEST CASES*)
+
+let test_string_of_card () =
+  ()
+
+let test_play_card () =
+  ()
+
+let test_game_play_card () =
+  ()
+
+let test_valid_defense () =
+  ()
+
+let test_deal () =
+  ()
+
+let test_last_attacker () =
+  ()
 
 let test_remove_last () =
   ()
@@ -405,6 +454,15 @@ let test_deflect () =
   ()
 
 let test_parse_no_fail () =
+  ()
+
+let test_take_all () =
+  ()
+
+let test_place_defense () =
+  ()
+
+let test_valid_defense () =
   ()
 
 let test_split () =
