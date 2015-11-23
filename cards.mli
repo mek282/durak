@@ -20,7 +20,8 @@ type deck = card list
 (* Represents a player of the game. The state distinguishes between human
  * and CPU players. hand determines the deck of cards each player holds. *)
 type player = { state : player_state;
-                hand : deck
+                hand : deck;
+                name: string
               }
 
 
