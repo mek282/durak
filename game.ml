@@ -340,6 +340,7 @@ let run_tests () =
   test_parse_card ();
   test_parse ();
 (*   test_init_deck (); *)
+  test_init_game_state ();
   print_endline "all tests pass";
   ()
 
