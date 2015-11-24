@@ -2,7 +2,7 @@ open Cards
 
 (*** The main game engine for Durak ***)
 
-(* Creates a randomized 52-card deck in which each card is different.
+(* Creates a randomized 36-card deck in which each card is different.
  * The suit of the last card, which is the trump suit, is stored in the pair *)
 val init_deck : unit -> (suit * deck)
 

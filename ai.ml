@@ -1,4 +1,3 @@
-open Game
 open Cards
 
 (*****************************************************************************)
@@ -153,15 +152,15 @@ let test_easy_defend () =
   let testHand4 = [(Club, 7);(Club, 8);(Heart, 10);(Diamond, 11)] in
   let testHand5 = [] in
   let testHand6 = [(Club, 7);(Club, 9);(Heart, 10);(Diamond, 11)] in
-  let player1 = {state = CPU 1; hand = testHand1} in
-  let player2 = {state = CPU 1; hand = testHand2} in
-  let player3 = {state = CPU 1; hand = testHand3} in
-  let player4 = {state = CPU 1; hand = testHand4} in
-  let player5 = {state = CPU 1; hand = testHand5} in
-  let player6 = {state = CPU 1; hand = testHand6} in
+  let player1 = {state = CPU 1; hand = testHand1; name = "happy1"} in
+  let player2 = {state = CPU 1; hand = testHand2; name = "happy2"} in
+  let player3 = {state = CPU 1; hand = testHand3; name = "happy3"} in
+  let player4 = {state = CPU 1; hand = testHand4; name = "happy4"} in
+  let player5 = {state = CPU 1; hand = testHand5; name = "happy5"} in
+  let player6 = {state = CPU 1; hand = testHand6; name = "happy6"} in
 
   let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
-  let attacker = {state= CPU(1); hand = hand2} in
+  let attacker = {state= CPU(1); hand = hand2; name = "Dora"} in
 
   let attackers = [attacker] in
   let defender = player1 in

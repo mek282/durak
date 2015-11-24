@@ -1,4 +1,3 @@
-open Game
 open Cards
 
 (*** Calculate an AI player's moves in response to current game state ***)

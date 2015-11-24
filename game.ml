@@ -83,13 +83,13 @@ let deal_hand d =
 let init_game_state d1 d2 d3 =
   let start_deck = init_deck () in
   let h1 = deal_hand (snd start_deck) in
-  let p1 = {state = Human; hand = (fst h1)} in
+  let p1 = {state = Human; hand = (fst h1); name = "Emilio"} in
   let h2 = deal_hand (snd h1) in
-  let p2 = {state = CPU d1; hand = (fst h2)} in
+  let p2 = {state = CPU d1; hand = (fst h2); name = "Mr. Snuggles"} in
   let h3 = deal_hand (snd h2) in
-  let p3 = {state = CPU d2; hand = (fst h3)} in
+  let p3 = {state = CPU d2; hand = (fst h3); name = "Hello!"} in
   let h4 = deal_hand (snd h3) in
-  let p4 = {state = CPU d3; hand = (fst h4)} in
+  let p4 = {state = CPU d3; hand = (fst h4); name = "Warm Hugs"} in
   { deck = (snd h4);
     trump = (fst start_deck);
     attackers = [p1; p3; p4];
@@ -371,8 +371,11 @@ let rec parse_no_fail' (p0 : string) (p1 : string) g : command =
       parse_no_fail' p0 m g
 
 
-(* Prompts the user for a response until the user types a valid input. *)
-let parse_no_fail (p : string) (g : state) : command = parse_no_fail' p p g
+(* Prompts the user for a response until the user types a valid input
+ * unless the active player is an AI, in which case an AI response will be
+ * requested *)
+let parse_no_fail (p : string) (g : state) : command =
+  if g.active.state = Human then parse_no_fail' p p g else Ai.response g
 
 
 (* returns a new gamestate in which all cards on the table have been added
@@ -404,7 +407,8 @@ let rec repl g = function
       let (g',won) = deflect g c1 c2 in
       if g'.active.state = Human
       then
-        let prev_player = "" (*g.active.name*) in
+        let prev_player = g.active.name in
+        (* check if AI, then call response *)
         let prompt = prev_player ^ " deflected. You can deflect, take, or defend." in
         let prompt' = if won then prev_player ^ " is out of the game. " ^ prompt
                     else prompt in
