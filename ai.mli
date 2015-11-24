@@ -6,9 +6,3 @@ open Cards
 * command. *)
 val response : state -> command
 
-val cardCompare : card -> card -> int
-
-val firstUndefended : (card*card option) list -> card
-
-val lowestValidDefOf : deck -> card -> suit -> card option
-
