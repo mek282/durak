@@ -78,18 +78,32 @@ let deal_hand d =
   | c1::c2::c3::c4::c5::c6::tl -> ([c1; c2; c3; c4; c5; c6], tl)
   | _ -> failwith "The deck is too small - only 4 players max!"
 
+let e_names = ref ["Mr. Camel"; "Camille"; "Cameron"; "Melly"]
+let m_names = ref ["Drew"; "Ivan"; "Jose"; "Mary"]
+let h_names = ref ["Clarkson"; "Chirag"; "Remy"; "M. George"]
+
+let gen_name d =
+  if d = 1
+    then let n = List.nth (!e_names) (Random.int (List.length (!e_names))) in
+         e_names := List.filter (fun x -> x <> n) (!e_names); n
+  else if d = 2
+    then let n = List.nth (!m_names) (Random.int (List.length (!m_names))) in
+         m_names := List.filter (fun x -> x <> n) (!m_names); n
+  else let n = List.nth (!h_names) (Random.int (List.length (!h_names))) in
+         h_names := List.filter (fun x -> x <> n) (!h_names); n
+
 (* Creates an initial state for the game in which all cards have been passed
  * out *)
-let init_game_state d1 d2 d3 =
+let init_game_state s d1 d2 d3 =
   let start_deck = init_deck () in
   let h1 = deal_hand (snd start_deck) in
-  let p1 = {state = Human; hand = (fst h1)} in
+  let p1 = {state = Human; hand = (fst h1); name = s} in
   let h2 = deal_hand (snd h1) in
-  let p2 = {state = CPU d1; hand = (fst h2)} in
+  let p2 = {state = CPU d1; hand = (fst h2); name = (gen_name d1)} in
   let h3 = deal_hand (snd h2) in
-  let p3 = {state = CPU d2; hand = (fst h3)} in
+  let p3 = {state = CPU d2; hand = (fst h3); name = (gen_name d2)} in
   let h4 = deal_hand (snd h3) in
-  let p4 = {state = CPU d3; hand = (fst h4)} in
+  let p4 = {state = CPU d3; hand = (fst h4); name = (gen_name d3)} in
   { deck = (snd h4);
     trump = (fst start_deck);
     attackers = [p1; p3; p4];
@@ -554,11 +568,12 @@ let test_init_deck () =
   ()
 
 let test_init_game_state () =
-  let g1 = init_game_state 1 2 3 in
+  let g1 = init_game_state "jane" 1 2 3 in
   assert (List.length (g1.deck) = 12);
   assert ((g1.defender).state = CPU 1);
   assert (List.length ((g1.defender).hand) = 6);
   assert ((g1.active).state = Human);
+  assert ((g1.active).name = "jane");
   assert (List.length ((g1.active).hand) = 6);
   ()
 
