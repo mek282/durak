@@ -291,6 +291,11 @@ let new_turn g (d : player) : state =
    winners = g.winners;
   }
 
+(* returns the player who comes after the active player in the attacker list.
+ * raise Invalid_action if the next player should be the defender *)
+let next_attacker (g : state) : player =
+  failwith "unimplemented"
+
 (* returns a new gamestate with attack c added to the table *)
 let add_attack g (c : card) : state =
   { deck = g.deck;
@@ -411,24 +416,49 @@ let valid_attack (g : state) (c : card) : bool =
   failwith "unimplemented"
 
 
+(* loops over attackers if everyone has been passing until someone doesn't pass*)
+let rec pass' (g : state) : state*command =
+  let g' = change_active g (next_attacker g) in
+    let prompt = g.active.name ^ " passed. You can pass or attack." in
+    let response = parse_no_fail prompt g' in
+    let first = g.active = (List.hd g.attackers) in
+    if response <> Pass || not first then (g', response) else
+    if g'.active = last_attacker g'.attackers
+      then let g'' = change_active g g.defender in
+      let prompt = "Everyone passed. You can take or defend." in
+      let response = parse_no_fail prompt g'' in
+      (g'',response)
+      (*TODO: Somehow make sure no one can attack anymore*)
+    else pass' g'
+
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl g = function
   | Attack c -> failwith "unimplemented"
   | Defend (c1,c2) -> failwith "unimplemented"
   | Take -> failwith "unimplemented"
-  | Pass -> failwith "unimplemented"
+  | Pass -> pass g
   | Deflect (c1,c2) -> begin
       let (g',won) = deflect g c1 c2 in
       if g'.active.state = Human
       then
         let prev_player = g.active.name in
-        (* check if AI, then call response *)
         let prompt = prev_player ^ " deflected. You can deflect, take, or defend." in
         let prompt' = if won then prev_player ^ " is out of the game. " ^ prompt
                     else prompt in
         let c' = parse_no_fail prompt' g in repl g' c'
   end
 
+
+(* changes state as necessary for pass.  Keeps track of who has passed
+ * until one attacker doesn't pass or until all attackers have passed *)
+and pass (g : state) : unit =
+  if g.active = g.defender then raise (Invalid_action "Only attackers can pass.") else
+  if g.active = last_attacker g.attackers
+    then let g' = change_active g g.defender in
+      let prompt = g.active.name ^ " passed. You can take or defend." in
+      let response = parse_no_fail prompt g' in
+      repl g' response else
+  let g',c = pass' g in repl g' c
 
 (*TEST CASES*)
 
@@ -439,6 +469,9 @@ let test_play_card () =
   ()
 
 let test_game_play_card () =
+  ()
+
+let test_next_attacker () =
   ()
 
 let test_valid_defense () =
@@ -481,6 +514,12 @@ let test_place_defense () =
   ()
 
 let test_valid_defense () =
+  ()
+
+let test_pass' () =
+  ()
+
+let test_pass () =
   ()
 
 let test_split () =
