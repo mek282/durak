@@ -9,7 +9,7 @@ let cardCompare ((a,b):card) ((c,d):card) = compare b d
 
 
 (* [sortHand a h t] outputs [h] sorted in increasing order, filtered by suit
-* of [a] and [t] *)
+* of [a] and [t], and by rank of [a] *)
 let sortHand (hand:deck) (attack:card) (trump:suit) : deck =
   List.sort cardCompare
     (List.filter
@@ -59,6 +59,42 @@ let rec getUndefended (table:(card * card option) list) : card list =
   | (a,b)::tl -> if b = None
                  then a::getUndefended tl
                  else getUndefended tl
+
+
+module GameState = struct
+  (*[GetNextPlayer g] returns the next player to move in gameState [g]*)
+  let GetNextPlayer =
+    failwith "TODO"
+
+  (*[Clone g] returns a clone of gameState [g]*)
+  let Clone =
+    failwith "TODO"
+
+  (*[CloneAndRandomize g p] returns a clone of the given gameState [g], after
+   *randomizing the elements that are invisible to the given player [p]*)
+  let CloneAndRandomize =
+    failwith "TODO"
+
+  (*DoMove c g] updates gameState [g] by executing command [c] *)
+  let DoMove =
+    failwith "TODO"
+
+  (*[GetMoves g] returns all possible moves given gameState g*)
+  let GetMoves =
+    failwith "TODO"
+
+  (*[GetResult g p] returns the result of gameState [g] from point of view of
+   *player [p]*)
+  let GetResult =
+    failwith "TODO"
+end
+
+
+module Node = struct
+
+  let GetUntriedMoves =
+    failwith "TODO"
+end
 
 
 module Easy = struct
