@@ -57,11 +57,11 @@ let rec getUndefended (table:(card * card option) list) : card list =
   match table with
   | [] -> []
   | (a,b)::tl -> if b = None
-                 then a::getUndefended tl
+                 then a::(getUndefended tl)
                  else getUndefended tl
 
 
-module GameState = struct
+(* module GameState = struct
   (*[GetNextPlayer g] returns the next player to move in gameState [g]*)
   let GetNextPlayer =
     failwith "TODO"
@@ -94,7 +94,7 @@ module Node = struct
 
   let GetUntriedMoves =
     failwith "TODO"
-end
+end *)
 
 
 module Easy = struct
@@ -140,17 +140,71 @@ end
 
 module Medium = struct
 
+  type gameStage = | Early | Late
+
+  let getGameStage (gameState:state) : gameStage =
+    let discarded = List.length (gameState.discard) in
+    if discarded < 12
+      then Early
+    else Late
+
+  (* canDefAll h c g returns true if attacks by all cards listed in cs can
+   * be defended by cards in h and false if not. *)
+  let rec defAllAttacks (hand:deck) (cs:card list) (gs:state) (lst:card list): card list =
+    match cs with
+    | [] -> lst
+    | hd::tl -> (
+      match lowestValidDefOf hand hd (gs.trump) with
+      | None -> lst
+      | Some c -> defAllAttacks (List.filter (fun x -> x <> c) hand) tl
+                                gs (List.append lst [c]) )
+
+  (* Medium AI defense calculator for early game*)
+  let earlyDef (cs:card list) (gs:state) =
+    (*One card to defend - deflect or defend if low, take if high*)
+    if (List.length cs = 1)
+      then if (snd (List.hd cs) >= 11 || fst (List.hd cs) = gs.trump)
+             then Take
+           else
+             let at = List.hd cs in
+             match lowestValidDefOf (gs.active).hand at (gs.trump) with
+             | None -> Take
+             | Some (a,b) -> if b = snd at && List.length gs.table = 1
+                               then Deflect (at, (a,b))
+                             else Defend (at, (a,b))
+    (*Multiple cards on the table*)
+    else let defList = defAllAttacks ((gs.active).hand) cs gs [] in
+         if List.length defList = List.length cs
+           then let is_high = fun x -> (fst x) = gs.trump || (snd x) > 10 in
+             if (float_of_int (List.length (List.filter is_high defList)) /.
+                float_of_int (List.length defList)) >= 0.5
+               then Take (*Take if more than >= half are high or trump*)
+             else let first = List.hd cs in
+                  (match lowestValidDefOf (gs.active).hand first (gs.trump) with
+                   | None -> Take
+                   | Some c -> Defend (first, c)) (*Defend low cards if can*)
+         else Take (*Take if not valid moves for all cards on table*)
+
+  (* Medium AI defense calculator for late game*)
+  let lateDef gs =
+    Easy.easyDefend gs
+
   let medDefend (gameState:state) : command =
-    failwith "TODO"
+    let attacks = getUndefended (gameState.table) in
+    match (getGameStage gameState) with
+    | Early -> earlyDef attacks gameState
+    | Late -> lateDef gameState
 
   let medAttack (gameState:state) : command =
-    failwith "TODO"
+    match (getGameStage gameState) with
+    | Early -> failwith "TODO"
+    | Late -> failwith "TODO"
 
   let medium (gameState:state) : command =
     if gameState.active = gameState.defender
-      then mediumDefend gameState
+      then medDefend gameState
     else if List.mem gameState.active gameState.attackers
-      then mediumAttack gameState
+      then medAttack gameState
     else failwith "error: AI player neither a defender nor an attacker"
 
 end
@@ -250,9 +304,17 @@ let test_easy_attack () =
   let winners =*)
   failwith "TODO"
 
+let test_med_defend () =
+  failwith "TODO"
+
+let test_med_attack () =
+  failwith "TODO"
+
 let run_ai_tests () =
   test_lowestValidDefOf ();
   test_easy_defend ();
+  test_med_defend ();
+  test_med_attack ();
   print_endline "all AI tests pass";
   ()
 
