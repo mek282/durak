@@ -171,8 +171,20 @@ end
 
 
 module Medium = struct
-  let medium (gameState:state) : command =
+
+  let medDefend (gameState:state) : command =
     failwith "TODO"
+
+  let medAttack (gameState:state) : command =
+    failwith "TODO"
+
+  let medium (gameState:state) : command =
+    if gameState.active = gameState.defender
+      then mediumDefend gameState
+    else if List.mem gameState.active gameState.attackers
+      then mediumAttack gameState
+    else failwith "error: AI player neither a defender nor an attacker"
+
 end
 
 
