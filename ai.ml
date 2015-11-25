@@ -66,6 +66,14 @@ module GameState = struct
   let GetNextPlayer =
     failwith "TODO"
 
+  (*returns a new deck of cards*)
+  let GetCardDeck () =
+    failwith "TODO"
+
+  (*Deals hands to players [ps] in gameState [g]*)
+  let Deal =
+    failwith "TODO"
+
   (*[Clone g] returns a clone of gameState [g]*)
   let Clone =
     failwith "TODO"
@@ -91,10 +99,34 @@ end
 
 
 module Node = struct
+  (*[GetUntriedMoves lms] returns the elements of lms for which this node does
+   *not have children*)
+  let GetUntriedMoves legalMoves =
+    failwith "TODO"
 
-  let GetUntriedMoves =
+  (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
+   *by the given list of legal moves [lms] and exploration coefficient [d]*)
+  let UCBSelectChild =
+    failwith "TODO"
+
+  (*[AddChild m] adds a new child node to stateNode [n] for the move [m]*)
+  let AddChild =
+    failwith "TODO"
+
+  (*[Update n s] increment the visit count of node [n], increase win count of
+   *[n] by the result of [GetResult p] for active player [p] of [s]*)
+  let Update =
+    failwith "TODO"
+
+  (*string representation of tree for debugging purposes*)
+  let TreeToSTring =
     failwith "TODO"
 end
+
+
+
+let ISMCTS =
+  failwith "TODO"
 
 
 module Easy = struct
