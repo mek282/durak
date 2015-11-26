@@ -100,7 +100,7 @@ end
 
 module Node = struct
   (*[GetUntriedMoves lms] returns the elements of lms for which this node does
-   *not have children*)
+   *not have children**)
   let getUntriedMoves legalMoves =
     failwith "TODO"
 
