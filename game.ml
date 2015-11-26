@@ -222,15 +222,38 @@ let parse (s : string) : command =
   end
   | _ -> raise (Cannot_parse s)
 
+(* Some helpers for strings manipulation - Vanya *)
+(* returns string representation of a suit *)
+let suit_to_string (suit: suit) : string =
+  match suit with
+  | Heart   -> "Hearts"
+  | Club    -> "Clubs"
+  | Diamond -> "Diamonds"
+  | Spade   -> "Spades"
 
+(* returns string representation of a rank *)
+let rank_to_string (rank: int) : string =
+  match rank with
+  | 14 -> "Ace"
+  | 13 -> "King"
+  | 12 -> "Queen"
+  | 11 -> "Jack"
+  | n  -> string_of_int n
+
+(* Finished and tested 11/26 - Vanya *)
 (* returns the string representation of card (s,r)*)
 let string_of_card (s,r) : string =
-  failwith "unimplemented"
+  (rank_to_string r) ^ " of " ^ (suit_to_string s)
 
+(* Finished and tested 11/26 - Vanya *)
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
 let play_card (p : player) (c : card) : player =
-  failwith "unimplemented"
+  let new_hand = List.filter (fun x -> x <> c) p.hand in
+  if List.length new_hand = List.length p.hand then
+    raise (Invalid_action ("Card is not in "^p.name^"'s hand"))
+  else
+    {p with hand = new_hand}
 
 
 (* returns a new gamestate in which the active player has played card c *)
@@ -397,6 +420,7 @@ let parse_no_fail (p : string) (g : state) : command =
   if g.active.state = Human then parse_no_fail' p p g else Ai.response g
 
 
+
 (* returns a new gamestate in which all cards on the table have been added
  * to the hand of the active player *)
 let take_all (g : state) : state =
@@ -463,10 +487,32 @@ and pass (g : state) : unit =
 (*TEST CASES*)
 
 let test_string_of_card () =
-  ()
+  let cards = [(Heart, 6); (Diamond, 7); (Spade, 8); (Club,9); (Spade, 10);
+               (Heart, 11);(Diamond, 12);(Spade, 13);(Club,14)] in
+  assert (string_of_card (List.nth cards 0) = "6 of Hearts");
+  assert (string_of_card (List.nth cards 1) = "7 of Diamonds");
+  assert (string_of_card (List.nth cards 2) = "8 of Spades");
+  assert (string_of_card (List.nth cards 3) = "9 of Clubs");
+  assert (string_of_card (List.nth cards 4) = "10 of Spades");
+  assert (string_of_card (List.nth cards 5) = "Jack of Hearts");
+  assert (string_of_card (List.nth cards 6) = "Queen of Diamonds");
+  assert (string_of_card (List.nth cards 7) = "King of Spades");
+  assert (string_of_card (List.nth cards 8) = "Ace of Clubs")
 
 let test_play_card () =
-  ()
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+  let test_hand1 = [(Diamond, 7);  (Club,14); (Spade, 14)] in
+  let test_hand2 = [(Heart, 7);  (Club,14); (Spade, 14)] in
+
+  assert (play_card player1 (Heart,7) = {player1 with hand = test_hand1});
+  assert (play_card player1 (Diamond, 7) = {player1 with hand = test_hand2});
+  assert (let p1 = play_card player1 (Club,14) in
+          let p2 = play_card p1 (Spade, 14) in
+          let p3 = play_card p2 (Diamond, 7) in
+          let p4 = play_card p3 (Heart, 7) in
+          p4 = {player1 with hand = []})
+  (* Need test case for error, but I think it works. -Vanya*)
 
 let test_game_play_card () =
   ()
@@ -621,6 +667,8 @@ let test_init_game_state () =
   ()
 
 let run_tests () =
+  test_string_of_card ();
+  test_play_card ();
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
