@@ -180,9 +180,11 @@ module Medium = struct
       then Early
     else Late
 
-  (* canDefAll h c g returns true if attacks by all cards listed in cs can
-   * be defended by cards in h and false if not. *)
-  let rec defAllAttacks (hand:deck) (cs:card list) (gs:state) (lst:card list): card list =
+  (* [defAllAttacks h c g l] returns list of defenses in response to cards in
+  * [c] from [h]. Not necessarily in the correct order. If a card cannot be
+  * defended, no value will be added to the list. *)
+  let rec defAllAttacks (hand:deck) (cs:card list) (gs:state) (lst:card list)
+                        : card list =
     match cs with
     | [] -> lst
     | hd::tl -> (
@@ -218,7 +220,8 @@ module Medium = struct
          else Take (*Take if not valid moves for all cards on table*)
 
   (* Medium AI defense calculator for late game*)
-  let lateDef gs =
+  let lateDef cs gs =
+    if
     Easy.easyDefend gs
 
   let medDefend (gameState:state) : command =
@@ -226,6 +229,9 @@ module Medium = struct
     match (getGameStage gameState) with
     | Early -> earlyDef attacks gameState
     | Late -> lateDef gameState
+
+  let earlyAtt gs =
+
 
   let medAttack (gameState:state) : command =
     match (getGameStage gameState) with
