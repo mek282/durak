@@ -80,7 +80,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*[CloneAndRandomize g p] returns a clone of the given gameState [g], after
    *randomizing the elements that are invisible to the given player [p]*)
-  let CloneAndRandomize =
+  let CloneAndRandomize (g:state) (p:player) =
     failwith "TODO"
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)

@@ -18,23 +18,39 @@ let rank_to_string (rank: int) : string =
   | 11 -> "J"
   | n  -> string_of_int n
 
-let create_string_list (lst: 'a list) (f: 'a -> string) : string =
-  String.concat "" (List.map f lst)
+let string_of_list (lst: 'a list) (f: 'a -> string) : string =
+  String.concat "   " (List.map f lst)
 
-let draw_deck (deck: deck) : unit =
+let string_of_assoc_list (lst: ('a * 'a option) list) (f: 'a -> string)
+  (g: 'a -> string) : string =
+  let newlst = List.map (fun x -> match x with
+                                  | (c1, Some c2) -> f c1
+                                  | (c1, None)    -> g c1) lst in
+  String.concat "   " newlst
+
+let string_of_assoc_list1 (lst: ('a * 'a option) list) (f: 'a -> string)
+  (g: 'a -> string) : string =
+  let newlst = List.map (fun x -> match x with
+                                  | (c1, Some c2) -> f c2
+                                  | (c1, None)    -> g c1) lst in
+  String.concat "   " newlst
+
+let draw_deck (deck: deck) (trump: suit): unit =
   let n = List.length deck in
   let num = if n < 10 then
               "0" ^ string_of_int n
             else
               string_of_int n
   in
+  let tstr = suit_to_string trump in
   Printf.printf
-"  _______
+"\nTrump: %s
+  _______
  |       |
  | Cards |
  | Left: |
  | %s    |
- |_______|\n%!" num
+ |_______|\n%!" tstr num
 
 let draw_card (card: card) : unit =
   let rank = rank_to_string (snd card) in
@@ -47,20 +63,33 @@ let draw_card (card: card) : unit =
  |       |
  |______%s|\n%!" rank suit rank
 
+let draw_card_overlap (card1: card) (card2: card): unit =
+  let rank1 = rank_to_string (snd card1) in
+  let suit1 = suit_to_string (fst card1) in
+  let rank2 = rank_to_string (snd card2) in
+  let suit2 = suit_to_string (fst card2) in
+  Printf.printf
+"  _______
+ |%s      |
+ |       |
+ |  %s __|____
+ |    |%s      |
+ |____|       |
+      |  %s   |
+      |       |
+      |______%s|  \n%!" rank1 suit1 rank2 suit2 rank2
+
 let draw_row (hand: deck): unit =
+  let out = [] in
   let rank x = rank_to_string (snd x) in
   let suit x = suit_to_string (fst x) in
-  let plist1 = create_string_list hand (fun x -> "  _______  ")  in
-  let plist2 = create_string_list hand (fun x -> " |"^rank x^"      | " ) in
-  let plist3 = create_string_list hand (fun x -> " |       | ") in
-  let plist4 = create_string_list hand (fun x -> " |  "^suit x^"   | ") in
-  let plist5 = create_string_list hand (fun x -> " |______"^rank x^"| ") in
-  Printf.printf "%s\n%!" plist1;
-  Printf.printf "%s\n%!" plist2;
-  Printf.printf "%s\n%!" plist3;
-  Printf.printf "%s\n%!" plist4;
-  Printf.printf "%s\n%!" plist3;
-  Printf.printf "%s\n%!" plist5
+  let out = string_of_list hand (fun x -> " _______ ") :: out in
+  let out = string_of_list hand (fun x -> "|"^rank x^"      |" ) :: out in
+  let out = string_of_list hand (fun x -> "|       |") :: out in
+  let out = string_of_list hand (fun x -> "|  "^suit x^"   |") :: out in
+  let out = string_of_list hand (fun x -> "|       |") :: out in
+  let out = string_of_list hand (fun x -> "|______"^rank x^"|") :: out in
+  List.iter (fun x -> Printf.printf "%s\n%!" x) (List.rev out)
 
 let rec draw_hand (hand: deck) : unit =
   match hand with
@@ -69,13 +98,56 @@ let rec draw_hand (hand: deck) : unit =
                                  draw_hand  t
   | lst -> draw_row lst
 
-let rec draw_table (cplist : (card * card option) list) : unit =
-  match cplist with
-  | [] -> ()
-  | (c1, c2) :: t -> (match c2 with
-                      | None -> draw_row [c1]
-                      | Some c3 -> draw_row [c1; c3]);
-                      draw_table t
+let draw_table_row (cplist: (card * card option) list) : unit =
+  let out = [] in
+  let rank x = rank_to_string (snd x) in
+  let suit x = suit_to_string (fst x) in
+  let (list1, list2) = List.split cplist in
+  let out = string_of_list list1 (fun x -> " _______      ")           :: out in
+  let out = string_of_list list1 (fun x -> "|"^rank x^"      |     ")  :: out in
+  let out = string_of_list list1 (fun x -> "|       |     ")           :: out in
+  let out = string_of_assoc_list cplist (fun x -> "|  "^suit x^" __|____ ")
+                                        (fun y -> "|  "^suit y^"   |     ")
+                                        :: out in
+  let out = string_of_assoc_list1 cplist (fun x -> "|    |"^rank x^"      |")
+                                        (fun y -> "|       |     ")
+                                        :: out in
+  let out = string_of_assoc_list cplist (fun x -> "|____|       |")
+                                        (fun y -> "|______"^rank y^"|     ")
+                                        :: out in
+  let out = string_of_assoc_list1 cplist (fun x -> "     |  "^ suit x^"   |")
+                                        (fun y -> "              ")
+                                        :: out in
+  let out = string_of_assoc_list1 cplist (fun x -> "     |       |")
+                                        (fun y -> "              ")
+                                        :: out in
+  let out = string_of_assoc_list1 cplist (fun x -> "     |______"^rank x^"|")
+                                        (fun y -> "              ")
+                                        :: out in
+  List.iter (fun x -> Printf.printf "%s\n%!" x) (List.rev out)
+
+let draw_table (cplist : (card * card option) list) : unit =
+  draw_table_row cplist
+
+let draw_opponent_row (hand: deck) : unit =
+  let plist1 = String.concat "" (List.map (fun x -> "_ ") hand) in
+  let plist2 = String.concat "" (List.map (fun x -> " |") hand) in
+  let plist3 = String.concat "" (List.map (fun x -> "_|") hand) in
+  Printf.printf " __%s\n%!" plist1;
+  Printf.printf "|  %s\n%!" plist2;
+  Printf.printf "|  %s\n%!" plist2;
+  Printf.printf "|__%s\n%!" plist3
+
+let draw_opponents (attackers: player list) (defender: player)
+  (winners: player list) (active: player): unit =
+  let players = defender :: attackers in
+  let players_filtered = List.filter (fun x -> x = active) players in
+  List.iter (fun x ->  Printf.printf "%s\n%!" x.name;
+                      if List.mem x winners then
+                        Printf.printf "Not an Idiot\n%!"
+                      else
+                        draw_opponent_row x.hand) players_filtered
+
 
 
 (* =================================MAIN======================================*)
@@ -84,10 +156,12 @@ let draw (s: state) : unit =
   clear_screen ();
   Printf.printf "YOUR HAND\n%!";
   draw_hand s.active.hand;
+  Printf.printf "\nOPPONENT'S HANDS\n%!";
+  draw_opponents s.attackers s.defender s.winners s.active;
   Printf.printf "\nTHE TABLE\n%!";
   draw_table s.table;
   Printf.printf "\nTHE DECK\n%!";
-  draw_deck (s.deck);
+  draw_deck s.deck s.trump;
   Printf.printf "\nWhat will you do?:\n%!"
 
 
