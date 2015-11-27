@@ -37,10 +37,19 @@ let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
 
 
 let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
-  failwith "TODO"
+  let rec compRanks pairlst =
+    match pairlst with
+    | [] -> []
+    | (a,None)::tl -> (snd a)::(compRanks tl)
+    | (a, Some b)::tl -> (snd a)::(snd b)::(compRanks tl) in
+  List.mem (snd att) (compRanks inPlay)
 
-let isValidDef (attacking:card) (defending:card) : bool =
-  failwith "TODO"
+(*[isValidDef a d t] returns true if d is a valid defense against a. Does not
+ *include deflections *)
+let isValidDef (attack:card) (defend:card) (trump:suit) : bool =
+  if (fst attack) = (fst defend) then (snd attack) < (snd defend)
+  else if (fst defend) = trump then true
+  else false
 
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
@@ -61,18 +70,60 @@ let rec getUndefended (table:(card * card option) list) : card list =
                  else getUndefended tl
 
 
+(*Provides functions for manipulating game states.
+ * Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
  module GameState = struct
   (*[GetNextPlayer g] returns the next player to move in gameState [g]*)
-  let getNextPlayer =
+  let getNextPlayer (g:state) =
     failwith "TODO"
 
-  (*returns a new deck of cards*)
-  let getCardDeck () =
-    failwith "TODO"
+  (*returns a new deck of cards
+   *Source: http://stackoverflow.com/questions/15095541/how-to-shuffle-list-in-on-in-ocaml*)
+  let rec getCardDeck d n =
+    if n < 15
+    then let new_d = List.append d [(Heart, n); (Diamond, n);
+                                 (Spade, n); (Club, n)] in
+        getCardDeck new_d (n+1)
+    else d
 
-  (*Deals hands to players [ps] in gameState [g]*)
-  let deal =
-    failwith "TODO"
+  let shuffle d =
+    let nd = List.map (fun c -> (Random.bits (), c)) d in
+    let sond = List.sort compare nd in
+    List.map snd sond
+
+
+  (*Reset the game state for the beginning of a new round, and deal the cards.*)
+  let deal g =
+    let deck = shuffle (getCardDeck [] 6) in
+    let players = g.defender::g.attackers in
+
+    (*make sure player hands are emptied prior to calling*)
+    let rec dealOnce deck player iter =
+      match deck with
+      | [] -> failwith "delt with too few cards"
+      | hd::tl -> if iter = 0 then (deck,player)
+                  else let newHand = hd::player.hand in
+                       dealOnce tl {player with hand = newHand} (iter-1) in
+    let rec dealAll deck playerList newlst =
+      if playerList = [] then (deck,newlst) else
+      match dealOnce deck (List.hd playerList) 6 with
+      | (a,b) -> dealAll a (List.tl playerList) (b::newlst) in
+    let rec prepPlayers (lst:player list) =
+      match lst with
+      | [] -> []
+      | hd::tl -> {hd with hand = []}::(prepPlayers tl) in
+
+    let (newDeck,newPlayers) = dealAll deck (prepPlayers players) [] in
+    let newDiscards = [] in
+    let newTable = [] in
+    let newTrump = List.hd (shuffle [Heart; Club; Spade; Diamond]) in
+    {g with discard = newDiscards;
+            table = newTable;
+            trump = newTrump;
+            deck = newDeck;
+            defender = List.hd newPlayers;
+            attackers = List.tl newPlayers;
+            }
 
   (*[Clone g] returns a clone of gameState [g]*)
   let clone =
@@ -98,6 +149,9 @@ let rec getUndefended (table:(card * card option) list) : card list =
 end
 
 
+(*Provides functions for creating and manipulating nodes in the ISMCTS
+ *  algorithm tree.
+ *Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
 module Node = struct
   (*[GetUntriedMoves lms] returns the elements of lms for which this node does
    *not have children**)
@@ -344,6 +398,12 @@ let test_easy_attack () =
   let active =
   let discard =
   let winners =*)
+  failwith "TODO"
+
+let test_gameState_shuffle () =
+  failwith "TODO"
+
+let test_gameState_deal () =
   failwith "TODO"
 
 let test_med_defend () =
