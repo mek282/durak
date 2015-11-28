@@ -170,7 +170,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
             }
 
   (*[Clone g] returns a clone of gameState [g]*)
-  let clone =
+  let clone g =
     failwith "TODO"
 
   let rec unwrapTable (lst:(card * card option) list) =
@@ -240,7 +240,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
    *player [p]*)
-  let getResult =
+  let getResult g p =
     failwith "TODO"
 end
 
@@ -256,26 +256,26 @@ module Node = struct
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
-  let uCBSelectChild =
+  let uCBSelectChild lms d =
     failwith "TODO"
 
   (*[AddChild m] adds a new child node to stateNode [n] for the move [m]*)
-  let addChild =
+  let addChild m =
     failwith "TODO"
 
   (*[Update n s] increment the visit count of node [n], increase win count of
    *[n] by the result of [GetResult p] for active player [p] of [s]*)
-  let update =
+  let update n s =
     failwith "TODO"
 
   (*string representation of tree for debugging purposes*)
-  let treeToSTring =
+  let treeToSTring t =
     failwith "TODO"
 end
 
 
 
-let iSMCTS =
+let iSMCTS () =
   failwith "TODO"
 
 
@@ -325,8 +325,8 @@ module Medium = struct
   type game_stage = | Early | Late
 
   let get_game_stage (gs:state) : game_stage =
-    let discarded = List.length (gs.discard) in
-    if discarded < 12
+    let deck_len = List.length (gs.deck) in
+    if deck_len > 0
       then Early
     else Late
 
@@ -439,13 +439,20 @@ module Medium = struct
                      else trump_sort (non_trumps @ [(s,v)]) trumps tl ) in
     trump_sort [] [] num_sorted
 
-  let early_att gs =
-    failwith "TODO"
+  let early_att (gs:state) : command =
+    let sorted_hand = sort_hand (gs.active).hand gs.trump in
+    if List.length (gs.table) = 0
+      then Attack (List.hd sorted_hand)
+    else if List.length (gs.table) < 6
+      then let valid_attacks = List.filter (isValidAtt gs.table) sorted_hand in
+           match valid_attacks with
+           | [] -> Pass
+           | (s,v)::tl -> if (s = gs.trump) || (v >= 12)
+                            then Pass
+                          else Attack (s,v)
+    else Pass
 
-  let late_att gs =
-    failwith "TODO"
-
-  let med_attack (gs:state) : command =
+  let late_att (gs:state) : command =
     let sorted_hand = sort_hand (gs.active).hand gs.trump in
     if List.length (gs.table) = 0
       then Attack (List.hd sorted_hand)
@@ -455,6 +462,11 @@ module Medium = struct
            | [] -> Pass
            | hd::tl -> Attack hd
     else Pass
+
+  let med_attack (gs:state) : command =
+    match (get_game_stage gs) with
+    | Early -> early_att gs
+    | Late -> late_att gs
 
   let medium (gs:state) : command =
     if gs.active = gs.defender
@@ -567,7 +579,41 @@ let test_gameState_deal () =
   failwith "TODO"
 
 let test_med_defend () =
-  failwith "TODO"
+  let gs1 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
+                      (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
+                      (Spade, 9); (Diamond, 12); (Club, 7)];
+             trump = Club;
+             attackers = [{state = Human;
+                           hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                           name = "testplayer"};
+                          {state = CPU 2;
+                           hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                           name = "Jose"};
+                          {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"}];
+             defender =   {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             table = [((Diamond, 14), None)];
+             active =     {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             discard = [];
+             winners = []} in
+  let gs2 = {gs1 with deck = [];
+                 discard = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
+                   (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
+                   (Spade, 9); (Diamond, 12); (Club, 7)]} in
+  assert (Medium.medium gs1 = Take);
+  assert (Medium.medium gs2 = Deflect ((Diamond, 14), (Spade, 14)));
+  ()
+
 
 let test_med_attack () =
   failwith "TODO"
@@ -575,8 +621,8 @@ let test_med_attack () =
 let run_ai_tests () =
   test_lowestValidDefOf ();
   test_easy_defend ();
-(*   test_med_defend ();
-  test_med_attack (); *)
+  test_med_defend ();
+(*   test_med_attack (); *)
   print_endline "all AI tests pass";
   ()
 
