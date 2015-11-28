@@ -1,4 +1,6 @@
 open Cards
+open Command
+open Ai
 
 
 (* Used in parsing to identify invalid user inputs *)
@@ -37,6 +39,7 @@ let title_screen () =
   Press 'Enter' to begin. \n";
   let s = read_line () in (fun x -> ()) s
 
+(*
 let rec unshuffled_deck d n =
   if n < 15
   then let new_d = List.append d [(Heart, n); (Diamond, n);
@@ -113,6 +116,7 @@ let init_game_state s d1 d2 d3 =
     discard = [];
     winners = [];
   }
+*)
 
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
@@ -245,6 +249,7 @@ let rank_to_string (rank: int) : string =
 let string_of_card (s,r) : string =
   (rank_to_string r) ^ " of " ^ (suit_to_string s)
 
+(*
 (* Finished and tested 11/26 - Vanya *)
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
@@ -294,6 +299,7 @@ let rec remove_last = function
   | [] -> []
   | _::[] -> []
   | h::t -> h::(remove_last t)
+
 
 
 (* returns a new state in which d is the defender, and the attackers have
@@ -373,6 +379,7 @@ let do_win (g : state) (p : player) : state =
   }
 
 
+
 (* carry out the command "deflect against c1 with c2"
  * raise Invalid_action if appropriate
  * returns the new gamestate and {active player won} *)
@@ -394,6 +401,7 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
       (change_active g'''' next_p,won)
     else raise (Invalid_action "Can't deflect")
   end
+*)
 
 
 (* Draws and prompts the user*)
@@ -421,6 +429,7 @@ let parse_no_fail (p : string) (g : state) : command =
 
 
 
+(*
 (* returns a new gamestate in which all cards on the table have been added
  * to the hand of the active player *)
 let take_all (g : state) : state =
@@ -454,9 +463,11 @@ let rec pass' (g : state) : state*command =
       (g'',response)
       (*TODO: Somehow make sure no one can attack anymore*)
     else pass' g'
+*)
 
 (* Calls itself recursively to update the state in response to commands *)
-let rec repl g = function
+let rec repl g c = step g c
+(*
   | Attack c -> failwith "unimplemented"
   | Defend (c1,c2) -> failwith "unimplemented"
   | Take -> failwith "unimplemented"
@@ -483,6 +494,7 @@ and pass (g : state) : unit =
       let response = parse_no_fail prompt g' in
       repl g' response else
   let g',c = pass' g in repl g' c
+*)
 
 (*TEST CASES*)
 
@@ -500,6 +512,8 @@ let test_string_of_card () =
   assert (string_of_card (List.nth cards 8) = "Ace of Clubs")
 
 let test_play_card () =
+  ()
+(*
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
   let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
   let test_hand1 = [(Diamond, 7);  (Club,14); (Spade, 14)] in
@@ -513,6 +527,7 @@ let test_play_card () =
           let p4 = play_card p3 (Heart, 7) in
           p4 = {player1 with hand = []})
   (* Need test case for error, but I think it works. -Vanya*)
+*)
 
 let test_game_play_card () =
   ()
@@ -636,6 +651,7 @@ let test_parse () =
   ()
 
 let test_init_deck () =
+(*
   Printf.printf "\n\nDECK 1 TEST:\n\n";
   let d1 = init_deck () in
   print_deck (fst d1) (snd d1);
@@ -654,9 +670,11 @@ let test_init_deck () =
   Printf.printf "\n\nDECK 6 TEST:\n\n";
   let d6 = init_deck () in
   print_deck (fst d6) (snd d6);
+*)
   ()
 
 let test_init_game_state () =
+(*
   let g1 = init_game_state "jane" 1 2 3 in
   assert (List.length (g1.deck) = 12);
   assert ((g1.defender).state = CPU 1);
@@ -664,6 +682,7 @@ let test_init_game_state () =
   assert ((g1.active).state = Human);
   assert ((g1.active).name = "jane");
   assert (List.length ((g1.active).hand) = 6);
+*)
   ()
 
 let run_tests () =
