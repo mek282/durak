@@ -1,4 +1,5 @@
 open Cards
+open Command
 
 (*****************************************************************************)
 (***********************************HELPERS***********************************)
@@ -43,6 +44,7 @@ let rec getUndefended (t:(card*card option) list) : card list =
                  then a::(getUndefended tl)
                  else getUndefended tl
 
+(*returns true if att is a valid attack, given table inPlay*)
 let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
   let rec compRanks pairlst =
     match pairlst with
@@ -58,42 +60,60 @@ let isValidDef (attack:card) (defend:card) (trump:suit) : bool =
   else if (fst defend) = trump then true
   else false
 
+(*returns true if def is a valid deflection, given state g*)
 let isValidDeflect (def:card) (g:state) =
   if g.active <> g.defender then false
   else if List.length g.table <> 1 then false
   else if (snd def) <> (snd (fst (List.hd g.table))) then false
   else true
 
+(*returns true if Pass is a valid command given state g*)
 let isValidPass (g:state) =
   (List.mem g.active g.attackers)
 
+(*returns true if Take is a valid command, given state g*)
 let isValidTake (g:state) =
   g.active = g.defender
 
+(*removes duplicate elements from a list*)
 let rec rem_dups lst =
   match lst with
   | [] -> []
   | hd::tl -> hd::(rem_dups (List.filter (fun a -> a<>hd) tl))
 
-let rec getValidDefenses (g:state) : card list =
+(*returns a list of all valid Defend commands given state g*)
+let rec getValidDefenses (g:state) : command list =
   let rec itrHand atk lst1 =
     match lst1 with
     | [] -> []
     | hd::tl -> if isValidDef atk hd g.trump
-                then hd::(itrHand atk tl)
+                then (Defend (atk,hd))::(itrHand atk tl)
                 else itrHand atk tl in
   let rec itrAtks lst2 =
     match lst2 with
     | [] -> []
     | hd::tl -> (itrHand hd g.active.hand) @ (itrAtks tl) in
-  let valids = itrAtks (getUndefended g.table) in
-  rem_dups valids
+  itrAtks (getUndefended g.table)
 
+(*returns a list of all valid Attack commands, given state g*)
 let rec getValidAttacks (g:state) : command list =
-  failwith "unimplemented"
+  let rec itrHand lst1 =
+    match lst1 with
+    | [] -> []
+    | hd::tl -> if isValidAtt g.table hd
+                  then (Attack hd)::(itrHand tl)
+                else itrHand tl in
+  itrHand g.active.hand
 
+(*returns a list of valid Deflect commands, given state g*)
 let rec getValidDeflections (g:state) : command list =
-  failwith "unimplemented"
+  let rec itrHand atk lst1 =
+    match lst1 with
+    | [] -> []
+    | hd::tl -> if isValidDeflect hd g
+                then (Deflect (atk,hd))::(itrHand atk tl)
+                else itrHand atk tl in
+  itrHand (fst (List.hd g.table)) g.active.hand
 
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
@@ -226,22 +246,27 @@ let rec getUndefended (table:(card * card option) list) : card list =
     failwith "TODO"
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
-  let doMove command gameState=
+  let doMove command gameState =
+    step gameState command
+  (*
     match command with
     | Attack c -> failwith "unimplemented"
     | Defend (c1,c2) -> failwith "unimplemented"
     | Take -> failwith "unimplemented"
     | Pass -> failwith "unimplemented"
     | Deflect (c1,c2) -> failwith "unimplemented"
+  *)
 
   (*[GetMoves g] returns all possible moves given gameState g*)
-  let getMoves (g:state) =
-    failwith "TODO"
+  let getMoves (g:state) : command list =
+    (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
+      (if g.active = g.defender then [Take] else []) @
+      (if List.mem g.active g.attackers then [Pass] else [])
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
    *player [p]*)
   let getResult g p =
-    failwith "TODO"
+    if (List.mem p g.winners) then 1 else 0
 end
 
 
@@ -251,6 +276,16 @@ end
 module Node = struct
   (*[GetUntriedMoves lms] returns the elements of lms for which this node does
    *not have children**)
+  type node = {
+    move : command;
+    parent : node;
+    children : node list;
+    wins : int;
+    visits : int;
+    avails : int;
+    playerJustMoved : player
+  }
+
   let getUntriedMoves legalMoves =
     failwith "TODO"
 
