@@ -75,25 +75,37 @@ let rec rem_dups lst =
   | [] -> []
   | hd::tl -> hd::(rem_dups (List.filter (fun a -> a<>hd) tl))
 
-let rec getValidDefenses (g:state) : card list =
+let rec getValidDefenses (g:state) : command list =
   let rec itrHand atk lst1 =
     match lst1 with
     | [] -> []
     | hd::tl -> if isValidDef atk hd g.trump
-                then hd::(itrHand atk tl)
+                then (Defend (atk,hd))::(itrHand atk tl)
                 else itrHand atk tl in
   let rec itrAtks lst2 =
     match lst2 with
     | [] -> []
     | hd::tl -> (itrHand hd g.active.hand) @ (itrAtks tl) in
-  let valids = itrAtks (getUndefended g.table) in
-  rem_dups valids
+  itrAtks (getUndefended g.table)
 
 let rec getValidAttacks (g:state) : command list =
-  failwith "unimplemented"
+  let rec itrHand lst1 =
+    match lst1 with
+    | [] -> []
+    | hd::tl -> if isValidAtt g.table hd
+                  then (Attack hd)::(itrHand tl)
+                else itrHand tl in
+  itrHand g.active.hand
+
 
 let rec getValidDeflections (g:state) : command list =
-  failwith "unimplemented"
+  let rec itrHand atk lst1 =
+    match lst1 with
+    | [] -> []
+    | hd::tl -> if isValidDeflect hd g
+                then (Deflect (atk,hd))::(itrHand atk tl)
+                else itrHand atk tl in
+  itrHand (fst (List.hd g.table)) g.active.hand
 
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
@@ -235,8 +247,10 @@ let rec getUndefended (table:(card * card option) list) : card list =
     | Deflect (c1,c2) -> failwith "unimplemented"
 
   (*[GetMoves g] returns all possible moves given gameState g*)
-  let getMoves (g:state) =
-    failwith "TODO"
+  let getMoves (g:state) : command list =
+    (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
+      (if g.active = g.defender then [Take] else []) @
+      (if List.mem g.active g.attackers then [Pass] else [])
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
    *player [p]*)
