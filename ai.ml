@@ -35,6 +35,13 @@ let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
                    else matchResult tl) in
   matchResult result
 
+(*returns a list of the undefended card pairs*)
+let rec getUndefended (t:(card*card option) list) : card list =
+  match t with
+  | [] -> []
+  | (a,b)::tl -> if b = None
+                 then a::(getUndefended tl)
+                 else getUndefended tl
 
 let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
   let rec compRanks pairlst =
@@ -50,6 +57,43 @@ let isValidDef (attack:card) (defend:card) (trump:suit) : bool =
   if (fst attack) = (fst defend) then (snd attack) < (snd defend)
   else if (fst defend) = trump then true
   else false
+
+let isValidDeflect (def:card) (g:state) =
+  if g.active <> g.defender then false
+  else if List.length g.table <> 1 then false
+  else if (snd def) <> (snd (fst (List.hd g.table))) then false
+  else true
+
+let isValidPass (g:state) =
+  (List.mem g.active g.attackers)
+
+let isValidTake (g:state) =
+  g.active = g.defender
+
+let rec rem_dups lst =
+  match lst with
+  | [] -> []
+  | hd::tl -> hd::(rem_dups (List.filter (fun a -> a<>hd) tl))
+
+let rec getValidDefenses (g:state) : card list =
+  let rec itrHand atk lst1 =
+    match lst1 with
+    | [] -> []
+    | hd::tl -> if isValidDef atk hd g.trump
+                then hd::(itrHand atk tl)
+                else itrHand atk tl in
+  let rec itrAtks lst2 =
+    match lst2 with
+    | [] -> []
+    | hd::tl -> (itrHand hd g.active.hand) @ (itrAtks tl) in
+  let valids = itrAtks (getUndefended g.table) in
+  rem_dups valids
+
+let rec getValidAttacks (g:state) : command list =
+  failwith "unimplemented"
+
+let rec getValidDeflections (g:state) : command list =
+  failwith "unimplemented"
 
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
@@ -129,17 +173,69 @@ let rec getUndefended (table:(card * card option) list) : card list =
   let clone =
     failwith "TODO"
 
+  let rec unwrapTable (lst:(card * card option) list) =
+    match lst with
+    | [] -> []
+    | (a,None)::tl -> a::(unwrapTable tl)
+    | (a, Some b)::tl -> a::b::(unwrapTable tl)
+
   (*[CloneAndRandomize g p] returns a clone of the given gameState [g], after
    *randomizing the elements that are invisible to the given player [p]*)
   let cloneAndRandomize (g:state) (p:player) =
+    let players = g.defender::g.attackers in
+    (*let nonActive = List.filter (fun a -> a <> p) players in*)
+    let seenCards = p.hand @ g.discard @ (unwrapTable g.table) in
+    let unseenCards = List.filter (fun a -> not (List.mem a seenCards))
+                                  (getCardDeck [] 6) in
+    let rec dealOnce deck player iter =
+      match deck with
+      | [] -> (deck,player)
+      | hd::tl -> if iter = 0 then (deck,player)
+                  else let newHand = hd::player.hand in
+                       dealOnce tl {player with hand = newHand} (iter-1) in
+
+    let rec dealAll deck playerList newlst =
+      let hd = List.hd playerList in
+      if playerList = [] then (deck,newlst)
+      else if hd = p then dealAll deck (List.tl playerList) (p::newlst)
+      else
+        match
+          dealOnce deck hd (6-(List.length hd.hand))
+        with
+        | (a,b) -> dealAll a (List.tl playerList) (b::newlst) in
+
+    let (newDeck, newPlayers) = dealAll unseenCards players [] in
+    {g with deck= newDeck;
+            defender= (List.hd newPlayers);
+            attackers= (List.tl newPlayers)}
+
+
+  let attack (c:card) (g:state) =
+    failwith "TODO"
+
+  let defend (attack:card) (defend:card) (g:state) =
+    failwith "TODO"
+
+  let take (g:state) =
+    failwith "TODO"
+
+  let pass (g:state) =
+    failwith "TODO"
+
+  let deflect (def:card) (g:state) =
     failwith "TODO"
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
-  let doMove =
-    failwith "TODO"
+  let doMove command gameState=
+    match command with
+    | Attack c -> failwith "unimplemented"
+    | Defend (c1,c2) -> failwith "unimplemented"
+    | Take -> failwith "unimplemented"
+    | Pass -> failwith "unimplemented"
+    | Deflect (c1,c2) -> failwith "unimplemented"
 
   (*[GetMoves g] returns all possible moves given gameState g*)
-  let getMoves =
+  let getMoves (g:state) =
     failwith "TODO"
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
