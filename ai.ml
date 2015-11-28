@@ -428,6 +428,17 @@ module Medium = struct
     | Early -> early_def attacks gs
     | Late -> late_def attacks gs
 
+  (* Sorts hand by increasing numerical value, with trump cards all at the end*)
+  let sort_hand (h:deck) (tr:suit) =
+    let num_sorted = List.sort cardCompare h in
+    let rec trump_sort non_trumps trumps old_hand = (
+      match old_hand with
+      | [] -> non_trumps @ trumps
+      | (s,v)::tl -> if s = tr
+                       then trump_sort non_trumps (trumps @ [(s,v)]) tl
+                     else trump_sort (non_trumps @ [(s,v)]) trumps tl ) in
+    trump_sort [] [] num_sorted
+
   let early_att gs =
     failwith "TODO"
 
@@ -435,9 +446,15 @@ module Medium = struct
     failwith "TODO"
 
   let med_attack (gs:state) : command =
-    match (get_game_stage gs) with
-    | Early -> early_att gs
-    | Late -> late_att gs
+    let sorted_hand = sort_hand (gs.active).hand gs.trump in
+    if List.length (gs.table) = 0
+      then Attack (List.hd sorted_hand)
+    else if List.length (gs.table) < 6
+      then let valid_attacks = List.filter (isValidAtt gs.table) sorted_hand in
+           match valid_attacks with
+           | [] -> Pass
+           | hd::tl -> Attack hd
+    else Pass
 
   let medium (gs:state) : command =
     if gs.active = gs.defender
