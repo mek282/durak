@@ -307,9 +307,21 @@ module Node = struct
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
-
-  let uCBSelectChild lms d =
-    failwith "TODO"
+  let uCBSelectChild legalMoves n =
+    let rec legalChildren lst =
+      match lst with
+      | [] -> []
+      | hd::tl -> if List.mem hd.move legalMoves
+                  then hd::(legalChildren tl)
+                 else legalChildren tl in
+    let rec choice maxSoFar lst =
+      match lst with
+      | [] -> maxSoFar
+      | hd::tl -> if (uCBFunction hd > uCBFunction maxSoFar)
+                    then choice hd tl
+                  else choice maxSoFar tl in
+    incrAvails n; choice (List.hd (legalChildren n.children))
+      (legalChildren n.children)
 
   (*[AddChild m] adds a new child node to stateNode [n] for the move [m]*)
   let addChild m =
