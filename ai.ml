@@ -274,25 +274,55 @@ end
  *  algorithm tree.
  *Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
 module Node = struct
-  (*[GetUntriedMoves lms] returns the elements of lms for which this node does
-   *not have children**)
   type node = {
     move : command;
     parent : node;
     children : node list;
-    wins : int;
-    visits : int;
-    avails : int;
+    wins : int ref;
+    visits : int ref;
+    avails : int ref;
     playerJustMoved : player
   }
 
-  let getUntriedMoves legalMoves =
-    failwith "TODO"
+  (*[GetUntriedMoves lms] returns the elements of lms for which this node does
+   *not have children**)
+  let getUntriedMoves (legalMoves:command list) (n:node) : command list =
+    let rec triedMoves = function
+      | [] -> []
+      | hd::tl -> hd.move::(triedMoves tl) in
+    List.filter (fun a -> not (List.mem a (triedMoves n.children))) legalMoves
+
+  let uCBFunction (n:node) =
+     (float_of_int !(n.wins)) /. (float_of_int !(n.visits)) +.
+      0.7 *.
+      sqrt(log((float_of_int !(n.avails))) /.
+      (float_of_int !(n.visits)))
+
+  let rec incrAvails n =
+    let rec helper lst =
+      match lst with
+      | [] -> ()
+      | hd::tl -> incr hd.avails; helper tl in
+    helper n.children
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
-  let uCBSelectChild =
-    failwith "TODO"
+  let uCBSelectChild (legalMoves:command list) (d:float) (n:node) : node =
+    let rec legalChildren (lst:node list) =
+      match lst with
+      | [] -> []
+      | hd::tl -> if List.mem hd.move legalMoves
+                  then hd::(legalChildren tl)
+                 else legalChildren tl in
+    let rec choice maxSoFar lst =
+      match lst with
+      | [] -> maxSoFar
+      | hd::tl -> if (uCBFunction hd > uCBFunction maxSoFar)
+                    then choice hd tl
+                  else choice maxSoFar tl in
+    incrAvails n; choice (List.hd (legalChildren n.children))
+      (legalChildren n.children)
+
 
   (*[AddChild m] adds a new child node to stateNode [n] for the move [m]*)
   let addChild =
