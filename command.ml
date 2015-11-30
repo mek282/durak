@@ -59,21 +59,23 @@ let gen_name d =
          h_names := List.filter (fun x -> x <> n) (!h_names); n
 
 (* Creates an initial state for the game in which all cards have been passed
- * out *)
-let init_game_state s d1 d2 d3 =
+ * out
+ * Prec: dlist is a list of at least one int. *)
+let init_game_state s dlist =
   let start_deck = init_deck () in
   let h1 = deal_hand (snd start_deck) in
   let p1 = {state = Human; hand = (fst h1); name = s} in
-  let h2 = deal_hand (snd h1) in
-  let p2 = {state = CPU d1; hand = (fst h2); name = (gen_name d1)} in
-  let h3 = deal_hand (snd h2) in
-  let p3 = {state = CPU d2; hand = (fst h3); name = (gen_name d2)} in
-  let h4 = deal_hand (snd h3) in
-  let p4 = {state = CPU d3; hand = (fst h4); name = (gen_name d3)} in
-  { deck = (snd h4);
+  let rec create_bots deck ds plist = (
+    match ds with
+    | [] -> (plist, deck)
+    | hd::tl -> let deal = deal_hand deck in
+                let p = {state = CPU hd; hand = (fst deal); name = (gen_name hd)} in
+                create_bots (snd deal) tl (plist @ [p]) ) in
+  let deal_all = create_bots (snd h1) dlist [] in
+  { deck = (snd deal_all);
     trump = (fst start_deck);
-    attackers = [p1; p3; p4];
-    defender = p2;
+    attackers = p1 :: (List.tl (fst deal_all));
+    defender = List.hd (fst deal_all);
     table = [];
     active = p1;
     discard = [];
