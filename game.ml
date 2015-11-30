@@ -687,14 +687,11 @@ let test_init_game_state () =
 
 let run_tests () =
   test_string_of_card ();
-  test_play_card ();
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
   test_parse ();
-(*   test_init_deck (); *)
-  test_init_game_state ();
   print_endline "all tests pass";
   ()
 
