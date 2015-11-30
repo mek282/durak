@@ -759,19 +759,91 @@ let test_med_defend () =
                  discard = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
                    (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
                    (Spade, 9); (Diamond, 12); (Club, 7)]} in
+  (* Early game, won't deflect because card is high *)
   assert (Medium.medium gs1 = Take);
+  (* Late game, will deflect if possible *)
   assert (Medium.medium gs2 = Deflect ((Diamond, 14), (Spade, 14)));
+  let gs3 = {gs1 with defender = {state = CPU 2;
+                                  hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                          (Heart, 10); (Heart, 7); (Heart, 6)];
+                                  name = "Ivan"};
+                      active = {state = CPU 2;
+                                  hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                          (Heart, 10); (Heart, 7); (Heart, 6)];
+                                  name = "Ivan"};} in
+  (* No moves *)
+  assert (Medium.medium gs3 = Take);
+  let gs4 = {gs3 with table = [((Diamond, 14), Some (Club, 9));
+                               ((Heart, 9), None)]} in
+  (* Defend one card, multiple on table, early game *)
+  assert (Medium.medium gs4 = Defend ((Heart, 9), (Heart, 10)));
+  let gs5 = {gs2 with defender = {state = CPU 2;
+                                  hand = [(Club, 14); (Club, 13); (Club, 10);
+                                          (Heart, 8); (Spade, 7); (Heart, 9)];
+                                  name = "Jose"};
+                      active = {state = CPU 2;
+                                  hand = [(Club, 14); (Club, 13); (Club, 10);
+                                          (Heart, 8); (Spade, 7); (Heart, 9)];
+                                  name = "Jose"};
+                      table = [((Diamond, 14), Some (Club, 9));
+                               ((Club, 11), None);
+                               ((Heart, 9), None);]} in
+  (* Multiple defense choices, late game *)
+  assert (Medium.medium gs5 = Defend ((Club, 11), (Club, 13)));
   ()
 
 
 let test_med_attack () =
-  failwith "TODO"
+  let gs1 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
+                      (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
+                      (Spade, 9); (Diamond, 12); (Club, 7)];
+             trump = Club;
+             attackers = [{state = Human;
+                           hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                           name = "testplayer"};
+                          {state = CPU 2;
+                           hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                           name = "Jose"};
+                          {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"}];
+             defender =   {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             table = [];
+             active =     {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"};
+             discard = [];
+             winners = []} in
+  (* No attacks yet *)
+  assert (Medium.medium gs1 = Attack (Heart, 6));
+  let gs2 = {gs1 with table = [((Club,8), Some (Club, 9));]} in
+  (* No valid attacks *)
+  assert (Medium.medium gs2 = Pass);
+  let gs3 = {gs1 with table = [((Club,8), Some (Club, 13)); ((Heart, 13), None)]} in
+  (* Pass rather than attacking with high cards early *)
+  assert (Medium.medium gs3 = Pass);
+  let gs4 = {gs3 with deck = []} in
+  (* Always attack if possible late game *)
+  assert (Medium.medium gs4 = Attack (Diamond, 13));
+  let gs5 = {gs4 with table = [((Club,8), Some (Club, 13)); ((Heart, 13), None);
+                              ((Diamond, 13), None); ((Diamond, 8), None);
+                              ((Heart, 8), None); ((Spade, 8), None);]} in
+  (* Don't attack if length of table is 6 *)
+  assert (Medium.medium gs5 = Pass);
+  ()
 
 let run_ai_tests () =
   test_lowestValidDefOf ();
   test_easy_defend ();
   test_med_defend ();
-(*   test_med_attack (); *)
+  test_med_attack ();
   print_endline "all AI tests pass";
   ()
 
