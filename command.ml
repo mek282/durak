@@ -105,15 +105,7 @@ let game_play_card (g : state) (c : card) : state =
   let replace = fun x -> if x = g.active then p else x in
   let attackers' = List.map replace g.attackers in
   let defender' = if g.defender = g.active then p else g.defender in
-  { deck = g.deck;
-   trump = g.trump;
-   attackers = attackers';
-   defender = defender';
-   table = g.table;
-   active = g.active;
-   discard = g.discard;
-   winners = g.winners;
-  }
+  { g with attackers = attackers'; defender = defender'}
 
 
 (* returns true iff d is a valid defense to attack a *)
@@ -146,15 +138,7 @@ let new_turn g (d : player) : state =
     then a
     else (last_attacker g.attackers)::(remove_last a)
     in
-  { deck = g.deck;
-   trump = g.trump;
-   attackers = a';
-   defender = d;
-   table = g.table;
-   active = g.active;
-   discard = g.discard;
-   winners = g.winners;
-  }
+  { g with attackers = a'; defender = d}
 
 (* returns the player who comes after the active player in the attacker list.
  * raise Invalid_action if the next player should be the defender *)
@@ -163,15 +147,7 @@ let next_attacker (g : state) : player =
 
 (* returns a new gamestate with attack c added to the table *)
 let add_attack g (c : card) : state =
-  { deck = g.deck;
-   trump = g.trump;
-   attackers = g.attackers;
-   defender = g.defender;
-   table = (c,None)::g.table;
-   active = g.active;
-   discard = g.discard;
-   winners = g.winners;
-  }
+  { g with table = (c,None)::g.table}
 
 
 (* returns true iff all the attacks on the table have rank r and have no
@@ -184,15 +160,7 @@ let rec deflectable (r : int) = function
 
 (* changes active player to p. Does not change any other field *)
 let rec change_active g (p : player) =
-  { deck = g.deck;
-   trump = g.trump;
-   attackers = g.attackers;
-   defender = g.defender;
-   table = g.table;
-   active = p;
-   discard = g.discard;
-   winners = g.winners;
-  }
+  {g with active = p}
 
 
 (* Terminates everything and prints either a positive or negative message
@@ -271,9 +239,13 @@ let rec pass' (g : state) : state*command =
     else pass' g'
 *)
 
+let attack (g : state) (c : card) =
+  failwith "unimplemented"
+
+
 let step (g:state) (c:command) : state =
   match c with
-  | Attack c -> failwith "unimplemented"
+  | Attack c -> attack g c
   | Defend (c1,c2) -> failwith "unimplemented"
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
