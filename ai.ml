@@ -4,6 +4,22 @@ open Command
 (*****************************************************************************)
 (***********************************HELPERS***********************************)
 (*****************************************************************************)
+type node = {
+               thisMove: command option;
+               parent: node option;
+               children: node list;
+               wins: int ref;
+               visits: int ref;
+               avails: int ref;
+               playerJustMoved: player option;
+              }
+
+
+(*unwrap option*)
+let unwrap o =
+  match o with
+  | None -> failwith "Something unwrapped poorly"
+  | Some a -> a
 
 (*version of Pervasives.compare which ignores card suits*)
 let cardCompare ((a,b):card) ((c,d):card) = compare b d
@@ -274,22 +290,13 @@ end
  *  algorithm tree.
  *Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
 module Node = struct
-  type node = {
-    move : command;
-    parent : node;
-    children : node list;
-    wins : int ref;
-    visits : int ref;
-    avails : int ref;
-    playerJustMoved : player
-  }
 
   (*[GetUntriedMoves lms] returns the elements of lms for which this node does
    *not have children**)
   let getUntriedMoves (legalMoves:command list) (n:node) : command list =
     let rec triedMoves = function
       | [] -> []
-      | hd::tl -> hd.move::(triedMoves tl) in
+      | hd::tl -> (unwrap hd.thisMove)::(triedMoves tl) in
     List.filter (fun a -> not (List.mem a (triedMoves n.children))) legalMoves
 
   let uCBFunction (n:node) =
@@ -307,11 +314,11 @@ module Node = struct
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
-  let uCBSelectChild legalMoves n =
+  let uCBSelectChild (legalMoves:command list) n =
     let rec legalChildren lst =
       match lst with
       | [] -> []
-      | hd::tl -> if List.mem hd.move legalMoves
+      | hd::tl -> if List.mem (unwrap hd.thisMove) legalMoves
                   then hd::(legalChildren tl)
                  else legalChildren tl in
     let rec choice maxSoFar lst =
@@ -323,24 +330,102 @@ module Node = struct
     incrAvails n; choice (List.hd (legalChildren n.children))
       (legalChildren n.children)
 
-  (*[AddChild m] adds a new child node to stateNode [n] for the move [m]*)
-  let addChild m =
-    failwith "TODO"
+  (*[AddChild m n p] adds a new child node to Node [n] for the move [m] with
+   *playerJustMoved set to [p]*)
+  let addChild (m:command) n p : node =
+    let newChild = {thisMove = Some m;
+                    parent = Some n;
+                    children = [];
+                    wins = ref 0;
+                    visits = ref 0;
+                    avails = ref 0;
+                    playerJustMoved = Some p;
+                    } in
+    let newChildren = (newChild::n.children) in
+    {n with children=newChildren}
+
 
   (*[Update n s] increment the visit count of node [n], increase win count of
-   *[n] by the result of [GetResult p] for active player [p] of [s]*)
-  let update n s =
-    failwith "TODO"
+   *[n] by the result of [GetResult p] for active player [p] of [g]*)
+  let update n g : unit =
+    incr n.visits;
+    match n.playerJustMoved with
+    | None -> ()
+    | Some a -> n.wins := (!(n.wins) + (GameState.getResult g a)); ()
 
   (*string representation of tree for debugging purposes*)
   let treeToSTring t =
     failwith "TODO"
+
 end
 
+let randomMove lst =
+  let nd = List.map (fun c -> (Random.bits (), c)) lst in
+    let sond = List.sort compare nd in
+    List.hd (List.map snd sond)
 
 
-let iSMCTS () =
-  failwith "TODO"
+let iSMCTS g itermax =
+  let rootnode = {thisMove = None;
+                    parent = None;
+                    children = [];
+                    wins = ref 0;
+                    visits = ref 0;
+                    avails = ref 0;
+                    playerJustMoved = None;
+                    } in
+
+  let rec forLoop root itermax1 =
+    if itermax <> 0 then begin
+    let node = root in
+    let state = (GameState.cloneAndRandomize g g.active) in
+    (*SELECT*)
+    let rec select g1 n =
+      let moves = (GameState.getMoves g1) in
+      if moves <> [] && (Node.getUntriedMoves moves n) = []
+        then begin
+          let newState = (GameState.doMove (unwrap n.thisMove) g1) in
+          let newNode = (Node.uCBSelectChild moves n) in
+          select newState newNode
+        end
+      else (g1,n) in
+    let (state,node)= select state node in
+    let untriedMoves = Node.getUntriedMoves (GameState.getMoves state)  node in
+    (*EXPAND*)
+    let (state,node) = (if untriedMoves <> []
+                          then begin
+                            let m = randomMove untriedMoves in
+                            let plyr = state.active in
+                            let newNode =
+                              List.hd (Node.addChild m node plyr).children in
+                            ((GameState.doMove m state),newNode)
+                          end
+                        else (state,node)
+                       ) in
+    let rec simulate g2 =
+      let moves = GameState.getMoves g2 in
+      match moves with
+      | [] -> g2
+      | _ -> simulate (GameState.doMove (randomMove moves) g2) in
+    let state = (simulate state) in
+
+    let rec backPropogate n1 =
+      match n1.parent with
+      | None -> n1
+      | _ -> Node.update n1 state; backPropogate (unwrap n1.parent) in
+    let node = backPropogate node in
+    forLoop node (itermax1 - 1)
+    end
+    else
+      let rec maxChild max lst =
+        match lst with
+        | [] -> max
+        | hd::tl -> if !(hd.visits) > !(max.visits)
+                      then maxChild hd tl
+                    else maxChild max tl in
+      unwrap ((maxChild (List.hd root.children) root.children).thisMove) in
+
+  forLoop rootnode itermax
 
 
 module Easy = struct
@@ -544,7 +629,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    failwith "TODO"
+    iSMCTS gameState 100
 end
 
 
