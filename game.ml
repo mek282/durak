@@ -674,27 +674,24 @@ let test_init_deck () =
   ()
 
 let test_init_game_state () =
-(*
-  let g1 = init_game_state "jane" 1 2 3 in
+
+  let g1 = init_game_state "jane" [1;2;3] in
   assert (List.length (g1.deck) = 12);
   assert ((g1.defender).state = CPU 1);
   assert (List.length ((g1.defender).hand) = 6);
   assert ((g1.active).state = Human);
   assert ((g1.active).name = "jane");
   assert (List.length ((g1.active).hand) = 6);
-*)
+
   ()
 
 let run_tests () =
   test_string_of_card ();
-  test_play_card ();
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
   test_parse ();
-(*   test_init_deck (); *)
-  test_init_game_state ();
   print_endline "all tests pass";
   ()
 
