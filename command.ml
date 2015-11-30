@@ -109,8 +109,10 @@ let game_play_card (g : state) (c : card) : state =
 
 
 (* returns true iff d is a valid defense to attack a *)
-let valid_defense (a : card) (d : card) : bool =
-  failwith "unimplemented"
+let valid_defense (a : card) (d : card) (trump: suit): bool =
+  if (fst a) = (fst d) then (snd a) < (snd d)
+  else if (fst d) = trump then true
+  else false
 
 (* returns a new gamestate in which all attackers have been dealt cards
  * from the deck until everyone has 6 cards or the deck in empty *)
@@ -316,7 +318,21 @@ let test_game_play_card () =
   ()
 
 let test_valid_defense () =
-  ()
+  let trump = Heart in
+  assert (valid_defense (Spade, 6) (Spade,7) trump);
+  assert (valid_defense (Diamond, 11) (Diamond,14) trump);
+  assert (valid_defense (Diamond, 13) (Heart,7) trump);
+  assert (valid_defense (Club, 10) (Heart,10) trump);
+  assert (valid_defense (Heart, 10) (Heart,11) trump);
+  assert (valid_defense (Club, 8) (Club, 12) trump);
+
+  assert (not (valid_defense (Club, 12) (Club, 8) trump));
+  assert (not (valid_defense (Diamond, 7) (Club, 8) trump));
+  assert (not (valid_defense (Heart, 8) (Spade, 12) trump));
+  assert (not (valid_defense (Club, 6) (Spade, 6) trump));
+  assert (not (valid_defense (Heart, 14) (Heart, 10) trump));
+  assert (not (valid_defense (Club, 11) (Club, 9) trump))
+
 
 let test_deal () =
   ()
@@ -364,6 +380,7 @@ let run_tests () =
   test_init_deck ();
   test_init_game_state ();
   test_play_card ();
+  test_valid_defense ();
   print_endline "all tests pass";
   ()
 
