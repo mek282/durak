@@ -1,19 +1,16 @@
 open Cards
 open Command
 
+(*Algorithms for the AI opponents in Durak. Stubs and guidance for
+ *the Hard AI's decision algorithm sourced from:
+ *
+ *http://www.aifactory.co.uk/newsletter/ISMCTS.txt
+ *Written by Peter Cowling, Edward Powley, Daniel Whitehouse
+ *(University of York, UK) September 2012 - August 2013.*)
+
 (*****************************************************************************)
 (***********************************HELPERS***********************************)
 (*****************************************************************************)
-type node = {
-               thisMove: command option;
-               parent: node option;
-               children: node list;
-               wins: int ref;
-               visits: int ref;
-               avails: int ref;
-               playerJustMoved: player option;
-              }
-
 
 (*unwrap option*)
 let unwrap o =
@@ -246,32 +243,9 @@ let rec getUndefended (table:(card * card option) list) : card list =
             attackers= (List.tl newPlayers)}
 
 
-  let attack (c:card) (g:state) =
-    failwith "TODO"
-
-  let defend (attack:card) (defend:card) (g:state) =
-    failwith "TODO"
-
-  let take (g:state) =
-    failwith "TODO"
-
-  let pass (g:state) =
-    failwith "TODO"
-
-  let deflect (def:card) (g:state) =
-    failwith "TODO"
-
   (*DoMove c g] updates gameState [g] by executing command [c] *)
   let doMove command gameState =
     step gameState command
-  (*
-    match command with
-    | Attack c -> failwith "unimplemented"
-    | Defend (c1,c2) -> failwith "unimplemented"
-    | Take -> failwith "unimplemented"
-    | Pass -> failwith "unimplemented"
-    | Deflect (c1,c2) -> failwith "unimplemented"
-  *)
 
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
@@ -285,6 +259,15 @@ let rec getUndefended (table:(card * card option) list) : card list =
     if (List.mem p g.winners) then 1 else 0
 end
 
+type node = {
+               thisMove: command option;
+               parent: node option;
+               children: node list;
+               wins: int ref;
+               visits: int ref;
+               avails: int ref;
+               playerJustMoved: player option;
+              }
 
 (*Provides functions for creating and manipulating nodes in the ISMCTS
  *  algorithm tree.
@@ -359,21 +342,31 @@ module Node = struct
 
 end
 
+
+(******************************************************************************)
+(********************************ISMCTS Helpers********************************)
+(******************************************************************************)
+
+(*return a randomly selected command from [lst]*)
 let randomMove lst =
   let nd = List.map (fun c -> (Random.bits (), c)) lst in
     let sond = List.sort compare nd in
     List.hd (List.map snd sond)
 
+(*if [g1] is non-terminal, and [n] has no untried moves, select a child and
+ *descend the tree*)
 let rec select g1 n =
       let moves = (GameState.getMoves g1) in
       if moves <> [] && (Node.getUntriedMoves moves n) = []
         then begin
-          let newState = (GameState.doMove (unwrap n.thisMove) g1) in
           let newNode = (Node.uCBSelectChild moves n) in
+          let newState = (GameState.doMove (unwrap newNode.thisMove) g1) in
           select newState newNode
         end
       else (g1,n)
 
+(*If [untried] is non_empty, select a random element, step [g1_1], create a new
+ *node and return it with associated state*)
 let expand g1_1 n untried =
   if untried <> []
     then begin
@@ -385,17 +378,20 @@ let expand g1_1 n untried =
     end
   else (g1_1,n)
 
+(*simulate a game, through to completion, making random choices, return *)
 let rec simulate g2 =
       let moves = GameState.getMoves g2 in
       match moves with
       | [] -> g2
       | _ -> simulate (GameState.doMove (randomMove moves) g2)
 
+(*Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
       match n1.parent with
       | None -> n1
       | _ -> Node.update n1 g2_1; backPropogate g2_1 (unwrap n1.parent)
 
+(*return the child with the most visits*)
 let rec maxChild max lst =
         match lst with
         | [] -> max
@@ -403,6 +399,7 @@ let rec maxChild max lst =
                       then maxChild hd tl
                     else maxChild max tl
 
+(*Information Set Monte Carlo Tree Search algorithm*)
 let iSMCTS g itermax =
   let rootnode = {thisMove = None;
                     parent = None;
