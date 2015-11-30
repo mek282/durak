@@ -172,13 +172,8 @@ let end_game (g : state) : state =
 (* makes player p a winner. Prereq: p must be an attacker *)
 let do_win (g : state) (p : player) : state =
   if List.length g.attackers = 1 then end_game g else
-  { deck = g.deck;
-   trump = g.trump;
+  { g with
    attackers = List.filter (fun x -> x<>p) g.attackers;
-   defender = g.defender;
-   table = g.table;
-   active = g.active;
-   discard = g.discard;
    winners = p::(g.winners);
   }
 
@@ -239,13 +234,27 @@ let rec pass' (g : state) : state*command =
     else pass' g'
 *)
 
+(* If the active player is an attacker holding card c, and card c is a valid
+ * attack, remove that card from the active player's hand and add that card
+ * to the table, then change the active player to either the next attacker
+ * or to the defender, if the active player is the last attacker *)
 let attack (g : state) (c : card) =
-  failwith "unimplemented"
+  if not (List.mem g.active g.attackers)
+    then raise (Invalid_action "You are not an attacker!")
+  else if not (valid_attack g c)
+    then raise (Invalid_action "That is not a valid attack!")
+  else let g' = game_play_card g c in
+  let table' = (c,None)::g.table in
+  let active' =
+    if g.active = last_attacker g.attackers
+      then g.defender
+      else next_attacker g in
+  {g' with table=table'; active=active'}
 
 
 let step (g:state) (c:command) : state =
   match c with
-  | Attack c -> attack g c
+  | Attack c -> (try attack g c with Invalid_action a -> print_endline a; g)
   | Defend (c1,c2) -> failwith "unimplemented"
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
