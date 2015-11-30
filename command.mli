@@ -11,5 +11,6 @@ val init_deck : unit -> (suit * deck)
  * each difficulty level (numbered 1 for easy, 2 for medium, 3 for hard.) *)
 val init_game_state : string -> int -> int -> int -> state
 
-(* Calls itself recursively to update the state in response to commands *)
+(* [step g c] returns the state that results from applying a command c to
+ * the game state g *)
 val step : state -> command -> state
