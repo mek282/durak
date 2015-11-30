@@ -401,14 +401,17 @@ let rec maxChild max lst =
 
 (*Information Set Monte Carlo Tree Search algorithm*)
 let iSMCTS g itermax =
-  let rootnode = {thisMove = None;
-                    parent = None;
-                    children = [];
-                    wins = ref 0;
-                    visits = ref 0;
-                    avails = ref 0;
-                    playerJustMoved = None;
-                    } in
+  let rootnode = {
+                  thisMove = None;
+                  parent = None;
+                  children = [];
+                  wins = ref 0;
+                  visits = ref 0;
+                  avails = ref 0;
+                  playerJustMoved = None;
+                 }
+
+  in
 
   let rec forLoop root itermax1 =
     if itermax <> 0 then
@@ -731,6 +734,33 @@ let test_gameState_shuffle () =
   failwith "TODO"
 
 let test_gameState_deal () =
+  failwith "TODO"
+
+let test_gameState_cloneAndRandomize () =
+  failwith "TODO"
+
+let test_gameState_doMove () =
+  failwith "TODO"
+
+let test_gameState_getMoves () =
+  failwith "TODO"
+
+let test_gameState_getResult () =
+  failwith "TODO"
+
+let test_Node_getUntriedMoves () =
+  failwith "TODO"
+
+let test_Node_uCBSelectChild () =
+  failwith "TODO"
+
+let test_Node_addChild () =
+  failwith "TODO"
+
+let test_Node_update () =
+  failwith "TODO"
+
+let test_iSMCTS () =
   failwith "TODO"
 
 let test_med_defend () =
