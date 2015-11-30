@@ -2,6 +2,9 @@ open Cards
 
 exception Invalid_action of string
 
+(* ========================================================================== *)
+(* ==============================INITIALIZER================================= *)
+(* ========================================================================== *)
 
 let rec unshuffled_deck d n =
   if n < 15
@@ -82,7 +85,11 @@ let init_game_state s dlist =
     winners = [];
   }
 
-(* Finished and tested 11/26 - Vanya *)
+
+(* ========================================================================== *)
+(* =========================COMMAND PROCESSING=============================== *)
+(* ========================================================================== *)
+
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
 let play_card (p : player) (c : card) : player =
@@ -272,3 +279,113 @@ let step (g:state) (c:command) : state =
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
   | Deflect (c1,c2) -> failwith "unimplemented"
+
+
+(* ========================================================================== *)
+(* ==============================TESTING===================================== *)
+(* ========================================================================== *)
+
+let test_init_deck () =
+(*
+  Printf.printf "\n\nDECK 1 TEST:\n\n";
+  let d1 = init_deck () in
+  print_deck (fst d1) (snd d1);
+  Printf.printf "\n\nDECK 2 TEST:\n\n";
+  let d2 = init_deck () in
+  print_deck (fst d2) (snd d2);
+  Printf.printf "\n\nDECK 3 TEST:\n\n";
+  let d3 = init_deck () in
+  print_deck (fst d3) (snd d3);
+  Printf.printf "\n\nDECK 4 TEST:\n\n";
+  let d4 = init_deck () in
+  print_deck (fst d4) (snd d4);
+  Printf.printf "\n\nDECK 5 TEST:\n\n";
+  let d5 = init_deck () in
+  print_deck (fst d5) (snd d5);
+  Printf.printf "\n\nDECK 6 TEST:\n\n";
+  let d6 = init_deck () in
+  print_deck (fst d6) (snd d6);
+*)
+  ()
+
+let test_init_game_state () =
+
+  let g1 = init_game_state "jane" [1;2;3] in
+  assert (List.length (g1.deck) = 12);
+  assert ((g1.defender).state = CPU 1);
+  assert (List.length ((g1.defender).hand) = 6);
+  assert ((g1.active).state = Human);
+  assert ((g1.active).name = "jane");
+  assert (List.length ((g1.active).hand) = 6)
+
+let test_play_card () =
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+  let test_hand1 = [(Diamond, 7);  (Club,14); (Spade, 14)] in
+  let test_hand2 = [(Heart, 7);  (Club,14); (Spade, 14)] in
+
+  assert (play_card player1 (Heart,7) = {player1 with hand = test_hand1});
+  assert (play_card player1 (Diamond, 7) = {player1 with hand = test_hand2});
+  assert (let p1 = play_card player1 (Club,14) in
+          let p2 = play_card p1 (Spade, 14) in
+          let p3 = play_card p2 (Diamond, 7) in
+          let p4 = play_card p3 (Heart, 7) in
+          p4 = {player1 with hand = []})
+  (* Need test case for error, but I think it works. -Vanya*)
+
+let test_game_play_card () =
+  ()
+
+let test_valid_defense () =
+  ()
+
+let test_deal () =
+  ()
+
+let test_last_attacker () =
+  ()
+
+let test_remove_last () =
+  ()
+
+let test_new_turn () =
+  ()
+
+let test_next_attacker () =
+  ()
+
+let test_add_attack () =
+  ()
+
+let test_deflectable () =
+  ()
+
+let test_change_active () =
+  ()
+
+let test_do_win () =
+  ()
+
+let test_deflect () =
+  ()
+
+let test_take_all () =
+  ()
+
+let test_place_defense () =
+  ()
+
+let test_pass' () =
+  ()
+
+let test_pass () =
+  ()
+
+let run_tests () =
+  test_init_deck ();
+  test_init_game_state ();
+  test_play_card ();
+  print_endline "all tests pass";
+  ()
+
+let _ = run_tests ()
