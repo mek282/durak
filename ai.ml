@@ -364,6 +364,44 @@ let randomMove lst =
     let sond = List.sort compare nd in
     List.hd (List.map snd sond)
 
+let rec select g1 n =
+      let moves = (GameState.getMoves g1) in
+      if moves <> [] && (Node.getUntriedMoves moves n) = []
+        then begin
+          let newState = (GameState.doMove (unwrap n.thisMove) g1) in
+          let newNode = (Node.uCBSelectChild moves n) in
+          select newState newNode
+        end
+      else (g1,n)
+
+let expand g1_1 n untried =
+  if untried <> []
+    then begin
+      let m = randomMove untried in
+      let plyr = g1_1.active in
+      let newNode =
+        List.hd (Node.addChild m n plyr).children in
+      ((GameState.doMove m g1_1),newNode)
+    end
+  else (g1_1,n)
+
+let rec simulate g2 =
+      let moves = GameState.getMoves g2 in
+      match moves with
+      | [] -> g2
+      | _ -> simulate (GameState.doMove (randomMove moves) g2)
+
+let rec backPropogate g2_1 n1 =
+      match n1.parent with
+      | None -> n1
+      | _ -> Node.update n1 g2_1; backPropogate g2_1 (unwrap n1.parent)
+
+let rec maxChild max lst =
+        match lst with
+        | [] -> max
+        | hd::tl -> if !(hd.visits) > !(max.visits)
+                      then maxChild hd tl
+                    else maxChild max tl
 
 let iSMCTS g itermax =
   let rootnode = {thisMove = None;
@@ -376,54 +414,25 @@ let iSMCTS g itermax =
                     } in
 
   let rec forLoop root itermax1 =
-    if itermax <> 0 then begin
-    let node = root in
-    let state = (GameState.cloneAndRandomize g g.active) in
-    (*SELECT*)
-    let rec select g1 n =
-      let moves = (GameState.getMoves g1) in
-      if moves <> [] && (Node.getUntriedMoves moves n) = []
-        then begin
-          let newState = (GameState.doMove (unwrap n.thisMove) g1) in
-          let newNode = (Node.uCBSelectChild moves n) in
-          select newState newNode
-        end
-      else (g1,n) in
-    let (state,node)= select state node in
-    let untriedMoves = Node.getUntriedMoves (GameState.getMoves state)  node in
-    (*EXPAND*)
-    let (state,node) = (if untriedMoves <> []
-                          then begin
-                            let m = randomMove untriedMoves in
-                            let plyr = state.active in
-                            let newNode =
-                              List.hd (Node.addChild m node plyr).children in
-                            ((GameState.doMove m state),newNode)
-                          end
-                        else (state,node)
-                       ) in
-    let rec simulate g2 =
-      let moves = GameState.getMoves g2 in
-      match moves with
-      | [] -> g2
-      | _ -> simulate (GameState.doMove (randomMove moves) g2) in
-    let state = (simulate state) in
+    if itermax <> 0 then
+      begin
+        let node = root in
+        let state = (GameState.cloneAndRandomize g g.active) in
 
-    let rec backPropogate n1 =
-      match n1.parent with
-      | None -> n1
-      | _ -> Node.update n1 state; backPropogate (unwrap n1.parent) in
-    let node = backPropogate node in
-    forLoop node (itermax1 - 1)
-    end
+        (*SELECT*)
+        let (state,node)= select state node in
+        let untriedMoves = Node.getUntriedMoves (GameState.getMoves state)  node in
+        (*EXPAND*)
+        let (state,node) = expand state node untriedMoves in
+        (*SIMULATE*)
+        let state = (simulate state) in
+        (*BACK PROPOGATE*)
+        let node = backPropogate state node in
+        forLoop node (itermax1 - 1)
+      end
     else
-      let rec maxChild max lst =
-        match lst with
-        | [] -> max
-        | hd::tl -> if !(hd.visits) > !(max.visits)
-                      then maxChild hd tl
-                    else maxChild max tl in
-      unwrap ((maxChild (List.hd root.children) root.children).thisMove) in
+      unwrap ((maxChild (List.hd root.children) root.children).thisMove)
+  in
 
   forLoop rootnode itermax
 
