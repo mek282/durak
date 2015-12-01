@@ -306,12 +306,13 @@ let step (g:state) (c:command) : state*string =
   match c with
   | Attack c -> begin
       try
-        (let (g',w) = attack g c in
+        let (g',w) = attack g c in
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" attacked with "^string_of_card c^". " ^ win_m in
-        (g',m))
+        (g',m)
       with
-      | Invalid_action a -> (g, "There was a problem: " ^ a) end
+      | Invalid_action a -> (g, "There was a problem: " ^ a)
+  end
   | Defend (c1,c2) -> begin
       try
         let (g',w) = defend g c1 c2 in
@@ -319,10 +320,19 @@ let step (g:state) (c:command) : state*string =
         let m=g.active.name^" defended with "^string_of_card c2^". " ^ win_m in
         (g',m)
       with
-      | Invalid_action a -> (g, a) end
+      | Invalid_action a -> (g, a)
+  end
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
-  | Deflect (c1,c2) -> failwith "unimplemented"
+  | Deflect (c1,c2) -> begin
+    try
+      let (g',w) = deflect g c1 c2 in
+      let win_m = if w then g.active.name ^ " won! " else "" in
+      let m=g.active.name^" deflected with "^string_of_card c2^". " ^ win_m in
+      (g',m)
+    with
+    | Invalid_action a -> (g,a)
+  end
 
 
 (* ========================================================================== *)
