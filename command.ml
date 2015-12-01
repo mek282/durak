@@ -292,8 +292,8 @@ let place_defense (g : state) (c1 : card) (c2 : card) : state =
 
 (* returns true iff the table is empty or at least one of the cards on the table
  * has the same rank as c *)
-let valid_attack (g : state) (c : card) : bool =
-  failwith "unimplemented"
+let valid_attack (g : state) ((s : suit) , (r : int)) : bool =
+  g.table = [] || (List.exists (fun (_,x) -> x = r) (tablepairs_to_list g.table))
 
 (*
 (* loops over attackers if everyone has been passing until someone doesn't pass*)
