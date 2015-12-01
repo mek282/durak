@@ -171,10 +171,18 @@ let end_game (g : state) : state =
   failwith "unimplemented"
 
 
-(* makes player p a winner. Prereq: p must be an attacker *)
+(* makes player p a winner. Ends the game if only one player is left. *)
 let do_win (g : state) (p : player) : state =
   if List.length g.attackers = 1 then end_game g else
+  if g.defender = p
+    then let g' = new_turn g (last_attacker g.attackers) in
+    { g' with winners = p::(g'.winners) }
+  else
+  let active' = if g.active = p
+      then if p = last_attacker g.attackers then g.defender else next_attacker g
+    else g.active in
   { g with
+   active = active';
    attackers = List.filter (fun x -> x<>p) g.attackers;
    winners = p::(g.winners);
   }
@@ -252,12 +260,28 @@ let attack (g : state) (c : card) =
       then g.defender
       else next_attacker g in
   {g' with table=table'; active=active'}
+  (*TODO: check if active player has won *)
+
+
+(* [is_unanswered g c]returns true iff (c,None) is a member of g.table*)
+
+
+(* if the active player is the defender, c1 is an unanswered attack on the
+ * table, c2 is a valid defense to c1, and c2 is in the active player's hand,
+ * then [defend g c1 c2] removes card c2 from the active player's hand and
+ * adds it to the table as a response to c1; otherwise Invalid_action is raised.
+ * If all attacks on the table have been answered, the active player becomes
+ * the attacker; otherwise the defender gets a chance to play again.
+ * Makes defender a winner c2 was her last card.*)
+let defend (g : state) (c1 : card) (c2 : card) =
+  failwith "unimplemented"
 
 
 let step (g:state) (c:command) : state =
   match c with
   | Attack c -> (try attack g c with Invalid_action a -> print_endline a; g)
-  | Defend (c1,c2) -> failwith "unimplemented"
+  | Defend (c1,c2) -> begin
+      try defend g c1 c2 with Invalid_action a -> print_endline a; g end
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
   | Deflect (c1,c2) -> failwith "unimplemented"
