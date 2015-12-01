@@ -226,28 +226,6 @@ let parse (s : string) : command =
   end
   | _ -> raise (Cannot_parse s)
 
-(* Some helpers for strings manipulation - Vanya *)
-(* returns string representation of a suit *)
-let suit_to_string (suit: suit) : string =
-  match suit with
-  | Heart   -> "Hearts"
-  | Club    -> "Clubs"
-  | Diamond -> "Diamonds"
-  | Spade   -> "Spades"
-
-(* returns string representation of a rank *)
-let rank_to_string (rank: int) : string =
-  match rank with
-  | 14 -> "Ace"
-  | 13 -> "King"
-  | 12 -> "Queen"
-  | 11 -> "Jack"
-  | n  -> string_of_int n
-
-(* Finished and tested 11/26 - Vanya *)
-(* returns the string representation of card (s,r)*)
-let string_of_card (s,r) : string =
-  (rank_to_string r) ^ " of " ^ (suit_to_string s)
 
 (*
 (* Finished and tested 11/26 - Vanya *)
@@ -466,7 +444,13 @@ let rec pass' (g : state) : state*command =
 *)
 
 (* Calls itself recursively to update the state in response to commands *)
-let rec repl g c = step g c
+let rec repl (g : state) (c : command) (message : string) : unit =
+  let (g',m) = step g c in
+  let m' = message ^ " " ^ m in
+  let c' = parse_no_fail m' g' in
+  if g.active.state = Human
+    then repl g' c' ""
+    else repl g' c' m'
 (*
   | Attack c -> failwith "unimplemented"
   | Defend (c1,c2) -> failwith "unimplemented"
@@ -497,19 +481,6 @@ and pass (g : state) : unit =
 *)
 
 (*TEST CASES*)
-
-let test_string_of_card () =
-  let cards = [(Heart, 6); (Diamond, 7); (Spade, 8); (Club,9); (Spade, 10);
-               (Heart, 11);(Diamond, 12);(Spade, 13);(Club,14)] in
-  assert (string_of_card (List.nth cards 0) = "6 of Hearts");
-  assert (string_of_card (List.nth cards 1) = "7 of Diamonds");
-  assert (string_of_card (List.nth cards 2) = "8 of Spades");
-  assert (string_of_card (List.nth cards 3) = "9 of Clubs");
-  assert (string_of_card (List.nth cards 4) = "10 of Spades");
-  assert (string_of_card (List.nth cards 5) = "Jack of Hearts");
-  assert (string_of_card (List.nth cards 6) = "Queen of Diamonds");
-  assert (string_of_card (List.nth cards 7) = "King of Spades");
-  assert (string_of_card (List.nth cards 8) = "Ace of Clubs")
 
 let test_play_card () =
   ()
@@ -674,27 +645,23 @@ let test_init_deck () =
   ()
 
 let test_init_game_state () =
-(*
-  let g1 = init_game_state "jane" 1 2 3 in
+
+  let g1 = init_game_state "jane" [1;2;3] in
   assert (List.length (g1.deck) = 12);
   assert ((g1.defender).state = CPU 1);
   assert (List.length ((g1.defender).hand) = 6);
   assert ((g1.active).state = Human);
   assert ((g1.active).name = "jane");
   assert (List.length ((g1.active).hand) = 6);
-*)
+
   ()
 
 let run_tests () =
-  test_string_of_card ();
-  test_play_card ();
   test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
   test_parse ();
-(*   test_init_deck (); *)
-  test_init_game_state ();
   print_endline "all tests pass";
   ()
 
