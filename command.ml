@@ -107,10 +107,12 @@ let rank_to_string (rank: int) : string =
   | 11 -> "Jack"
   | n  -> string_of_int n
 
+
 (* Finished and tested 11/26 - Vanya *)
 (* returns the string representation of card (s,r)*)
 let string_of_card (s,r) : string =
   (rank_to_string r) ^ " of " ^ (suit_to_string s)
+
 
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
@@ -128,7 +130,8 @@ let game_play_card (g : state) (c : card) : state =
   let replace = fun x -> if x = g.active then p else x in
   let attackers' = List.map replace g.attackers in
   let defender' = if g.defender = g.active then p else g.defender in
-  { g with attackers = attackers'; defender = defender'}
+  { g with attackers = attackers'; defender = defender';
+        discard = c::g.discard}
 
 
 (* returns true iff d is a valid defense to attack a *)
@@ -136,6 +139,7 @@ let valid_defense (a : card) (d : card) (trump: suit): bool =
   if (fst a) = (fst d) then (snd a) < (snd d)
   else if (fst d) = trump then true
   else false
+
 
 (* returns a player list with each hand having at least six cards (until deck is
  * empty) and a deck with those cards removed. *)
@@ -153,6 +157,7 @@ let rec deal_helper (plist: player list) (deck: deck): player list * deck =
             else
               let (newplist, newdeck) = deal_helper t deck in
               (h :: newplist, newdeck)
+
 
 (* returns a new gamestate in which all attackers have been dealt cards
  * from the deck until everyone has 6 cards or the deck in empty *)
@@ -363,6 +368,7 @@ let rec penultimate = function
   | h::_::[] -> h
   | h::t -> penultimate t
 
+
 (* [all_answered g] returns true iff (c,None) is not a member of g.table
  * for any c. In other words, every card on the table is paired with some
  * other card. *)
@@ -370,7 +376,7 @@ let all_answered (g : state) : bool =
   not (List.exists (fun (_,x) -> x = None) g.table)
 
 
-(* Carries out "defende against c1 with c2" --
+(* Carries out "defend against c1 with c2" --
  * if the active player is the defender, c1 is an unanswered attack on the
  * table, c2 is a valid defense to c1, and c2 is in the active player's hand,
  * then [defend g c1 c2] removes card c2 from the active player's hand and
@@ -388,7 +394,10 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool =
   let won = g'.active.hand = [] in
   if won then ({ (do_win g' g'.active) with table = [] },won) else
   if all_answered g'
-    then let g'' = {g' with table = []} in
+    then
+      let g'' = { g' with
+                  table = [];
+                  discard = (tablepairs_to_list g.table)@g.discard } in
       (new_turn g'' (last_attacker g''.attackers) , won)
     else (g', won)
 
@@ -405,44 +414,35 @@ let pass (g : state) : state =
 (* returns the state that would result from applying c to g, as well as
  * a string describing what was done *)
 let step (g:state) (c:command) : state*string =
-  match c with
-  | Attack c -> begin
-      try
+  try
+    match c with
+    | Attack c -> begin
         let (g',w) = attack g c in
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" attacked with "^string_of_card c^". " ^ win_m in
         (g',m)
-      with
-      | Invalid_action a -> (g, "There was a problem: " ^ a)
-  end
-  | Defend (c1,c2) -> begin
-      try
+    end
+    | Defend (c1,c2) -> begin
         let (g',w) = defend g c1 c2 in
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" defended with "^string_of_card c2^". " ^ win_m in
         (g',m)
-      with
-      | Invalid_action a -> (g, a)
-  end
-  | Take -> begin
-    try
-      let g' = take_all g in
-      let g'' = new_turn g' (penultimate g.attackers) in
-      let m = g.active.name ^ " chose to take." in
-      (g'',m)
-    with
-    | Invalid_action a -> (g, a)
-  end
-  | Pass -> let m = g.active.name ^ "passed." in (pass g, m)
-  | Deflect (c1,c2) -> begin
-    try
-      let (g',w) = deflect g c1 c2 in
-      let win_m = if w then g.active.name ^ " won! " else "" in
-      let m=g.active.name^" deflected with "^string_of_card c2^". " ^ win_m in
-      (g',m)
-    with
-    | Invalid_action a -> (g,a)
-  end
+      end
+    | Take -> begin
+        let g' = take_all g in
+        let g'' = new_turn g' (penultimate g.attackers) in
+        let m = g.active.name ^ " chose to take." in
+        (g'',m)
+      end
+    | Pass -> let m = g.active.name ^ "passed." in (pass g, m)
+    | Deflect (c1,c2) -> begin
+        let (g',w) = deflect g c1 c2 in
+        let win_m = if w then g.active.name ^ " won! " else "" in
+        let m=g.active.name^" deflected with "^string_of_card c2^". " ^ win_m in
+        (g',m)
+      end
+  with
+  | Invalid_action a -> (g, "There was a problem: " ^ a)
 
 
 (* ========================================================================== *)
@@ -475,6 +475,36 @@ let sample_state () : state =
   let active = player1 in
   let discard = [] in
   let winners = [] in
+  {deck=deck; trump=trump; attackers=attackers; defender=defender;
+               table=table; active=active; discard=discard; winners=winners}
+
+let sample_state2 () : state =
+  let deck = [(Heart, 11); (Diamond, 6);  (Club, 10); (Club, 9)] in
+  let trump = Heart in
+
+  let hand1 = [(Heart, 7); (Heart, 6);  (Club,13)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14); (Club,11); (Spade,10); (Spade, 7); (Diamond, 8); (Heart, 10)] in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+
+  let hand3 = [(Diamond, 9); (Club, 6)] in
+  let player3 = {state= CPU(1); hand = hand3; name = "Ayyy"} in
+
+  let hand4 = [] in
+  let player4 = {state= CPU(1); hand = hand4; name = "Lmao"} in
+
+  let attackers = [player2; player3] in
+  let defender = player1 in
+  let table = [((Club, 6), Some(Club,7));
+               ((Diamond,6), Some(Diamond,10));
+               ((Club,8), None);
+               ((Heart,8), None);
+               ((Spade, 8), Some(Spade,9))] in
+
+  let active = player2 in
+  let discard = [] in
+  let winners = [player4] in
   {deck=deck; trump=trump; attackers=attackers; defender=defender;
                table=table; active=active; discard=discard; winners=winners}
 
@@ -699,6 +729,11 @@ let test_pass' () =
   ()
 
 let test_pass () =
+  ()
+
+let test_step () =
+  (*let g1 = sample_state2 () in
+  let (g1',_) = step g1 (Attack )*)
   ()
 
 let run_tests () =
