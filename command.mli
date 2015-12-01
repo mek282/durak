@@ -12,5 +12,5 @@ val init_deck : unit -> (suit * deck)
 val init_game_state : string -> int list -> state
 
 (* [step g c] returns the state that results from applying a command c to
- * the game state g *)
-val step : state -> command -> state
+ * the game state g and a message describing game events *)
+val step : state -> command -> state*string

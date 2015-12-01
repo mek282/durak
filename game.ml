@@ -226,28 +226,6 @@ let parse (s : string) : command =
   end
   | _ -> raise (Cannot_parse s)
 
-(* Some helpers for strings manipulation - Vanya *)
-(* returns string representation of a suit *)
-let suit_to_string (suit: suit) : string =
-  match suit with
-  | Heart   -> "Hearts"
-  | Club    -> "Clubs"
-  | Diamond -> "Diamonds"
-  | Spade   -> "Spades"
-
-(* returns string representation of a rank *)
-let rank_to_string (rank: int) : string =
-  match rank with
-  | 14 -> "Ace"
-  | 13 -> "King"
-  | 12 -> "Queen"
-  | 11 -> "Jack"
-  | n  -> string_of_int n
-
-(* Finished and tested 11/26 - Vanya *)
-(* returns the string representation of card (s,r)*)
-let string_of_card (s,r) : string =
-  (rank_to_string r) ^ " of " ^ (suit_to_string s)
 
 (*
 (* Finished and tested 11/26 - Vanya *)
@@ -498,19 +476,6 @@ and pass (g : state) : unit =
 
 (*TEST CASES*)
 
-let test_string_of_card () =
-  let cards = [(Heart, 6); (Diamond, 7); (Spade, 8); (Club,9); (Spade, 10);
-               (Heart, 11);(Diamond, 12);(Spade, 13);(Club,14)] in
-  assert (string_of_card (List.nth cards 0) = "6 of Hearts");
-  assert (string_of_card (List.nth cards 1) = "7 of Diamonds");
-  assert (string_of_card (List.nth cards 2) = "8 of Spades");
-  assert (string_of_card (List.nth cards 3) = "9 of Clubs");
-  assert (string_of_card (List.nth cards 4) = "10 of Spades");
-  assert (string_of_card (List.nth cards 5) = "Jack of Hearts");
-  assert (string_of_card (List.nth cards 6) = "Queen of Diamonds");
-  assert (string_of_card (List.nth cards 7) = "King of Spades");
-  assert (string_of_card (List.nth cards 8) = "Ace of Clubs")
-
 let test_play_card () =
   ()
 (*
@@ -686,7 +651,6 @@ let test_init_game_state () =
   ()
 
 let run_tests () =
-  test_string_of_card ();
   test_split ();
   test_parse_rank ();
   test_parse_suit ();

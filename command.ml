@@ -302,6 +302,15 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool =
   failwith "unimplemented"
 
 
+(* makes the next player the active player *)
+let pass (g : state) : state =
+  let active' =
+    if g.active = g.defender
+      then last_attacker g.attackers
+      else try next_attacker g with Invalid_action _ -> g.defender
+  in { g with active = active' }
+
+
 let step (g:state) (c:command) : state*string =
   match c with
   | Attack c -> begin
@@ -323,7 +332,7 @@ let step (g:state) (c:command) : state*string =
       | Invalid_action a -> (g, a)
   end
   | Take -> failwith "unimplemented"
-  | Pass -> failwith "unimplemented"
+  | Pass -> let m = g.active.name ^ "passed." in (pass g, m)
   | Deflect (c1,c2) -> begin
     try
       let (g',w) = deflect g c1 c2 in
