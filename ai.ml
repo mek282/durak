@@ -245,7 +245,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
   let doMove command gameState =
-    step gameState command
+    let (m,_) = step gameState command in m
 
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
@@ -374,7 +374,8 @@ let expand g1_1 n untried =
       let plyr = g1_1.active in
       let newNode =
         List.hd (Node.addChild m n plyr).children in
-      ((GameState.doMove m g1_1),newNode)
+        let new_state = GameState.doMove m g1_1 in
+      (new_state,newNode)
     end
   else (g1_1,n)
 

@@ -444,7 +444,13 @@ let rec pass' (g : state) : state*command =
 *)
 
 (* Calls itself recursively to update the state in response to commands *)
-let rec repl g c = step g c
+let rec repl (g : state) (c : command) (message : string) : unit =
+  let (g',m) = step g c in
+  let m' = message ^ " " ^ m in
+  let c' = parse_no_fail m' g' in
+  if g.active.state = Human
+    then repl g' c' ""
+    else repl g' c' m'
 (*
   | Attack c -> failwith "unimplemented"
   | Defend (c1,c2) -> failwith "unimplemented"
