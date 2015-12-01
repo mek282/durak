@@ -337,6 +337,8 @@ let pass (g : state) : state =
   in { g with active = active' }
 
 
+(* returns the state that would result from applying c to g, as well as
+ * a string describing what was done *)
 let step (g:state) (c:command) : state*string =
   match c with
   | Attack c -> begin
