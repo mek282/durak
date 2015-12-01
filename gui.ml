@@ -171,8 +171,8 @@ let draw_opponent_row (hand: deck) : unit =
 let draw_opponents (attackers: player list) (defender: player)
   (winners: player list) (active: player): unit =
   let players = defender :: attackers in
-  let players_filtered = List.filter (fun x -> x = active) players in
-  List.iter (fun x ->  Printf.printf "%s\n%!" x.name;
+  let players_filtered = List.filter (fun x -> x <> active) players in
+  List.iter (fun x ->  Printf.printf "\n%s\n%!" x.name;
                       if List.mem x winners then
                         Printf.printf "Not an Idiot\n%!"
                       else
@@ -213,7 +213,7 @@ let ptest_draw_table () : unit =
   draw_table []
 
 let ptest_draw () : unit =
-  let deck = [] in
+  let deck = [(Heart, 9); (Diamond, 9);  (Club, 9); (Spade, 9)] in
   let trump = Heart in
 
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
@@ -222,7 +222,13 @@ let ptest_draw () : unit =
   let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
   let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
 
-  let attackers = [player2] in
+  let hand3 = [(Diamond, 11); (Club, 11); (Club, 9)] in
+  let player3 = {state= CPU(1); hand = hand3; name = "Ayyy"} in
+
+  let hand4 = [(Club, 7); (Club, 8); (Heart, 10); (Spade,10)] in
+  let player4 = {state= CPU(1); hand = hand4; name = "Lmao"} in
+
+  let attackers = [player2; player3; player4] in
   let defender = player1 in
   let table = [((Club, 6), Some(Club,7));
                ((Diamond,6), Some(Diamond,10));

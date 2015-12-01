@@ -542,13 +542,64 @@ let test_deal () =
                                       (Club, 12); (Spade,13); (Diamond, 14)])
 
 let test_last_attacker () =
-  ()
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+
+  let lst = [1;2;3;4] in
+  let lst1 = [1] in
+  let lst2 = [player1; player2] in
+  assert (last_attacker lst = 4);
+  assert (last_attacker lst1 = 1);
+  assert (last_attacker lst2 = player2)
 
 let test_remove_last () =
-  ()
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+
+  let lst = [1;2;3;4] in
+  let lst1 = [1] in
+  let lst2 = [player1; player2] in
+  assert (remove_last lst = [1;2;3]);
+  assert (remove_last lst1 = []);
+  assert (remove_last lst2 = [player1])
 
 let test_new_turn () =
-  ()
+  let deck = [(Heart, 9); (Diamond, 9);  (Club, 9); (Spade, 9)] in
+  let trump = Heart in
+
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+
+  let hand3 = [(Diamond, 11); (Club, 11); (Club, 9)] in
+  let player3 = {state= CPU(1); hand = hand3; name = "Ayyy"} in
+
+  let hand4 = [(Club, 7); (Club, 8); (Heart, 10); (Spade,10)] in
+  let player4 = {state= CPU(1); hand = hand4; name = "Lmao"} in
+
+  let attackers = [player2; player3; player4] in
+  let defender = player1 in
+  let table = [((Club, 6), Some(Club,7));
+               ((Diamond,6), Some(Diamond,10));
+               ((Club,8), None);
+               ((Heart,8), None);
+               ((Spade, 8), Some(Spade,9))] in
+
+  let active = player1 in
+  let discard = [] in
+  let winners = [] in
+  let state = {deck=deck; trump=trump; attackers=attackers; defender=defender;
+               table=table; active=active; discard=discard; winners=winners} in
+  let new_state = new_turn state player4 in
+
+  assert (new_state.defender  = player4);
+  assert (new_state.attackers = [player1; player2; player3])
 
 let test_next_attacker () =
   ()
@@ -587,6 +638,9 @@ let run_tests () =
   test_play_card ();
   test_valid_defense ();
   test_deal ();
+  test_last_attacker ();
+  test_remove_last ();
+  test_new_turn ();
   print_endline "all tests pass";
   ()
 
