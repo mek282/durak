@@ -254,13 +254,13 @@ let attack (g : state) (c : card) =
   else if not (valid_attack g c)
     then raise (Invalid_action "That is not a valid attack!")
   else let g' = game_play_card g c in
-  let table' = (c,None)::g.table in
+  let g'' = if g'.active.hand = [] then do_win g' g'.active else g' in
+  let table' = (c,None)::g''.table in
   let active' =
-    if g.active = last_attacker g.attackers
-      then g.defender
-      else next_attacker g in
-  {g' with table=table'; active=active'}
-  (*TODO: check if active player has won *)
+    if g''.active = last_attacker g''.attackers
+      then g''.defender
+      else next_attacker g'' in
+  {g'' with table=table'; active=active'}
 
 
 (* [is_unanswered g c]returns true iff (c,None) is a member of g.table*)
