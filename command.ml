@@ -137,10 +137,35 @@ let valid_defense (a : card) (d : card) (trump: suit): bool =
   else if (fst d) = trump then true
   else false
 
+(* returns a player list with each hand having at least six cards (until deck is
+ * empty) and a deck with those cards removed. *)
+let rec deal_helper (plist: player list) (deck: deck): player list * deck =
+  match plist with
+  | [] -> (plist, deck)
+  | h::t -> let len = List.length h.hand in
+            if len < 6 || List.length deck = 0 then
+              let (card,newdeck) = match deck with
+                                   | [] -> ([], [])
+                                   | h::t -> ([h], t)
+              in
+              let newplayer = {h with hand = card @ h.hand} in
+              deal_helper (newplayer :: t) newdeck
+            else
+              let (newplist, newdeck) = deal_helper t deck in
+              (h :: newplist, newdeck)
+
 (* returns a new gamestate in which all attackers have been dealt cards
  * from the deck until everyone has 6 cards or the deck in empty *)
 let deal (g : state) : state =
-  failwith "unimplemented"
+  let players = g.attackers @ [g.defender] in
+  let (newplayers, newdeck) = deal_helper players g.deck in
+  match List.rev newplayers with
+  | []      -> raise (Invalid_action "game should be over, error in deal")
+  | h :: [] -> raise (Invalid_action "game should be over, error in deal")
+  | h :: t  -> {g with defender  = h;
+                       attackers = t;
+                       deck      = newdeck}
+
 
 (* returns the last element of a list. Raises Invalid_action if the list is empty*)
 let rec last_attacker = function
@@ -464,9 +489,39 @@ let test_valid_defense () =
   assert (not (valid_defense (Heart, 14) (Heart, 10) trump));
   assert (not (valid_defense (Club, 11) (Club, 9) trump))
 
-
+(* This test works, but need to also check for when deck becomes empty
+ * but I need sleep now. *)
 let test_deal () =
-  ()
+  let deck = [(Heart, 9); (Diamond, 9);  (Club, 9); (Spade, 9)] in
+  let trump = Heart in
+
+  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+
+  let attackers = [player2] in
+  let defender = player1 in
+  let table = [((Club, 6), Some(Club,7));
+               ((Diamond,6), Some(Diamond,10));
+               ((Club,8), None);
+               ((Heart,8), None);
+               ((Spade, 8), Some(Spade,9))] in
+
+  let active = player1 in
+  let discard = [] in
+  let winners = [] in
+  let state = {deck=deck; trump=trump; attackers=attackers; defender=defender;
+               table=table; active=active; discard=discard; winners=winners} in
+  let dealt_state = deal state in
+  let attacker1 = List.nth dealt_state.attackers 0 in
+
+  assert (dealt_state.deck          = [(Spade, 9)]);
+  assert (dealt_state.defender.hand = [(Club, 9); (Diamond, 9); (Heart, 7);
+                                      (Diamond, 7); (Club,14); (Spade, 14)]);
+  assert (attacker1.hand            = [(Heart, 9); (Diamond, 6); (Club, 10);
+                                      (Club, 12); (Spade,13); (Diamond, 14)])
 
 let test_last_attacker () =
   ()
@@ -508,11 +563,12 @@ let test_pass () =
   ()
 
 let run_tests () =
+  test_string_of_card ();
   test_init_deck ();
   test_init_game_state ();
   test_play_card ();
   test_valid_defense ();
-  test_string_of_card ();
+  test_deal ();
   print_endline "all tests pass";
   ()
 
