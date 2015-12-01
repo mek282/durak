@@ -216,7 +216,11 @@ let rec change_active g (p : player) =
 (* Terminates everything and prints either a positive or negative message
  * depending on whether the player won or is a Durak. *)
 let end_game (g : state) : state =
-  failwith "unimplemented"
+  let _ =
+    if List.exists (fun x -> x.state = Human) g.winners
+    then print_endline "Congratualtions! You didn't lose!"
+    else print_endline "You lost--You're the durak!" in
+  exit 0
 
 
 (* makes player p a winner. Ends the game if only one player is left. *)
