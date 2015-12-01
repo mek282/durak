@@ -287,6 +287,15 @@ let attack (g : state) (c : card) : state*bool =
   ( {g'' with table=table'; active=active'}, won)
 
 
+(* returns the penultimate element of a list, unless the list only has one
+ * element, in which case that element is returned. Raises Invalid_action for
+ * the empty list. *)
+let rec penultimate = function
+  | [] -> raise (Invalid_action "The list is empty")
+  | h::[] -> h
+  | h::_::[] -> h
+  | h::t -> penultimate t
+
 (* [is_unanswered g c]returns true iff (c,None) is a member of g.table*)
 
 
@@ -299,6 +308,7 @@ let attack (g : state) (c : card) : state*bool =
  * Makes defender a winner c2 was her last card.
  * Also returns a bool telling whether or not g.active won *)
 let defend (g : state) (c1 : card) (c2 : card) : state*bool =
+  (* useful helper: place_defense g c1 c2 *)
   failwith "unimplemented"
 
 
@@ -331,7 +341,15 @@ let step (g:state) (c:command) : state*string =
       with
       | Invalid_action a -> (g, a)
   end
-  | Take -> failwith "unimplemented"
+  | Take -> begin
+    try
+      let g' = take_all g in
+      let g'' = new_turn g' (penultimate g.attackers) in
+      let m = g.active.name ^ " chose to take." in
+      (g'',m)
+    with
+    | Invalid_action a -> (g, a)
+  end
   | Pass -> let m = g.active.name ^ "passed." in (pass g, m)
   | Deflect (c1,c2) -> begin
     try
