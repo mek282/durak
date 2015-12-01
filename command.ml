@@ -239,7 +239,9 @@ let take_all (g : state) : state =
 
 
 (* if c1 is on the table, and if c2 is a valid defense, return a new gamestate
- * with c2 paired to c1 on the table.  Raise Invalid_action otherwise. *)
+ * with c2 paired to c1 on the table and with c2 removed from the active
+ * player's hand.
+ * Raise Invalid_action otherwise. *)
 let place_defense (g : state) (c1 : card) (c2 : card) : state =
   (* implementation tip: Use valid_defense as a helper *)
   failwith "unimplemented"
@@ -296,20 +298,34 @@ let rec penultimate = function
   | h::_::[] -> h
   | h::t -> penultimate t
 
-(* [is_unanswered g c]returns true iff (c,None) is a member of g.table*)
+(* [all_answered g] returns true iff (c,None) is not a member of g.table
+ * for any c. In other words, every card on the table is paired with some
+ * other card. *)
+let all_answered (g : state) : bool =
+  failwith "unimplemented"
 
 
-(* if the active player is the defender, c1 is an unanswered attack on the
+(* Carries out "defende against c1 with c2" --
+ * if the active player is the defender, c1 is an unanswered attack on the
  * table, c2 is a valid defense to c1, and c2 is in the active player's hand,
  * then [defend g c1 c2] removes card c2 from the active player's hand and
  * adds it to the table as a response to c1; otherwise Invalid_action is raised.
  * If all attacks on the table have been answered, the active player becomes
  * the attacker; otherwise the defender gets a chance to play again.
- * Makes defender a winner c2 was her last card.
+ * Makes defender a winner if c2 was her last card.
  * Also returns a bool telling whether or not g.active won *)
 let defend (g : state) (c1 : card) (c2 : card) : state*bool =
-  (* useful helper: place_defense g c1 c2 *)
-  failwith "unimplemented"
+  if g.active <> g.defender
+    then raise (Invalid_action "Only the defender can defend.") else
+  if not (List.mem (c1,None) g.table)
+    then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
+  let g' = place_defense g c1 c2 in
+  let won = g'.active.hand = [] in
+  if won then ({ (do_win g' g'.active) with table = [] },won) else
+  if all_answered g'
+    then let g'' = {g' with table = []} in
+      (new_turn g'' (last_attacker g''.attackers) , won)
+    else (g', won)
 
 
 (* makes the next player the active player *)
