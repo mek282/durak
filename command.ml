@@ -261,10 +261,24 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
     else raise (Invalid_action "Can't deflect")
   end
 
+
+(* Converts a list of type ('a,'a Option) to a list of type 'a with each
+ * non-None member of a pair made into its own element *)
+let rec tablepairs_to_list = function
+  | [] -> []
+  | (c1,Some c2)::t -> c1::c2::(tablepairs_to_list t)
+  | (c1, None)::t -> c1::(tablepairs_to_list t)
+
+
 (* returns a new gamestate in which all cards on the table have been added
- * to the hand of the active player *)
+ * to the hand of the active player
+ * Precondition: the active player must be the defender *)
 let take_all (g : state) : state =
-  failwith "unimplemented"
+  if g.active <> g.defender
+    then raise (Invalid_action "You're not the defender!") else
+  let table = tablepairs_to_list g.table in
+  let p = {g.active with hand = table@g.active.hand} in
+  { g with active = p; defender = p; table = [] }
 
 
 (* if c1 is on the table, and if c2 is a valid defense, return a new gamestate
