@@ -296,13 +296,20 @@ let take_all (g : state) : state =
   { g with active = p; defender = p; table = [] }
 
 
-(* if c1 is on the table, and if c2 is a valid defense, return a new gamestate
- * with c2 paired to c1 on the table and with c2 removed from the active
- * player's hand.
+(* if c1 is unpaired on the table, and if c2 is a valid defense, return a new
+ * gamestate with c2 paired to c1 on the table and with c2 removed from the
+ * active player's hand.
  * Raise Invalid_action otherwise. *)
 let place_defense (g : state) (c1 : card) (c2 : card) : state =
-  (* implementation tip: Use valid_defense as a helper *)
-  failwith "unimplemented"
+  if not (List.mem (c1,None) g.table)
+    then raise (Invalid_action ((string_of_card c1) ^ " is not on the table."))
+  else if not (valid_defense c1 c2 g.trump)
+    then let s1 = string_of_card c1 in
+    let s2 = string_of_card c2 in
+    raise (Invalid_action (s2 ^ " can't  defend against " ^ s1 ^ "! "))
+  else let g' = game_play_card g c2 in
+  let tabl = List.remove_assoc c1 g'.table in
+  { g' with table = (c1,Some c2)::tabl }
 
 
 (* returns true iff the table is empty or at least one of the cards on the table
