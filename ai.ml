@@ -856,6 +856,34 @@ let test_gameState_cloneAndRandomize () =
   ()
 
 let test_gameState_doMove () =
+  let () = print_endline "testing doMove: " in
+  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
+  let trump = Heart in
+  let defender = {state= CPU 1; hand= []; name= "Foo"} in
+  let attackers = [
+    {state= CPU 1; hand= []; name= "Bar"};
+    {state= CPU 1; hand= []; name= "Bob"};
+    {state= CPU 1; hand= []; name= "Blarg"};
+  ] in
+  let table = [] in
+  let active = List.hd attackers in
+  let discard = [] in
+  let winners = [] in
+  let g = {
+    deck; trump; defender; attackers; table; active; discard; winners
+  } in
+  let g1 = GameState.deal g in
+  let moveList = GameState.getMoves g1 in
+  print_endline ("DECK: "^(printCardList g1.deck));
+  print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
+  print_endline (printPlayerHands g1.attackers);
+  print_endline (printCommList moveList);
+  print_endline ("ACTIVE: "^g1.active.name);
+  let g2 = GameState.doMove (List.hd moveList) g1 in
+  print_endline ("DECK: "^(printCardList g2.deck));
+  print_endline ("DEFENDER: "^(printCardList g2.defender.hand));
+  print_endline (printPlayerHands g2.attackers);
+  print_endline ("ACTIVE: "^g2.active.name);
   ()
 
 let test_gameState_getMoves () =
@@ -1028,6 +1056,7 @@ let run_ai_tests () =
   test_med_attack ();
   test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
+  test_gameState_doMove ();
   test_gameState_getMoves ();
   print_endline "all AI tests pass";
   ()
