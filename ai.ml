@@ -59,12 +59,17 @@ let rec getUndefended (t:(card*card option) list) : card list =
 
 (*returns true if att is a valid attack, given table inPlay*)
 let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
-  let rec compRanks pairlst =
-    match pairlst with
-    | [] -> []
-    | (a,None)::tl -> (snd a)::(compRanks tl)
-    | (a, Some b)::tl -> (snd a)::(snd b)::(compRanks tl) in
-  List.mem (snd att) (compRanks inPlay)
+  if List.length inPlay = 0
+    then true
+  else
+    begin
+      let rec compRanks pairlst =
+        match pairlst with
+        | [] -> []
+        | (a,None)::tl -> (snd a)::(compRanks tl)
+        | (a, Some b)::tl -> (snd a)::(snd b)::(compRanks tl) in
+      List.mem (snd att) (compRanks inPlay)
+    end
 
 (*[isValidDef a d t] returns true if d is a valid defense against a. Does not
  *include deflections *)
@@ -96,38 +101,58 @@ let rec rem_dups lst =
 
 (*returns a list of all valid Defend commands given state g*)
 let rec getValidDefenses (g:state) : command list =
-  let rec itrHand atk lst1 =
-    match lst1 with
-    | [] -> []
-    | hd::tl -> if isValidDef atk hd g.trump
-                then (Defend (atk,hd))::(itrHand atk tl)
-                else itrHand atk tl in
-  let rec itrAtks lst2 =
-    match lst2 with
-    | [] -> []
-    | hd::tl -> (itrHand hd g.active.hand) @ (itrAtks tl) in
-  itrAtks (getUndefended g.table)
+  if List.length g.attackers = 0
+    then []
+  else if List.mem g.active g.attackers
+    then []
+  else
+    begin
+      let rec itrHand atk lst1 =
+        match lst1 with
+        | [] -> []
+        | hd::tl -> if isValidDef atk hd g.trump
+                    then (Defend (atk,hd))::(itrHand atk tl)
+                    else itrHand atk tl in
+      let rec itrAtks lst2 =
+        match lst2 with
+        | [] -> []
+        | hd::tl -> (itrHand hd g.active.hand) @ (itrAtks tl) in
+      itrAtks (getUndefended g.table)
+    end
 
 (*returns a list of all valid Attack commands, given state g*)
 let rec getValidAttacks (g:state) : command list =
-  let rec itrHand lst1 =
-    match lst1 with
-    | [] -> []
-    | hd::tl -> if isValidAtt g.table hd
-                  then (Attack hd)::(itrHand tl)
-                else itrHand tl in
-  itrHand g.active.hand
+  if List.length g.attackers = 0
+    then []
+  else if g.active = g.defender
+    then []
+  else
+    begin
+      let rec itrHand lst1 =
+        match lst1 with
+        | [] -> []
+        | hd::tl -> if isValidAtt g.table hd
+                      then (Attack hd)::(itrHand tl)
+                    else itrHand tl in
+      itrHand g.active.hand
+    end
 
 (*returns a list of valid Deflect commands, given state g*)
 let rec getValidDeflections (g:state) : command list =
-  let rec itrHand atk lst1 =
-    match lst1 with
-    | [] -> []
-    | hd::tl -> if isValidDeflect hd g
-                then (Deflect (atk,hd))::(itrHand atk tl)
-                else itrHand atk tl in
-  itrHand (fst (List.hd g.table)) g.active.hand
-
+  if List.length g.attackers = 0
+    then []
+  else if List.length g.table = 0
+    then []
+  else
+    begin
+      let rec itrHand atk lst1 =
+        match lst1 with
+        | [] -> []
+        | hd::tl -> if isValidDeflect hd g
+                    then (Deflect (atk,hd))::(itrHand atk tl)
+                    else itrHand atk tl in
+      itrHand (fst (List.hd g.table)) g.active.hand
+    end
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
 let rec firstUndefended (table:(card * card option) list) =
@@ -163,6 +188,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
         getCardDeck new_d (n+1)
     else d
 
+  (*shuffle card deck d*)
   let shuffle d =
     let nd = List.map (fun c -> (Random.bits (), c)) d in
     let sond = List.sort compare nd in
@@ -191,6 +217,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
       | hd::tl -> {hd with hand = []}::(prepPlayers tl) in
 
     let (newDeck,newPlayers) = dealAll deck (prepPlayers players) [] in
+    let newPlayers = List.rev newPlayers in
     let newDiscards = [] in
     let newTable = [] in
     let newTrump = List.hd (shuffle [Heart; Club; Spade; Diamond]) in
@@ -200,6 +227,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
             deck = newDeck;
             defender = List.hd newPlayers;
             attackers = List.tl newPlayers;
+            active = List.hd (List.tl newPlayers)
             }
 
   (*[Clone g] returns a clone of gameState [g]*)
@@ -214,30 +242,40 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*[CloneAndRandomize g p] returns a clone of the given gameState [g], after
    *randomizing the elements that are invisible to the given player [p]*)
-  let cloneAndRandomize (g:state) (p:player) =
+  let cloneAndRandomize (g:state) =
+    let p = g.active in
+    let () = print_endline ("PLAYERHAND: "^(string_of_int (List.length p.hand))); in
     let players = g.defender::g.attackers in
     (*let nonActive = List.filter (fun a -> a <> p) players in*)
     let seenCards = p.hand @ g.discard @ (unwrapTable g.table) in
     let unseenCards = List.filter (fun a -> not (List.mem a seenCards))
-                                  (getCardDeck [] 6) in
-    let rec dealOnce deck player iter =
+                                  (shuffle (getCardDeck [] 6)) in
+    let rec dealO deck player iter =
       match deck with
       | [] -> (deck,player)
       | hd::tl -> if iter = 0 then (deck,player)
                   else let newHand = hd::player.hand in
-                       dealOnce tl {player with hand = newHand} (iter-1) in
+                       dealO tl {player with hand = newHand} (iter-1) in
 
-    let rec dealAll deck playerList newlst =
-      let hd = List.hd playerList in
-      if playerList = [] then (deck,newlst)
-      else if hd = p then dealAll deck (List.tl playerList) (p::newlst)
-      else
-        match
-          dealOnce deck hd (6-(List.length hd.hand))
-        with
-        | (a,b) -> dealAll a (List.tl playerList) (b::newlst) in
+    let rec dealA deck playerList newlst =
+      (if playerList = [] then (deck,(List.rev newlst))
+      else let hd = List.hd playerList in
+        if hd = p
+          then dealA deck (List.tl playerList) (hd::newlst)
+        else
+          match
+            dealO deck hd (6-(List.length hd.hand))
+          with
+          | (a,b) -> dealA a (List.tl playerList) (b::newlst))
+    in
+    let rec prep (lst:player list) =
+      match lst with
+      | [] -> []
+      | hd::tl -> if hd = p
+                    then ({hd with hand = p.hand})::(prep tl)
+                  else ({hd with hand = []})::(prep tl) in
 
-    let (newDeck, newPlayers) = dealAll unseenCards players [] in
+    let (newDeck, newPlayers) = dealA unseenCards (prep players) [] in
     {g with deck= newDeck;
             defender= (List.hd newPlayers);
             attackers= (List.tl newPlayers)}
@@ -250,8 +288,10 @@ let rec getUndefended (table:(card * card option) list) : card list =
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
     (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
-      (if g.active = g.defender then [Take] else []) @
-      (if List.mem g.active g.attackers then [Pass] else [])
+      (if g.active <> g.defender || List.length g.attackers = 0
+        then [] else [Take]) @
+      (if not (List.mem g.active g.attackers) || List.length g.attackers = 0
+        then [] else [Pass])
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
    *player [p]*)
@@ -417,7 +457,7 @@ let iSMCTS g itermax =
     if itermax <> 0 then
       begin
         let node = root in
-        let state = (GameState.cloneAndRandomize g g.active) in
+        let state = (GameState.cloneAndRandomize g) in
 
         (*SELECT*)
         let (state,node)= select state node in
@@ -649,6 +689,55 @@ let response (gameState:state) : command =
   | CPU 3 -> Hard.hard gameState
   | _ -> failwith "[response] error. Invalid active player_state"
 
+let suit_to_string (suit: suit) : string =
+  match suit with
+  | Heart   -> "H"
+  | Club    -> "C"
+  | Diamond -> "D"
+  | Spade   -> "S"
+
+let rank_to_string (rank: int) : string =
+  match rank with
+  | 14 -> "A"
+  | 13 -> "K"
+  | 12 -> "Q"
+  | 11 -> "J"
+  | n  -> string_of_int n
+
+let card_to_string c : string =
+  match c with
+  | (a,b) -> " |"^(suit_to_string a)^(rank_to_string b)^"| "
+
+let command_to_string c : string =
+  match c with
+  | Pass -> "Pass\n"
+  | Take -> "Take\n"
+  | Deflect (a,b) ->
+     "Deflect "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+  | Attack a -> "Attack with"^(card_to_string a)^"\n"
+  | Defend (a,b) -> "Defend "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+
+let rec printCardList d : string =
+  match d with
+  | [] -> ""
+  | (a,b)::tl -> (suit_to_string a)^":"^
+                 (rank_to_string b)^" | "^(printCardList tl)
+
+let rec printPlayerHands lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> "ATTACKER: "^(printCardList hd.hand)^"\n"^(printPlayerHands tl)
+
+let rec printPlayers lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> hd.name^", "^(printPlayers tl)
+
+let rec printCommList lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> (command_to_string hd)^(printCommList tl)
+
 (*****************************************************************************)
 (************************************TESTS************************************)
 (*****************************************************************************)
@@ -731,19 +820,75 @@ let test_easy_attack () =
   failwith "TODO"
 
 let test_gameState_shuffle () =
-  failwith "TODO"
-
-let test_gameState_deal () =
-  failwith "TODO"
+  let d = GameState.getCardDeck [] 10 in
+  let d1 = GameState.shuffle d in
+  print_endline (printCardList d);
+  print_endline (printCardList d1);
+  ()
 
 let test_gameState_cloneAndRandomize () =
-  failwith "TODO"
+  let () = print_endline "testing cloneAndRandomize: "; in
+  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
+  let trump = Heart in
+  let defender = {state= CPU 1; hand= []; name= "Foo"} in
+  let attackers = [
+    {state= CPU 1; hand= []; name= "Bar"};
+    {state= CPU 1; hand= []; name= "Bob"};
+    {state= CPU 1; hand= []; name= "Blarg"};
+  ] in
+  let table = [] in
+  let active = List.hd attackers in
+  let discard = [] in
+  let winners = [] in
+  let g = {
+    deck; trump; defender; attackers; table; active; discard; winners
+  } in
+  let g1 = GameState.deal g in
+  print_endline ("DECK: "^(printCardList g1.deck));
+  print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
+  print_endline (printPlayerHands g1.attackers);
+  let g2 = GameState.cloneAndRandomize g1 in
+  print_endline ("DECK: "^(printCardList g2.deck));
+  print_endline ("DEFENDER: "^(printCardList g2.defender.hand));
+  print_endline (printPlayerHands g2.attackers);
+  print_endline "";
+  ()
 
 let test_gameState_doMove () =
-  failwith "TODO"
+  ()
 
 let test_gameState_getMoves () =
-  failwith "TODO"
+  let () = print_endline "testing getMoves: " in
+  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
+  let trump = Heart in
+  let defender = {state= CPU 1; hand= []; name= "Foo"} in
+  let attackers = [
+    {state= CPU 1; hand= []; name= "Bar"};
+    {state= CPU 1; hand= []; name= "Bob"};
+    {state= CPU 1; hand= []; name= "Blarg"};
+  ] in
+  let table = [] in
+  let active = List.hd attackers in
+  let discard = [] in
+  let winners = [] in
+  let g = {
+    deck; trump; defender; attackers; table; active; discard; winners
+  } in
+  let g1 = GameState.deal g in
+  let moveList = GameState.getMoves g1 in
+  print_endline ("DECK: "^(printCardList g1.deck));
+  print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
+  print_endline (printPlayerHands g1.attackers);
+  print_endline (printCommList moveList);
+  let g2 = GameState.cloneAndRandomize g1 in
+  let g3 = {g2 with active = g2.defender;
+                    table = [((Diamond,10),None)]} in
+  let moveList1 = GameState.getMoves g3 in
+  print_endline ("DECK: "^(printCardList g3.deck));
+  print_endline ("DEFENDER: "^(printCardList g3.defender.hand));
+  print_endline (printPlayerHands g3.attackers);
+  print_endline (printCommList moveList1);
+  ()
 
 let test_gameState_getResult () =
   failwith "TODO"
@@ -880,6 +1025,9 @@ let run_ai_tests () =
   test_easy_defend ();
   test_med_defend ();
   test_med_attack ();
+  test_gameState_shuffle ();
+  test_gameState_cloneAndRandomize ();
+  test_gameState_getMoves ();
   print_endline "all AI tests pass";
   ()
 
