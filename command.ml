@@ -89,6 +89,29 @@ let init_game_state s dlist =
 (* =========================COMMAND PROCESSING=============================== *)
 (* ========================================================================== *)
 
+(* Some helpers for strings manipulation - Vanya *)
+(* returns string representation of a suit *)
+let suit_to_string (suit: suit) : string =
+  match suit with
+  | Heart   -> "Hearts"
+  | Club    -> "Clubs"
+  | Diamond -> "Diamonds"
+  | Spade   -> "Spades"
+
+(* returns string representation of a rank *)
+let rank_to_string (rank: int) : string =
+  match rank with
+  | 14 -> "Ace"
+  | 13 -> "King"
+  | 12 -> "Queen"
+  | 11 -> "Jack"
+  | n  -> string_of_int n
+
+(* Finished and tested 11/26 - Vanya *)
+(* returns the string representation of card (s,r)*)
+let string_of_card (s,r) : string =
+  (rank_to_string r) ^ " of " ^ (suit_to_string s)
+
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
 let play_card (p : player) (c : card) : player =
@@ -248,19 +271,20 @@ let rec pass' (g : state) : state*command =
  * attack, remove that card from the active player's hand and add that card
  * to the table, then change the active player to either the next attacker
  * or to the defender, if the active player is the last attacker *)
-let attack (g : state) (c : card) =
+let attack (g : state) (c : card) : state*bool =
   if not (List.mem g.active g.attackers)
     then raise (Invalid_action "You are not an attacker!")
   else if not (valid_attack g c)
     then raise (Invalid_action "That is not a valid attack!")
   else let g' = game_play_card g c in
-  let g'' = if g'.active.hand = [] then do_win g' g'.active else g' in
+  let won = g'.active.hand = [] in
+  let g'' = if won then do_win g' g'.active else g' in
   let table' = (c,None)::g''.table in
   let active' =
     if g''.active = last_attacker g''.attackers
       then g''.defender
       else next_attacker g'' in
-  {g'' with table=table'; active=active'}
+  ( {g'' with table=table'; active=active'}, won)
 
 
 (* [is_unanswered g c]returns true iff (c,None) is a member of g.table*)
@@ -272,16 +296,30 @@ let attack (g : state) (c : card) =
  * adds it to the table as a response to c1; otherwise Invalid_action is raised.
  * If all attacks on the table have been answered, the active player becomes
  * the attacker; otherwise the defender gets a chance to play again.
- * Makes defender a winner c2 was her last card.*)
-let defend (g : state) (c1 : card) (c2 : card) =
+ * Makes defender a winner c2 was her last card.
+ * Also returns a bool telling whether or not g.active won *)
+let defend (g : state) (c1 : card) (c2 : card) : state*bool =
   failwith "unimplemented"
 
 
-let step (g:state) (c:command) : state =
+let step (g:state) (c:command) : state*string =
   match c with
-  | Attack c -> (try attack g c with Invalid_action a -> print_endline a; g)
+  | Attack c -> begin
+      try
+        (let (g',w) = attack g c in
+        let win_m = if w then g.active.name ^ " won! " else "" in
+        let m=g.active.name^" attacked with "^string_of_card c^". " ^ win_m in
+        (g',m))
+      with
+      | Invalid_action a -> (g, "There was a problem: " ^ a) end
   | Defend (c1,c2) -> begin
-      try defend g c1 c2 with Invalid_action a -> print_endline a; g end
+      try
+        let (g',w) = defend g c1 c2 in
+        let win_m = if w then g.active.name ^ " won! " else "" in
+        let m=g.active.name^" defended with "^string_of_card c2^". " ^ win_m in
+        (g',m)
+      with
+      | Invalid_action a -> (g, a) end
   | Take -> failwith "unimplemented"
   | Pass -> failwith "unimplemented"
   | Deflect (c1,c2) -> failwith "unimplemented"
@@ -322,6 +360,20 @@ let test_init_game_state () =
   assert ((g1.active).state = Human);
   assert ((g1.active).name = "jane");
   assert (List.length ((g1.active).hand) = 6)
+
+let test_string_of_card () =
+  let cards = [(Heart, 6); (Diamond, 7); (Spade, 8); (Club,9); (Spade, 10);
+               (Heart, 11);(Diamond, 12);(Spade, 13);(Club,14)] in
+  assert (string_of_card (List.nth cards 0) = "6 of Hearts");
+  assert (string_of_card (List.nth cards 1) = "7 of Diamonds");
+  assert (string_of_card (List.nth cards 2) = "8 of Spades");
+  assert (string_of_card (List.nth cards 3) = "9 of Clubs");
+  assert (string_of_card (List.nth cards 4) = "10 of Spades");
+  assert (string_of_card (List.nth cards 5) = "Jack of Hearts");
+  assert (string_of_card (List.nth cards 6) = "Queen of Diamonds");
+  assert (string_of_card (List.nth cards 7) = "King of Spades");
+  assert (string_of_card (List.nth cards 8) = "Ace of Clubs")
+
 
 let test_play_card () =
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
@@ -405,6 +457,7 @@ let run_tests () =
   test_init_game_state ();
   test_play_card ();
   test_valid_defense ();
+  test_string_of_card ();
   print_endline "all tests pass";
   ()
 
