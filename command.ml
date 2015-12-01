@@ -190,10 +190,24 @@ let new_turn g (d : player) : state =
     in
   { g with attackers = a'; defender = d}
 
+
+(* [before el lst] returns the element in lst that comes before el.
+ * Precondition: There must be at least two elements in the list, and el
+ * cannot be the first element *)
+let rec before el = function
+  | [] -> failwith "crashed on before"
+  | h::[] -> raise (Invalid_action "The next player is the defender")
+  | e1::e2::t -> if e2 = el then e1 else before el (e2::t)
+
+
 (* returns the player who comes after the active player in the attacker list.
- * raise Invalid_action if the next player should be the defender *)
+ * raise Invalid_action if the next player should be the defender
+ * Raises Invalid_action if the active player is not an attacker *)
 let next_attacker (g : state) : player =
-  failwith "unimplemented"
+  if not (List.mem g.active g.attackers)
+    then raise (Invalid_action "The current player isn't an attacker!") else
+  before g.active g.attackers
+
 
 (* returns a new gamestate with attack c added to the table *)
 let add_attack g (c : card) : state =
@@ -345,7 +359,7 @@ let rec penultimate = function
  * for any c. In other words, every card on the table is paired with some
  * other card. *)
 let all_answered (g : state) : bool =
-  failwith "unimplemented"
+  not (List.exists (fun (_,x) -> x = None) g.table)
 
 
 (* Carries out "defende against c1 with c2" --
