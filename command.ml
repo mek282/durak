@@ -465,7 +465,7 @@ let step (g:state) (c:command) : state*string*bool =
         let m = g.active.name ^ " chose to take." in
         (g'',m,false)
       end
-    | Pass -> let m = g.active.name ^ "passed." in (pass g, m,false)
+    | Pass -> let m = g.active.name ^ " passed." in (pass g, m,false)
     | Deflect (c1,c2) -> begin
         let (g',w,e) = deflect g c1 c2 in
         let win_m = if w then g.active.name ^ " won! " else "" in
@@ -826,21 +826,77 @@ let test_take_all () =
 let test_place_defense () =
   ()
 
-let test_pass' () =
-  ()
-
 let test_pass () =
+(*   let gs1 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
+                      (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
+                      (Spade, 9); (Diamond, 12); (Club, 7)];
+             trump = Club;
+             attackers = [{state = Human;
+                           hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                           name = "testplayer"};
+                          {state = CPU 2;
+                           hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                           name = "Jose"};
+                          {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"}];
+             defender =   {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             table = [];
+             active =     {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"};
+             discard = [];
+             winners = [];
+             passed = [{state = Human;
+                           hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                           name = "testplayer"};
+                          {state = CPU 2;
+                           hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                           name = "Jose"};];} in
+  assert (pass gs1 =
+          {gs1 with passed = [];
+                    attackers = [
+                                 {state = CPU 2;
+                                  hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                                  name = "Mary"};
+                                  {state = CPU 2;
+                                   hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                                   name = "Jose"};
+                                 {state = Human;
+                                  hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                                  name = "testplayer"};];
+                    defender =   {state = CPU 2;
+                                  hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                                  name = "Ivan"};
+                    active = {state = CPU 2;
+                                  hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                                  name = "Mary"} }); *)
   ()
 
 let run_tests () =
   test_string_of_card ();
   test_init_deck ();
-  (* test_init_game_state (); *)
+  test_init_game_state ();
   test_play_card ();
   test_valid_defense ();
   test_deal ();
   test_last_attacker ();
   test_remove_last ();
+  test_pass ();
   (*test_new_turn (); These tests need to be changed because new_turn specification changed*)
   (* test_next_attacker (); *)
   (* test_add_attack (); *)

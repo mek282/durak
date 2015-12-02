@@ -178,7 +178,7 @@ let parse_no_fail (p : string) (g : state) : command =
 let end_game (g : state) : unit =
   let _ =
     if List.exists (fun x -> x.state = Human) g.winners
-    then print_endline "Congratualtions! You didn't lose!"
+    then print_endline "Congratulations! You didn't lose!"
     else print_endline "You lost--You're the durak!" in
   exit 0
 
