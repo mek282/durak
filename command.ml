@@ -593,12 +593,6 @@ let test_step () =
    (Club,11); (Spade,10); (Diamond, 8); (Heart, 10)] in
   let player2' = { Sample_state2.player2 with hand = hand2' } in
   let g1'' = { g1 with table = ((Spade,7),None)::g1.table;
-      active = Sample_state2.player1;
-      attackers = player2'::Sample_state2.player3::[];
-      discard = [] } in
-  let (g2,s2) = step g1' (Defend ((Spade,7),(Spade,13))) in
-  let g2' = { g1' with table = [((Spade,7),Some (Spade,13))];
-      active = Sample_state2.player3 } in
                       active = Sample_state2.player1;
                    attackers = player2'::Sample_state2.player3::[];
                      discard = [] } in
@@ -608,7 +602,6 @@ let test_step () =
   let g2' = { g1' with table = ((Spade,7),Some (Spade,13)) :: List.tl g1'.table;
                       active = Sample_state2.player3;
                     defender = defender'} in
->>>>>>> 07f2613acb20d801d63c4c8f3500a700a7d0dbb6
   print_endline s2;
   field_compare g1' g1'';
   field_compare g2 g2'
