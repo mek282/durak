@@ -12,6 +12,55 @@ open Command
 (***********************************HELPERS***********************************)
 (*****************************************************************************)
 
+let suit_to_string (suit: suit) : string =
+  match suit with
+  | Heart   -> "H"
+  | Club    -> "C"
+  | Diamond -> "D"
+  | Spade   -> "S"
+
+let rank_to_string (rank: int) : string =
+  match rank with
+  | 14 -> "A"
+  | 13 -> "K"
+  | 12 -> "Q"
+  | 11 -> "J"
+  | n  -> string_of_int n
+
+let card_to_string c : string =
+  match c with
+  | (a,b) -> " |"^(suit_to_string a)^(rank_to_string b)^"| "
+
+let command_to_string c : string =
+  match c with
+  | Pass -> "Pass\n"
+  | Take -> "Take\n"
+  | Deflect (a,b) ->
+     "Deflect "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+  | Attack a -> "Attack with"^(card_to_string a)^"\n"
+  | Defend (a,b) -> "Defend "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+
+let rec printCardList d : string =
+  match d with
+  | [] -> ""
+  | (a,b)::tl -> (suit_to_string a)^":"^
+                 (rank_to_string b)^" | "^(printCardList tl)
+
+let rec printPlayerHands lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> "ATTACKER: "^(printCardList hd.hand)^"\n"^(printPlayerHands tl)
+
+let rec printPlayers lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> hd.name^", "^(printPlayers tl)
+
+let rec printCommList lst : string =
+  match lst with
+  | [] -> ""
+  | hd::tl -> (command_to_string hd)^(printCommList tl)
+
 (*unwrap option*)
 let unwrap o =
   match o with
@@ -879,7 +928,7 @@ let test_gameState_doMove () =
   print_endline (printPlayerHands g1.attackers);
   print_endline (printCommList moveList);
   print_endline ("ACTIVE: "^g1.active.name);
-  let g2 = GameState.doMove (List.hd moveList) g1 in
+  let g2 = GameState.doMove (Attack (Spade,7)) g1 in
   print_endline ("DECK: "^(printCardList g2.deck));
   print_endline ("DEFENDER: "^(printCardList g2.defender.hand));
   print_endline (printPlayerHands g2.attackers);
@@ -934,8 +983,44 @@ let test_Node_addChild () =
 let test_Node_update () =
   failwith "TODO"
 
-let test_iSMCTS () =
+let test_select () =
   failwith "TODO"
+
+let expand () =
+  failwith "TODO"
+
+let rec simulate () =
+  failwith "TODO"
+
+let rec backPropogate () =
+  failwith "TODO"
+
+let test_iSMCTS () =
+  let () = print_endline "testing ISMCTS: " in
+  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
+  let trump = Heart in
+  let defender = {state= CPU 1; hand= []; name= "Foo"} in
+  let attackers = [
+    {state= CPU 1; hand= []; name= "Bar"};
+    {state= CPU 1; hand= []; name= "Bob"};
+    {state= CPU 1; hand= []; name= "Blarg"};
+  ] in
+  let table = [] in
+  let active = List.hd attackers in
+  let discard = [] in
+  let winners = [] in
+  let g = {
+    deck; trump; defender; attackers; table; active; discard; winners
+  } in
+  let g1 = GameState.deal g in
+  let moveList = GameState.getMoves g1 in
+  print_endline ("DECK: "^(printCardList g1.deck));
+  print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
+  print_endline (printPlayerHands g1.attackers);
+  print_endline (printCommList moveList);
+  let m = iSMCTS g 100 in print_endline
+    ("GRANDMASTERMOVE: "^(command_to_string m));
+  ()
 
 let test_med_defend () =
   let gs1 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
@@ -1057,7 +1142,8 @@ let run_ai_tests () =
   test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
-  test_gameState_getMoves ();
+  (*test_gameState_getMoves ();*)
+  test_iSMCTS ();
   print_endline "all AI tests pass";
   ()
 
