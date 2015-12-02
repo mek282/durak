@@ -580,7 +580,7 @@ let test_step () =
   let g1'' = { g1 with table = ((Spade,7),None)::g1.table;
       active = Sample_state2.player1;
       attackers = player2'::Sample_state2.player3::[];
-      discard = [(Spade, 7)] } in
+      discard = [] } in
   let (g2,s2) = step g1' (Defend ((Spade,7),(Spade,13))) in
   let g2' = { g1' with table = [((Spade,7),Some (Spade,13))];
       active = Sample_state2.player3 } in
