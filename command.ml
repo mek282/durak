@@ -201,17 +201,22 @@ let new_turn g (d : player) : state =
 (* [before el lst] returns the element in lst that comes before el.
  * Precondition: There must be at least two elements in the list, and el
  * cannot be the first element *)
-let rec before el = function
-  | [] -> failwith "crashed on before"
-  | h::[] -> raise (Invalid_action "The next player is the defender")
-  | e1::e2::t -> if e2 = el then e1 else before el (e2::t)
+let rec before (el: 'a) (plist: 'a list) =
+  print_endline "BITCH WE'RE IN BEFORE NOW";
+  match plist with
+  | [] -> print_endline "Bithc wat"; failwith "crashed on before"
+  | h::[] -> print_endline "Bitljkads;lfkja"; raise (Invalid_action "The next player is the defender")
+  | e1::e2::t -> Printf.printf "OK HERE WER FUCKING GO %b\n" (e2 = el);
+                 if e2.name = el.name then e1 else before el (e2::t)
 
 (* returns the player who comes after the active player in the attacker list.
  * raise Invalid_action if the next player should be the defender
  * Raises Invalid_action if the active player is not an attacker *)
 let next_attacker (g : state) : player =
+  print_endline "BITCH WE'RE IN NEXT ATTACKER NOW";
   if not (List.exists (fun x -> x.name = g.active.name) g.attackers)
     then raise (Invalid_action "The current player isn't an attacker!") else
+    print_endline "BITCH WERE LEAVING NEXT ATTACKER NOW";
   before g.active g.attackers
 
 
@@ -346,6 +351,7 @@ let attack (g : state) (c : card) : state*bool*bool =
     if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
       else next_attacker g'' in
+  print_endline "BITCH ATTACK JUST ENDED";
   ( {g'' with table=table'; active=active'; passed = []}, won,ended)
 
 
@@ -766,6 +772,9 @@ let test_new_turn () =
 
   assert (new_state.defender  = attacker3);
   assert (new_state.attackers = [defender; attacker1; attacker2])
+
+let test_before () =
+  ()
 
 let test_next_attacker () =
   ()
