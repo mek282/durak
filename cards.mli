@@ -58,7 +58,8 @@ val print_suit : suit -> unit
  * the second element is None or Some "defending card"
  * active is the player whose turn it is
  * discard represents the discard pile
- * winners is the list of players who are out of the game *)
+ * winners is the list of players who are out of the game
+ * Invariant: no two distinct players in the game may have the same name *)
 type state = { deck: deck;
                trump: suit;
                attackers: player list;

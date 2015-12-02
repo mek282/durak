@@ -209,7 +209,7 @@ let rec before el = function
  * raise Invalid_action if the next player should be the defender
  * Raises Invalid_action if the active player is not an attacker *)
 let next_attacker (g : state) : player =
-  if not (List.mem g.active g.attackers)
+  if not (List.exists (fun x -> x.name = g.active.name) g.attackers)
     then raise (Invalid_action "The current player isn't an attacker!") else
   before g.active g.attackers
 
@@ -251,7 +251,7 @@ let do_win (g : state) (p : player) : state =
     { g' with winners = p::(g'.winners) }
   else
   let active' = if g.active = p
-      then if p = last_attacker g.attackers then g.defender else next_attacker g
+      then if p.name = (List.hd g.attackers).name then g.defender else next_attacker g
     else g.active in
   { g with
    active = active';
@@ -353,7 +353,7 @@ let attack (g : state) (c : card) : state*bool =
   let g'' = if won then do_win g' g'.active else g' in
   let table' = (c,None)::g''.table in
   let active' =
-    if g''.active = last_attacker g''.attackers
+    if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
       else next_attacker g'' in
   ( {g'' with table=table'; active=active'}, won)
@@ -448,6 +448,46 @@ let step (g:state) (c:command) : state*string =
 (* ========================================================================== *)
 (* ==============================TESTING===================================== *)
 (* ========================================================================== *)
+let rec string_of_deck = function
+  | [] -> ""
+  | h::t -> (string_of_card h) ^ "; " ^ (string_of_deck t)
+
+let string_of_player (p : player) =
+  let s = match p.state with Human -> "Human" | CPU i -> "CPU" ^ (string_of_int i) in
+  let hand = string_of_deck p.hand in
+  "(" ^ p.name ^ ": " ^ s ^ ", " ^ hand ^ ")"
+
+let rec string_of_attackers = function
+  | [] -> ""
+  | h::t -> (string_of_player h) ^ "; " ^ (string_of_attackers t)
+
+let rec string_of_table = function
+  | [] -> ""
+  | (a,Some d)::t ->
+    "(" ^ string_of_card a ^ ", " ^ string_of_card d ^ ") " ^ string_of_table t
+  | (a,None)::t ->
+    "(" ^ string_of_card a ^ ", None) " ^ string_of_table t
+
+let print_state (g : state) : unit =
+  print_endline("deck: " ^ string_of_deck g.deck);
+  print_endline("trump: " ^ suit_to_string g.trump);
+  print_endline("attackers: " ^ string_of_attackers g.attackers);
+  print_endline("defender: " ^ string_of_player g.defender);
+  print_endline("table: " ^ string_of_table g.table);
+  print_endline("active: " ^ string_of_player g.active);
+  print_endline("discard: " ^ string_of_deck g.discard);
+  print_endline("winners: " ^ string_of_attackers g.winners)
+
+let field_compare g1 g2 =
+  assert (g1.deck = g2.deck);
+  assert (g1.trump = g2.trump);
+  assert (g1.attackers = g2.attackers);
+  assert (g1.defender = g2.defender);
+  assert (g1.table = g2.table);
+  assert (g1.active = g2.active);
+  assert (g1.discard = g2.discard);
+  assert (g1.winners = g2.winners)
+
 let sample_state () : state =
   let deck = [(Heart, 9); (Diamond, 9);  (Club, 9); (Spade, 9)] in
   let trump = Heart in
@@ -478,36 +518,55 @@ let sample_state () : state =
   {deck=deck; trump=trump; attackers=attackers; defender=defender;
                table=table; active=active; discard=discard; winners=winners}
 
-let sample_state2 () : state =
-  let deck = [(Heart, 11); (Diamond, 6);  (Club, 10); (Club, 9)] in
-  let trump = Heart in
+module Sample_state2 = struct
+  let deck = [(Heart, 11); (Diamond, 6);  (Club, 10); (Club, 9)]
+  let trump = Heart
 
-  let hand1 = [(Heart, 7); (Heart, 6);  (Club,13)] in
-  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
+  let hand1 = [(Heart, 7); (Heart, 6);  (Club,13)]
+  let player1 = {state = Human; hand = hand1; name = "Zapdoz"}
 
-  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14); (Club,11); (Spade,10); (Spade, 7); (Diamond, 8); (Heart, 10)] in
-  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14);
+   (Club,11); (Spade,10); (Spade, 7); (Diamond, 8); (Heart, 10)]
+  let player2 = {state= CPU(1); hand = hand2; name = "Rawr"}
 
-  let hand3 = [(Diamond, 9); (Club, 6)] in
-  let player3 = {state= CPU(1); hand = hand3; name = "Ayyy"} in
+  let hand3 = [(Diamond, 9)]
+  let player3 = {state= CPU(1); hand = hand3; name = "Ayyy"}
 
-  let hand4 = [] in
-  let player4 = {state= CPU(1); hand = hand4; name = "Lmao"} in
+  let hand4 = []
+  let player4 = {state= CPU(1); hand = hand4; name = "Lmao"}
 
-  let attackers = [player2; player3] in
-  let defender = player1 in
+  let attackers = [player2; player3]
+  let defender = player1
   let table = [((Club, 6), Some(Club,7));
                ((Diamond,6), Some(Diamond,10));
                ((Club,8), None);
                ((Heart,8), None);
-               ((Spade, 8), Some(Spade,9))] in
+               ((Spade, 8), Some(Spade,9))]
 
-  let active = player2 in
-  let discard = [] in
-  let winners = [player4] in
-  {deck=deck; trump=trump; attackers=attackers; defender=defender;
+  let active = player2
+  let discard = []
+  let winners = [player4]
+  let game = {deck=deck; trump=trump; attackers=attackers; defender=defender;
                table=table; active=active; discard=discard; winners=winners}
+end
 
+let test_step () =
+  let g1 = Sample_state2.game in
+  let (g1',m) = step g1 (Attack (Spade, 7)) in
+  let hand2' = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14);
+   (Club,11); (Spade,10); (Diamond, 8); (Heart, 10)] in
+  let player2' = { Sample_state2.player2 with hand = hand2' } in
+  let g1'' = { g1 with table = ((Spade,7),None)::g1.table;
+      active = Sample_state2.player1;
+      attackers = player2'::Sample_state2.player3::[];
+      discard = [(Spade, 7)] } in
+  (*print_endline "\n";
+  print_endline m;
+  print_endline "\n";
+  print_state g1';
+  print_endline "\n";
+  print_state g1'';*)
+  field_compare g1' g1''
 
 let test_init_deck () =
 (*
@@ -731,11 +790,6 @@ let test_pass' () =
 let test_pass () =
   ()
 
-let test_step () =
-  (*let g1 = sample_state2 () in
-  let (g1',_) = step g1 (Attack )*)
-  ()
-
 let run_tests () =
   test_string_of_card ();
   test_init_deck ();
@@ -750,6 +804,7 @@ let run_tests () =
   (* test_add_attack (); *)
   test_deflectable ();
   test_change_active ();
+  test_step ();
   print_endline "all tests pass";
   ()
 
