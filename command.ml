@@ -314,22 +314,6 @@ let take_all (g : state) : state =
 let valid_attack (g : state) ((s : suit) , (r : int)) : bool =
   g.table = [] || (List.exists (fun (_,x) -> x = r) (tablepairs_to_list g.table))
 
-(*
-(* loops over attackers if everyone has been passing until someone doesn't pass*)
-let rec pass' (g : state) : state*command =
-  let g' = change_active g (next_attacker g) in
-    let prompt = g.active.name ^ " passed. You can pass or attack." in
-    let response = parse_no_fail prompt g' in
-    let first = g.active = (List.hd g.attackers) in
-    if response <> Pass || not first then (g', response) else
-    if g'.active = last_attacker g'.attackers
-      then let g'' = change_active g g.defender in
-      let prompt = "Everyone passed. You can take or defend." in
-      let response = parse_no_fail prompt g'' in
-      (g'',response)
-      (*TODO: Somehow make sure no one can attack anymore*)
-    else pass' g'
-*)
 
 (* If the active player is an attacker holding card c, and card c is a valid
  * attack, remove that card from the active player's hand and add that card
@@ -821,6 +805,13 @@ let test_deflect () =
   ()
 
 let test_take_all () =
+  let g0 = { Sample_state2.game with active = Sample_state2.defender } in
+  let g1 = take_all g0 in
+  let hand1 = [(Club, 6); (Club,7); (Diamond,6); (Diamond,10); (Club,8);
+      (Heart,8); (Spade, 8); (Spade,9); (Heart, 7); (Heart, 6);  (Spade,13)] in
+  let p1 = { Sample_state2.player1 with hand = hand1 } in
+  let g1' = { g0 with table = []; defender = p1; active = p1} in
+  field_compare g1 g1' ;
   ()
 
 let test_place_defense () =
@@ -885,6 +876,11 @@ let test_pass () =
                                   hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
                                    (Diamond, 8); (Diamond, 7); (Heart, 12)];
                                   name = "Mary"} }); *)
+  let g0 = Sample_state2.game in
+  let g1 = pass g0 in
+  let g1' = { g0 with active = Sample_state2.defender;
+    passed = [Sample_state2.active] } in
+  field_compare g1 g1';
   ()
 
 let run_tests () =
@@ -903,6 +899,8 @@ let run_tests () =
   test_deflectable ();
   test_change_active ();
   test_step ();
+  test_take_all ();
+  test_pass ();
   print_endline "all tests pass";
   ()
 
