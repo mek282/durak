@@ -501,8 +501,8 @@ let field_compare g1 g2 =
   assert (g1.trump = g2.trump);
   assert (g1.attackers = g2.attackers);
   assert (g1.defender = g2.defender);
-  assert (g1.table = g2.table);
   assert (g1.active = g2.active);
+  assert (g1.table = g2.table);
   assert (g1.discard = g2.discard);
   assert (g1.winners = g2.winners);
   assert (g1.passed = g2.passed)
@@ -580,7 +580,7 @@ let test_step () =
   let g1'' = { g1 with table = ((Spade,7),None)::g1.table;
       active = Sample_state2.player1;
       attackers = player2'::Sample_state2.player3::[];
-      discard = [(Spade, 7)] } in
+      discard = [] } in
   let (g2,s2) = step g1' (Defend ((Spade,7),(Spade,13))) in
   let g2' = { g1' with table = [((Spade,7),Some (Spade,13))];
       active = Sample_state2.player3 } in
