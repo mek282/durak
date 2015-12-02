@@ -30,15 +30,30 @@ let print_suit s =
 
 let print_card c =
   match c with
-  | (Heart, x) -> Printf.printf "\n%i of Hearts" x
-  | (Diamond, x) -> Printf.printf "\n%i of Diamonds" x
-  | (Club, x) -> Printf.printf "\n%i of Clubs" x
-  | (Spade, x) -> Printf.printf "\n%i of Spades" x
+  | (Heart, x) -> Printf.printf "\n%i of Hearts\n" x
+  | (Diamond, x) -> Printf.printf "\n%i of Diamonds\n" x
+  | (Club, x) -> Printf.printf "\n%i of Clubs\n" x
+  | (Spade, x) -> Printf.printf "\n%i of Spades\n" x
 
 let rec print_deck t clist =
   match clist with
   | [] -> Printf.printf "\nTRUMP: "; print_suit t
   | hd::tl -> (print_card hd; print_deck t tl)
+
+let print_command command =
+  match command with
+  | Attack x      -> print_string "Attacked with ";
+                     print_card x
+  | Defend(x, y)  -> print_string "Defended ";
+                     print_card x;
+                     print_string " with ";
+                     print_card y
+  | Take          -> print_endline "Take"
+  | Pass          -> print_endline "Pass"
+  | Deflect(x, y) -> print_string "Deflected ";
+                     print_card x;
+                     print_string " with ";
+                     print_card y
 
 type state = { deck: deck;
                trump: suit;

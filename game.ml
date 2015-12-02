@@ -190,10 +190,12 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   (if ended then end_game g' else ());
   Printf.printf "step done\n%!";
   let m' = message ^ " " ^ m in
-  Printf.printf "message done\n%!";
   Gui.draw g';
+  Printf.printf "message done\n%!";
   Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
+  Cards.print_command c';
+
   if g.active.state = Human
     then (print_endline "first repl!!!"; repl g' c' "")
     else (print_endline "second repl!!!!!!"; repl g' c' m')
