@@ -396,14 +396,14 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool =
   let g' = place_defense g c1 c2 in
   let won = g'.active.hand = [] in
   if won then ({ (do_win g' g'.active) with table = [] },won) else
-  if all_answered g'
+  (*if all_answered g'
     then
       let g'' = { g' with
                   table = [];
                   discard = (tablepairs_to_list g.table)@g.discard;
                   passed = [] } in
       (new_turn g'' (last_attacker g''.attackers) , won)
-    else ({g' with passed = []}, won)
+    else*) ({g' with passed = []}, won)
 
 
 (* returns true iff the two lists have exactly the same elements, though
