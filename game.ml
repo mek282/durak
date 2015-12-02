@@ -190,7 +190,7 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   (if ended then end_game g' else ());
   Printf.printf "step done\n%!";
   let m' = message ^ " " ^ m in
-  Gui.draw g';
+  (* Gui.draw g'; *)
   Printf.printf "message done\n%!";
   Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
