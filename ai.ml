@@ -979,7 +979,7 @@ let test_iSMCTS () =
   let discard = [] in
   let winners = [] in
   let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
+    deck; trump; defender; attackers; table; active; discard; winners;
   } in
   let g1 = GameState.deal g in
   print_endline ("DECK: "^(printCardList g1.deck));
