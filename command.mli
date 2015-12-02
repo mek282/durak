@@ -14,4 +14,4 @@ val init_game_state : string -> int list -> state
 (* [step g c] returns the state that results from applying a command c to
  * the game state g and a message describing game events and a bool which
  * is true iff the game has ended *)
-val step : state -> command -> state*string(**bool*)
+val step : state -> command -> state*string*bool
