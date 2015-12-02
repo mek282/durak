@@ -150,7 +150,7 @@ let rec rem_dups lst =
 
 (*returns a list of all valid Defend commands given state g*)
 let rec getValidDefenses (g:state) : command list =
-  if List.length g.attackers = 0
+  if g.attackers = []
     then []
   else if List.mem g.active g.attackers
     then []
@@ -171,7 +171,7 @@ let rec getValidDefenses (g:state) : command list =
 
 (*returns a list of all valid Attack commands, given state g*)
 let rec getValidAttacks (g:state) : command list =
-  if List.length g.attackers = 0
+  if g.attackers = []
     then []
   else if g.active = g.defender
     then []
@@ -188,7 +188,7 @@ let rec getValidAttacks (g:state) : command list =
 
 (*returns a list of valid Deflect commands, given state g*)
 let rec getValidDeflections (g:state) : command list =
-  if List.length g.attackers = 0
+  if g.attackers = []
     then []
   else if List.length g.table = 0
     then []
@@ -332,14 +332,14 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
   let doMove command gameState =
-    let (m,_) = step gameState command in m
+    let (m,_,_) = step gameState command in m
 
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
     (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
-      (if g.active <> g.defender || List.length g.attackers = 0
+      (if g.active <> g.defender || g.attackers = []
         then [] else [Take]) @
-      (if not (List.mem g.active g.attackers) || List.length g.attackers = 0
+      (if not (List.mem g.active g.attackers) || g.attackers = []
         then [] else [Pass])
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
@@ -473,7 +473,8 @@ let rec simulate g2 =
       let moves = GameState.getMoves g2 in
       match moves with
       | [] -> g2
-      | _ -> simulate (GameState.doMove (randomMove moves) g2)
+      | _ -> (let () = (print_endline (printCommList moves)); in
+        simulate (GameState.doMove (randomMove moves) g2))
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =

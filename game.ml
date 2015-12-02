@@ -173,19 +173,29 @@ let parse_no_fail (p : string) (g : state) : command =
   if g.active.state = Human then parse_no_fail' p p g else Ai.response g
 
 
-
+(* Terminates everything and prints either a positive or negative message
+ * depending on whether the player won or is a Durak. *)
+let end_game (g : state) : unit =
+  let _ =
+    if List.exists (fun x -> x.state = Human) g.winners
+    then print_endline "Congratualtions! You didn't lose!"
+    else print_endline "You lost--You're the durak!" in
+  exit 0
 
 
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
   Printf.printf "starting repl\n%!";
-  let (g',m) = step g c in
+  let (g',m,ended) = step g c in
+  (if ended then end_game g' else ());
   Printf.printf "step done\n%!";
   let m' = message ^ " " ^ m in
+  (* Gui.draw g'; *)
   Printf.printf "message done\n%!";
-  Gui.draw g';
   Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
+  Cards.print_command c';
+
   if g.active.state = Human
     then (print_endline "first repl!!!"; repl g' c' "")
     else (print_endline "second repl!!!!!!"; repl g' c' m')

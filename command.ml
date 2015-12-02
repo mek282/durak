@@ -201,18 +201,22 @@ let new_turn g (d : player) : state =
 (* [before el lst] returns the element in lst that comes before el.
  * Precondition: There must be at least two elements in the list, and el
  * cannot be the first element *)
-let rec before el = function
-  | [] -> failwith "crashed on before"
-  | h::[] -> raise (Invalid_action "The next player is the defender")
-  | e1::e2::t -> if e2 = el then e1 else before el (e2::t)
-
+let rec before (el: 'a) (plist: 'a list) =
+  print_endline "BITCH WE'RE IN BEFORE NOW";
+  match plist with
+  | [] -> print_endline "Bithc wat"; failwith "crashed on before"
+  | h::[] -> print_endline "Bitljkads;lfkja"; raise (Invalid_action "The next player is the defender")
+  | e1::e2::t -> Printf.printf "OK HERE WER FUCKING GO %b\n" (e2 = el);
+                 if e2.name = el.name then e1 else before el (e2::t)
 
 (* returns the player who comes after the active player in the attacker list.
  * raise Invalid_action if the next player should be the defender
  * Raises Invalid_action if the active player is not an attacker *)
 let next_attacker (g : state) : player =
+  print_endline "BITCH WE'RE IN NEXT ATTACKER NOW";
   if not (List.exists (fun x -> x.name = g.active.name) g.attackers)
     then raise (Invalid_action "The current player isn't an attacker!") else
+    print_endline "BITCH WERE LEAVING NEXT ATTACKER NOW";
   before g.active g.attackers
 
 
@@ -236,36 +240,37 @@ let rec change_active g (p : player) =
 
 
 (* Terminates everything and prints either a positive or negative message
- * depending on whether the player won or is a Durak. *)
+ * depending on whether the player won or is a Durak.
 let end_game (g : state) : state =
   let _ =
     if List.exists (fun x -> x.state = Human) g.winners
     then print_endline "Congratualtions! You didn't lose!"
     else print_endline "You lost--You're the durak!" in
-  exit 0
+  exit 0 *)
 
 
 (* makes player p a winner. Ends the game if only one player is left. *)
-let do_win (g : state) (p : player) : state =
-  if (List.length g.attackers = 1) && p = g.defender then end_game g else
+let do_win (g : state) (p : player) : state*bool =
+  if (List.length g.attackers = 1) && p = g.defender
+    then ({g with attackers = []},true) else
   if g.defender = p
     then let g' = new_turn g (last_attacker g.attackers) in
-    { g' with winners = p::(g'.winners) }
+    ({ g' with winners = p::(g'.winners) }, false)
   else
-  if List.length g.attackers = 0 then end_game g else
+  if List.length g.attackers = 0 then ({g with attackers = []},true) else
   let active' = if g.active = p
       then if p.name = (List.hd g.attackers).name then g.defender else next_attacker g
     else g.active in
-  { g with
+  ({ g with
    active = active';
    attackers = List.filter (fun x -> x<>p) g.attackers;
    winners = p::(g.winners);
-  }
+  }, false)
 
 (* carry out the command "deflect against c1 with c2"
  * raise Invalid_action if appropriate
- * returns the new gamestate and {active player won} *)
-let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
+ * returns the new gamestate and {active player won} and {game is over}*)
+let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
   if r1 <> r2
   then raise (Invalid_action "You must deflect with a card of the same rank")
   else match g.table with
@@ -279,8 +284,8 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool =
       let next_p = last_attacker g'''.attackers in
       let g' = new_turn g''' next_p in
       let g'' = add_attack g' (s2,r2) in
-      let g'''' = if won then do_win g'' active else g'' in
-      (change_active g'''' next_p,won)
+      let (g'''',ended) = if won then do_win g'' active else (g'',false) in
+      (change_active g'''' next_p,won,ended)
     else raise (Invalid_action "Can't deflect")
   end
 
@@ -302,22 +307,6 @@ let take_all (g : state) : state =
   let table = tablepairs_to_list g.table in
   let p = {g.active with hand = table@g.active.hand} in
   { g with active = p; defender = p; table = [] }
-
-
-(* if c1 is unpaired on the table, and if c2 is a valid defense, return a new
- * gamestate with c2 paired to c1 on the table and with c2 removed from the
- * active player's hand.
- * Raise Invalid_action otherwise. *)
-let place_defense (g : state) (c1 : card) (c2 : card) : state =
-  if not (List.mem (c1,None) g.table)
-    then raise (Invalid_action ((string_of_card c1) ^ " is not on the table."))
-  else if not (valid_defense c1 c2 g.trump)
-    then let s1 = string_of_card c1 in
-    let s2 = string_of_card c2 in
-    raise (Invalid_action (s2 ^ " can't  defend against " ^ s1 ^ "! "))
-  else let g' = game_play_card g c2 in
-  let tabl = List.remove_assoc c1 g'.table in
-  { g' with table = (c1,Some c2)::tabl }
 
 
 (* returns true iff the table is empty or at least one of the cards on the table
@@ -345,21 +334,25 @@ let rec pass' (g : state) : state*command =
 (* If the active player is an attacker holding card c, and card c is a valid
  * attack, remove that card from the active player's hand and add that card
  * to the table, then change the active player to either the next attacker
- * or to the defender, if the active player is the last attacker *)
-let attack (g : state) (c : card) : state*bool =
+ * or to the defender, if the active player is the last attacker
+ * and a bool telling whether the game has ended *)
+let attack (g : state) (c : card) : state*bool*bool =
+  print_endline "BITCH ATTACK IS STARTING";
   if not (List.mem g.active g.attackers)
     then raise (Invalid_action "You are not an attacker!")
   else if not (valid_attack g c)
     then raise (Invalid_action "That is not a valid attack!")
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
-  let g'' = if won then do_win g' g'.active else g' in
+  let (g'',ended) = if won then do_win g' g'.active else (g',false) in
   let table' = (c,None)::g''.table in
+  print_endline "BITCH ATTACK IS ENDING SOON";
   let active' =
     if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
       else next_attacker g'' in
-  ( {g'' with table=table'; active=active'; passed = []}, won)
+  print_endline "BITCH ATTACK JUST ENDED";
+  ( {g'' with table=table'; active=active'; passed = []}, won,ended)
 
 
 (* returns the penultimate element of a list, unless the list only has one
@@ -378,6 +371,21 @@ let rec penultimate = function
 let all_answered (g : state) : bool =
   not (List.exists (fun (_,x) -> x = None) g.table)
 
+(* if c1 is unpaired on the table, and if c2 is a valid defense, return a new
+ * gamestate with c2 paired to c1 on the table and with c2 removed from the
+ * active player's hand.
+ * Raise Invalid_action otherwise. *)
+let place_defense (g : state) (c1 : card) (c2 : card) : state =
+  if not (List.mem (c1,None) g.table)
+    then raise (Invalid_action ((string_of_card c1) ^ " is not on the table."))
+  else if not (valid_defense c1 c2 g.trump)
+    then let s1 = string_of_card c1 in
+    let s2 = string_of_card c2 in
+    raise (Invalid_action (s2 ^ " can't  defend against " ^ s1 ^ "! "))
+  else let g' = game_play_card g c2 in
+  let tabl = List.remove_assoc c1 g'.table in
+  { g' with table = (c1,Some c2)::tabl;
+           active = last_attacker g'.attackers}
 
 (* Carries out "defend against c1 with c2" --
  * if the active player is the defender, c1 is an unanswered attack on the
@@ -387,15 +395,18 @@ let all_answered (g : state) : bool =
  * If all attacks on the table have been answered, the active player becomes
  * the attacker; otherwise the defender gets a chance to play again.
  * Makes defender a winner if c2 was her last card.
- * Also returns a bool telling whether or not g.active won *)
-let defend (g : state) (c1 : card) (c2 : card) : state*bool =
+ * Also returns a bool telling whether or not g.active won and a bool telling
+ * whether or not the game has ended *)
+let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
   if g.active <> g.defender
     then raise (Invalid_action "Only the defender can defend.") else
   if not (List.mem (c1,None) g.table)
     then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
   let g' = place_defense g c1 c2 in
   let won = g'.active.hand = [] in
-  if won then ({ (do_win g' g'.active) with table = [] },won) else
+  if won
+    then let (g'',ended) = do_win g' g'.active in
+    ({ g'' with table = [] },won,ended) else
   (*if all_answered g'
     then
       let g'' = { g' with
@@ -403,7 +414,7 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool =
                   discard = (tablepairs_to_list g.table)@g.discard;
                   passed = [] } in
       (new_turn g'' (last_attacker g''.attackers) , won)
-    else*) ({g' with passed = []}, won)
+    else*) ({g' with passed = []}, won,false)
 
 
 (* returns true iff the two lists have exactly the same elements, though
@@ -430,36 +441,39 @@ let pass (g : state) : state =
 
 (* returns the state that would result from applying c to g, as well as
  * a string describing what was done *)
-let step (g:state) (c:command) : state*string =
+let step (g:state) (c:command) : state*string*bool =
   try
+  print_endline "BITCH STEP IS HAPPENING ";
     match c with
     | Attack c -> begin
-        let (g',w) = attack g c in
+        print_endline "BITCH ATTACK IS GETTING MATCHED 1";
+        let (g',w,ended) = attack g c in
+        print_endline "BITCH ATTACK IS GETTING MATCHED 2";
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" attacked with "^string_of_card c^". " ^ win_m in
-        (g',m)
+        (g',m,ended)
     end
     | Defend (c1,c2) -> begin
-        let (g',w) = defend g c1 c2 in
+        let (g',w,ended) = defend g c1 c2 in
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" defended with "^string_of_card c2^". " ^ win_m in
-        (g',m)
+        (g',m,ended)
       end
     | Take -> begin
         let g' = take_all g in
         let g'' = new_turn g' (penultimate g.attackers) in
         let m = g.active.name ^ " chose to take." in
-        (g'',m)
+        (g'',m,false)
       end
-    | Pass -> let m = g.active.name ^ "passed." in (pass g, m)
+    | Pass -> let m = g.active.name ^ "passed." in (pass g, m,false)
     | Deflect (c1,c2) -> begin
-        let (g',w) = deflect g c1 c2 in
+        let (g',w,e) = deflect g c1 c2 in
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" deflected with "^string_of_card c2^". " ^ win_m in
-        (g',m)
+        (g',m,e)
       end
   with
-  | Invalid_action a -> (g, "There was a problem: " ^ a)
+  | Invalid_action a -> (g, "There was a problem: " ^ a, false)
 
 
 (* ========================================================================== *)
@@ -501,8 +515,8 @@ let field_compare g1 g2 =
   assert (g1.trump = g2.trump);
   assert (g1.attackers = g2.attackers);
   assert (g1.defender = g2.defender);
-  assert (g1.table = g2.table);
   assert (g1.active = g2.active);
+  assert (g1.table = g2.table);
   assert (g1.discard = g2.discard);
   assert (g1.winners = g2.winners);
   assert (g1.passed = g2.passed)
@@ -573,7 +587,8 @@ end
 
 let test_step () =
   let g1 = Sample_state2.game in
-  let (g1',m) = step g1 (Attack (Spade, 7)) in
+  let (g1',m,_) = step g1 (Attack (Spade, 7)) in
+
   let hand2' = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14);
    (Club,11); (Spade,10); (Diamond, 8); (Heart, 10)] in
   let player2' = { Sample_state2.player2 with hand = hand2' } in
@@ -584,6 +599,16 @@ let test_step () =
   let (g2,s2) = step g1' (Defend ((Spade,7),(Spade,13))) in
   let g2' = { g1' with table = [((Spade,7),Some (Spade,13))];
       active = Sample_state2.player3 } in
+                      active = Sample_state2.player1;
+                   attackers = player2'::Sample_state2.player3::[];
+                     discard = [] } in
+
+  let (g2,s2,_) = step g1' (Defend ((Spade,7),(Spade,13))) in
+  let defender' = {Sample_state2.player1 with hand = [(Heart, 7); (Heart, 6)]} in
+  let g2' = { g1' with table = ((Spade,7),Some (Spade,13)) :: List.tl g1'.table;
+                      active = Sample_state2.player3;
+                    defender = defender'} in
+>>>>>>> 07f2613acb20d801d63c4c8f3500a700a7d0dbb6
   print_endline s2;
   field_compare g1' g1'';
   field_compare g2 g2'
@@ -754,6 +779,9 @@ let test_new_turn () =
 
   assert (new_state.defender  = attacker3);
   assert (new_state.attackers = [defender; attacker1; attacker2])
+
+let test_before () =
+  ()
 
 let test_next_attacker () =
   ()
