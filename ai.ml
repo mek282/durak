@@ -553,6 +553,12 @@ module Medium = struct
                                              else get_best_def tl current_def)
     ) in get_best_def filtered_hand None
 
+(*   let can_defl (hand:deck) (table:(card*card option) list) : bool =
+    if List.length table = 0
+      then false
+    else let val = fst (List.hd table) in *)
+
+
   let best_deflection (hand:deck) (att:card) (gs:state): card option =
     let possible_defls = List.filter (fun (a,b) -> (snd att) = b) hand in
     let rec get_best_defl filt_hand current_defl =
