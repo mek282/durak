@@ -48,4 +48,5 @@ type state = { deck: deck;
                active: player;
                discard: deck;
                winners: player list;
+               passed: player list;
               }

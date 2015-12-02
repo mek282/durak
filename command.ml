@@ -83,6 +83,7 @@ let init_game_state s dlist =
     active = p1;
     discard = [];
     winners = [];
+    passed = [];
   }
 
 (* ========================================================================== *)
@@ -130,8 +131,7 @@ let game_play_card (g : state) (c : card) : state =
   let replace = fun x -> if x = g.active then p else x in
   let attackers' = List.map replace g.attackers in
   let defender' = if g.defender = g.active then p else g.defender in
-  { g with attackers = attackers'; defender = defender';
-        discard = c::g.discard}
+  { g with attackers = attackers'; defender = defender'}
 
 
 (* returns true iff d is a valid defense to attack a *)
@@ -195,7 +195,7 @@ let new_turn g (d : player) : state =
     then a
     else (last_attacker g'.attackers)::(remove_last a)
     in
-  { g' with attackers = a'; defender = d}
+  { g' with attackers = a'; defender = d; passed = []}
 
 
 (* [before el lst] returns the element in lst that comes before el.
@@ -247,11 +247,12 @@ let end_game (g : state) : state =
 
 (* makes player p a winner. Ends the game if only one player is left. *)
 let do_win (g : state) (p : player) : state =
-  if List.length g.attackers = 1 then end_game g else
+  if (List.length g.attackers = 1) && p = g.defender then end_game g else
   if g.defender = p
     then let g' = new_turn g (last_attacker g.attackers) in
     { g' with winners = p::(g'.winners) }
   else
+  if List.length g.attackers = 0 then end_game g else
   let active' = if g.active = p
       then if p.name = (List.hd g.attackers).name then g.defender else next_attacker g
     else g.active in
@@ -358,7 +359,7 @@ let attack (g : state) (c : card) : state*bool =
     if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
       else next_attacker g'' in
-  ( {g'' with table=table'; active=active'}, won)
+  ( {g'' with table=table'; active=active'; passed = []}, won)
 
 
 (* returns the penultimate element of a list, unless the list only has one
@@ -399,18 +400,32 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool =
     then
       let g'' = { g' with
                   table = [];
-                  discard = (tablepairs_to_list g.table)@g.discard } in
+                  discard = (tablepairs_to_list g.table)@g.discard;
+                  passed = [] } in
       (new_turn g'' (last_attacker g''.attackers) , won)
-    else (g', won)
+    else ({g' with passed = []}, won)
 
+
+(* returns true iff the two lists have exactly the same elements, though
+ * they may be in different orders *)
+let rec same_elements lst1 = function
+  | [] -> lst1 = []
+  | h::t ->
+      if List.mem h lst1
+      then let lst1' = List.filter (fun x -> x <> h) lst1 in
+      same_elements lst1' t
+      else false
 
 (* makes the next player the active player *)
 let pass (g : state) : state =
+  let g' = {g with passed = g.active::g.passed} in
+  if (same_elements g'.attackers g'.passed) && all_answered g'
+    then new_turn g' (last_attacker g'.attackers) else
   let active' =
-    if g.active = g.defender
-      then last_attacker g.attackers
-      else try next_attacker g with Invalid_action _ -> g.defender
-  in { g with active = active' }
+    if g'.active = g'.defender
+      then last_attacker g'.attackers
+      else try next_attacker g' with Invalid_action _ -> g'.defender
+  in { g' with active = active' }
 
 
 (* returns the state that would result from applying c to g, as well as
@@ -478,7 +493,8 @@ let print_state (g : state) : unit =
   print_endline("table: " ^ string_of_table g.table);
   print_endline("active: " ^ string_of_player g.active);
   print_endline("discard: " ^ string_of_deck g.discard);
-  print_endline("winners: " ^ string_of_attackers g.winners)
+  print_endline("winners: " ^ string_of_attackers g.winners);
+  print_endline("passed: " ^ string_of_attackers g.passed)
 
 let field_compare g1 g2 =
   assert (g1.deck = g2.deck);
@@ -488,7 +504,8 @@ let field_compare g1 g2 =
   assert (g1.table = g2.table);
   assert (g1.active = g2.active);
   assert (g1.discard = g2.discard);
-  assert (g1.winners = g2.winners)
+  assert (g1.winners = g2.winners);
+  assert (g1.passed = g2.passed)
 
 let sample_state () : state =
   let deck = [(Heart, 9); (Diamond, 9);  (Club, 9); (Spade, 9)] in
@@ -517,14 +534,15 @@ let sample_state () : state =
   let active = player1 in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   {deck=deck; trump=trump; attackers=attackers; defender=defender;
-               table=table; active=active; discard=discard; winners=winners}
+    table=table; active=active; discard=discard; winners=winners; passed = passed}
 
 module Sample_state2 = struct
   let deck = [(Heart, 11); (Diamond, 6);  (Club, 10); (Club, 9)]
   let trump = Heart
 
-  let hand1 = [(Heart, 7); (Heart, 6);  (Club,13)]
+  let hand1 = [(Heart, 7); (Heart, 6);  (Spade,13)]
   let player1 = {state = Human; hand = hand1; name = "Zapdoz"}
 
   let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14);
@@ -548,8 +566,9 @@ module Sample_state2 = struct
   let active = player2
   let discard = []
   let winners = [player4]
+  let passed = []
   let game = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-               table=table; active=active; discard=discard; winners=winners}
+    table=table; active=active; discard=discard; winners=winners; passed=passed}
 end
 
 let test_step () =
@@ -562,8 +581,12 @@ let test_step () =
       active = Sample_state2.player1;
       attackers = player2'::Sample_state2.player3::[];
       discard = [(Spade, 7)] } in
-  (*let g2 = step g1' (Defend ((),()))*)
-  field_compare g1' g1''
+  let (g2,s2) = step g1' (Defend ((Spade,7),(Spade,13))) in
+  let g2' = { g1' with table = [((Spade,7),Some (Spade,13))];
+      active = Sample_state2.player3 } in
+  print_endline s2;
+  field_compare g1' g1'';
+  field_compare g2 g2'
 
 let test_init_deck () =
 (*
@@ -666,8 +689,9 @@ let test_deal () =
   let active = player1 in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let state1 = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-               table=table; active=active; discard=discard; winners=winners} in
+      table=table; active=active; discard=discard; winners=winners; passed=passed} in
   let dealt_state1 = deal state1 in
   let attacker' = List.nth dealt_state1.attackers 0 in
 

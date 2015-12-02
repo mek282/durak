@@ -239,8 +239,9 @@ let ptest_draw () : unit =
   let active = player1 in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let state = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-               table=table; active=active; discard=discard; winners=winners} in
+    table=table; active=active; discard=discard; winners=winners; passed=passed} in
 
   draw state
 

@@ -791,8 +791,9 @@ let test_easy_defend () =
   let active = player1 in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let state1 = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-               table=table; active=active; discard=discard; winners=winners} in
+      table=table; active=active; discard=discard; winners=winners; passed=passed} in
   let state2 = {state1 with defender=player2; active=player2} in
   let state3 = {state1 with defender=player3; active=player3} in
   let state4 = {state1 with defender=player4; active=player4} in
@@ -841,8 +842,9 @@ let test_gameState_cloneAndRandomize () =
   let active = List.hd attackers in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
+    deck; trump; defender; attackers; table; active; discard; winners; passed
   } in
   let g1 = GameState.deal g in
   print_endline ("DECK: "^(printCardList g1.deck));
@@ -869,8 +871,9 @@ let test_gameState_doMove () =
   let active = List.hd attackers in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
+    deck; trump; defender; attackers; table; active; discard; winners; passed
   } in
   let g1 = GameState.deal g in
   let moveList = GameState.getMoves g1 in
@@ -900,8 +903,9 @@ let test_gameState_getMoves () =
   let active = List.hd attackers in
   let discard = [] in
   let winners = [] in
+  let passed = [] in
   let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
+    deck; trump; defender; attackers; table; active; discard; winners; passed
   } in
   let g1 = GameState.deal g in
   let moveList = GameState.getMoves g1 in
@@ -964,7 +968,7 @@ let test_med_defend () =
                                    (Diamond, 8); (Diamond, 7); (Heart, 12)];
                            name = "Mary"};
              discard = [];
-             winners = []} in
+             winners = []; passed = []} in
   let gs2 = {gs1 with deck = [];
                  discard = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
                    (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
@@ -1030,7 +1034,7 @@ let test_med_attack () =
                                    (Heart, 10); (Heart, 7); (Heart, 6)];
                            name = "Ivan"};
              discard = [];
-             winners = []} in
+             winners = []; passed = []} in
   (* No attacks yet *)
   assert (Medium.medium gs1 = Attack (Heart, 6));
   let gs2 = {gs1 with table = [((Club,8), Some (Club, 9));]} in

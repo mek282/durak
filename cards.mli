@@ -59,6 +59,7 @@ val print_suit : suit -> unit
  * active is the player whose turn it is
  * discard represents the discard pile
  * winners is the list of players who are out of the game
+ * passed is a list of attackers who have passed consecutively
  * Invariant: no two distinct players in the game may have the same name *)
 type state = { deck: deck;
                trump: suit;
@@ -68,4 +69,5 @@ type state = { deck: deck;
                active: player;
                discard: deck;
                winners: player list;
+               passed: player list;
               }
