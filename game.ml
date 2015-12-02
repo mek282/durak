@@ -667,4 +667,8 @@ let run_tests () =
 
 let _ =
   title_screen ();
+  print_endline "What is your name?";
+  let name = read_line () in
+  print_endline ("Hi " ^ name ^
+    "! Choose the difficulty of your first opponent.  Type 1 for easy, 2 for medium, and 3 for hard.");
   run_tests ()
