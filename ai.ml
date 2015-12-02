@@ -332,7 +332,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
   let doMove command gameState =
-    let (m,_) = step gameState command in m
+    let (m,_,_) = step gameState command in m
 
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
