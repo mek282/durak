@@ -47,6 +47,8 @@ val print_deck : suit -> deck -> unit
 
 val print_suit : suit -> unit
 
+val print_command : command -> unit
+
 (* Stores information about the state of the game.
  * deck is the cards that haven't been drawn yet
  * trump is the trump suit
