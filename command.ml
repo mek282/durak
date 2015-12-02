@@ -805,6 +805,13 @@ let test_deflect () =
   ()
 
 let test_take_all () =
+  let g0 = { Sample_state2.game with active = Sample_state2.defender } in
+  let g1 = take_all g0 in
+  let hand1 = [(Club, 6); (Club,7); (Diamond,6); (Diamond,10); (Club,8);
+      (Heart,8); (Spade, 8); (Spade,9); (Heart, 7); (Heart, 6);  (Spade,13)] in
+  let p1 = { Sample_state2.player1 with hand = hand1 } in
+  let g1' = { g0 with table = []; defender = p1; active = p1} in
+  field_compare g1 g1' ;
   ()
 
 let test_place_defense () =
@@ -833,6 +840,7 @@ let run_tests () =
   test_deflectable ();
   test_change_active ();
   test_step ();
+  test_take_all ();
   test_pass ();
   print_endline "all tests pass";
   ()
