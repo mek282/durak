@@ -454,7 +454,7 @@ let rec select g1 n =
         end
       else (g1,n)
 
-(*If [untried] is non_empty, select a random element, step [g1_1], create a new
+(*[g1_1 n untried] If [untried] is non_empty, select a random element, step [g1_1], create a new
  *node and return it with associated state*)
 let expand g1_1 n untried =
   if untried <> []
@@ -475,7 +475,7 @@ let rec simulate g2 =
       | [] -> g2
       | _ -> simulate (GameState.doMove (randomMove moves) g2)
 
-(*Work back up the tree, updating each node to reflect outcomes*)
+(*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
       match n1.parent with
       | None -> n1
@@ -739,55 +739,24 @@ let response (gameState:state) : command =
   | CPU 3 -> Hard.hard gameState
   | _ -> failwith "[response] error. Invalid active player_state"
 
-let suit_to_string (suit: suit) : string =
-  match suit with
-  | Heart   -> "H"
-  | Club    -> "C"
-  | Diamond -> "D"
-  | Spade   -> "S"
-
-let rank_to_string (rank: int) : string =
-  match rank with
-  | 14 -> "A"
-  | 13 -> "K"
-  | 12 -> "Q"
-  | 11 -> "J"
-  | n  -> string_of_int n
-
-let card_to_string c : string =
-  match c with
-  | (a,b) -> " |"^(suit_to_string a)^(rank_to_string b)^"| "
-
-let command_to_string c : string =
-  match c with
-  | Pass -> "Pass\n"
-  | Take -> "Take\n"
-  | Deflect (a,b) ->
-     "Deflect "^(card_to_string a)^"with"^(card_to_string b)^"\n"
-  | Attack a -> "Attack with"^(card_to_string a)^"\n"
-  | Defend (a,b) -> "Defend "^(card_to_string a)^"with"^(card_to_string b)^"\n"
-
-let rec printCardList d : string =
-  match d with
-  | [] -> ""
-  | (a,b)::tl -> (suit_to_string a)^":"^
-                 (rank_to_string b)^" | "^(printCardList tl)
-
-let rec printPlayerHands lst : string =
-  match lst with
-  | [] -> ""
-  | hd::tl -> "ATTACKER: "^(printCardList hd.hand)^"\n"^(printPlayerHands tl)
-
-let rec printPlayers lst : string =
-  match lst with
-  | [] -> ""
-  | hd::tl -> hd.name^", "^(printPlayers tl)
-
-let rec printCommList lst : string =
-  match lst with
-  | [] -> ""
-  | hd::tl -> (command_to_string hd)^(printCommList tl)
-
+let testStateInit () =
+  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
+  let trump = Heart in
+  let defender = {state= CPU 3; hand= []; name= "Foo"} in
+  let attackers = [
+    {state= CPU 3; hand= []; name= "Bar"};
+    {state= CPU 3; hand= []; name= "Bob"};
+    {state= CPU 3; hand= []; name= "Blarg"};
+  ] in
+  let table = [] in
+  let active = List.hd attackers in
+  let discard = [] in
+  let winners = [] in
+  let g = {
+    deck; trump; defender; attackers; table; active; discard; winners
+  } in
+  let g1 = GameState.deal g in
+  g1
 (*****************************************************************************)
 (************************************TESTS************************************)
 (*****************************************************************************)
@@ -878,22 +847,7 @@ let test_gameState_shuffle () =
 
 let test_gameState_cloneAndRandomize () =
   let () = print_endline "testing cloneAndRandomize: "; in
-  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
-  let trump = Heart in
-  let defender = {state= CPU 1; hand= []; name= "Foo"} in
-  let attackers = [
-    {state= CPU 1; hand= []; name= "Bar"};
-    {state= CPU 1; hand= []; name= "Bob"};
-    {state= CPU 1; hand= []; name= "Blarg"};
-  ] in
-  let table = [] in
-  let active = List.hd attackers in
-  let discard = [] in
-  let winners = [] in
-  let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
-  } in
-  let g1 = GameState.deal g in
+  let g1 = testStateInit () in
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
   print_endline (printPlayerHands g1.attackers);
@@ -906,22 +860,7 @@ let test_gameState_cloneAndRandomize () =
 
 let test_gameState_doMove () =
   let () = print_endline "testing doMove: " in
-  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
-  let trump = Heart in
-  let defender = {state= CPU 1; hand= []; name= "Foo"} in
-  let attackers = [
-    {state= CPU 1; hand= []; name= "Bar"};
-    {state= CPU 1; hand= []; name= "Bob"};
-    {state= CPU 1; hand= []; name= "Blarg"};
-  ] in
-  let table = [] in
-  let active = List.hd attackers in
-  let discard = [] in
-  let winners = [] in
-  let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
-  } in
-  let g1 = GameState.deal g in
+  let g1 = testStateInit () in
   let moveList = GameState.getMoves g1 in
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
@@ -937,22 +876,7 @@ let test_gameState_doMove () =
 
 let test_gameState_getMoves () =
   let () = print_endline "testing getMoves: " in
-  let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
-  let trump = Heart in
-  let defender = {state= CPU 1; hand= []; name= "Foo"} in
-  let attackers = [
-    {state= CPU 1; hand= []; name= "Bar"};
-    {state= CPU 1; hand= []; name= "Bob"};
-    {state= CPU 1; hand= []; name= "Blarg"};
-  ] in
-  let table = [] in
-  let active = List.hd attackers in
-  let discard = [] in
-  let winners = [] in
-  let g = {
-    deck; trump; defender; attackers; table; active; discard; winners
-  } in
-  let g1 = GameState.deal g in
+  let g1 = testStateInit () in
   let moveList = GameState.getMoves g1 in
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
@@ -983,27 +907,64 @@ let test_Node_addChild () =
 let test_Node_update () =
   failwith "TODO"
 
+(*if [g1] is non-terminal, and [n] has no untried moves, select a child and
+ *descend the tree*)
 let test_select () =
-  failwith "TODO"
+  let () = print_endline "testing select: " in
+  let g1 = testStateInit () in
+  print_endline ("DECK: "^(printCardList g1.deck));
+  print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
+  print_endline (printPlayerHands g1.attackers);
+  let n = {
+            thisMove = None;
+            parent = None;
+            children = [];
+            wins = ref 0;
+            visits = ref 0;
+            avails = ref 0;
+            playerJustMoved = None;
+          } in
+  let _ = (select g1 n); in
+  ()
 
-let expand () =
-  failwith "TODO"
+(*[g1_1 n untried] If [untried] is non_empty, select a random element, step [g1_1], create a new
+ *node and return it with associated state*)
+let test_expand () =
+  let () = print_endline "testing expand: " in
+  let g1 = testStateInit () in
+  let n = {
+            thisMove = None;
+            parent = None;
+            children = [];
+            wins = ref 0;
+            visits = ref 0;
+            avails = ref 0;
+            playerJustMoved = None;
+          } in
+  let untried1 = Node.getUntriedMoves (GameState.getMoves g1) n in
+  let _ = (expand g1 n untried1); in
+  ()
 
-let rec simulate () =
-  failwith "TODO"
+(*simulate a game, through to completion, making random choices, return *)
+let rec test_simulate () =
+  let () = print_endline "testing simulate: " in
+  let g1 = testStateInit () in
+  let _ = (simulate g1); in
+  ()
 
-let rec backPropogate () =
-  failwith "TODO"
+(*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
+let rec test_backPropogate () =
+  ()
 
 let test_iSMCTS () =
   let () = print_endline "testing ISMCTS: " in
   let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
   let trump = Heart in
-  let defender = {state= CPU 1; hand= []; name= "Foo"} in
+  let defender = {state= CPU 3; hand= []; name= "Foo"} in
   let attackers = [
-    {state= CPU 1; hand= []; name= "Bar"};
-    {state= CPU 1; hand= []; name= "Bob"};
-    {state= CPU 1; hand= []; name= "Blarg"};
+    {state= CPU 3; hand= []; name= "Bar"};
+    {state= CPU 3; hand= []; name= "Bob"};
+    {state= CPU 3; hand= []; name= "Blarg"};
   ] in
   let table = [] in
   let active = List.hd attackers in
@@ -1013,12 +974,10 @@ let test_iSMCTS () =
     deck; trump; defender; attackers; table; active; discard; winners
   } in
   let g1 = GameState.deal g in
-  let moveList = GameState.getMoves g1 in
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
   print_endline (printPlayerHands g1.attackers);
-  print_endline (printCommList moveList);
-  let m = iSMCTS g 100 in print_endline
+  let m = iSMCTS g1 5 in print_endline
     ("GRANDMASTERMOVE: "^(command_to_string m));
   ()
 
@@ -1139,11 +1098,15 @@ let run_ai_tests () =
   test_easy_defend ();
   test_med_defend ();
   test_med_attack ();
-  test_gameState_shuffle ();
+  (*test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
-  (*test_gameState_getMoves ();*)
-  test_iSMCTS ();
+  test_gameState_getMoves ();*)
+  test_select ();
+  test_expand ();
+  test_simulate ();
+  test_backPropogate ();
+  (*test_iSMCTS ();*)
   print_endline "all AI tests pass";
   ()
 
