@@ -1112,10 +1112,10 @@ let run_ai_tests () =
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
   test_gameState_getMoves ();*)
-  test_select ();
+(*   test_select ();
   test_expand ();
   test_simulate ();
-  test_backPropogate ();
+  test_backPropogate (); *)
   (*test_iSMCTS ();*)
   print_endline "all AI tests pass";
   ()

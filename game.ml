@@ -185,6 +185,7 @@ let end_game (g : state) : unit =
 
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
+  print_state g;
   Printf.printf "starting repl\n%!";
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
@@ -195,7 +196,7 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
   Cards.print_command c';
-
+  print_state g';
   if g.active.state = Human
     then (print_endline "first repl!!!"; repl g' c' "")
     else (print_endline "second repl!!!!!!"; repl g' c' m')

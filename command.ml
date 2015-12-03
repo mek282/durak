@@ -1,3 +1,11 @@
+(*
+* Mary's to do list:
+* players allowed to take and then attack, should start a new turn instead!
+* table not clearing properly all the time & not sure if discard pile is always updated
+* Something funky going on with pass, still not getting attackers/defenders right - seem
+* to be clearing the passed field too soon maybe?
+*)
+
 open Cards
 
 exception Invalid_action of string
@@ -47,19 +55,22 @@ let deal_hand d =
   | c1::c2::c3::c4::c5::c6::tl -> ([c1; c2; c3; c4; c5; c6], tl)
   | _ -> failwith "The deck is too small - only 4 players max!"
 
-let e_names = ref ["Mr. Camel"; "Camille"; "Cameron"; "Melly"]
-let m_names = ref ["Drew"; "Ivan"; "Jose"; "Mary"]
-let h_names = ref ["Clarkson"; "Chirag"; "Remy"; "M. George"]
+let e_names = ref ["Mr. Camel"; "Camille"; "Cameron"; "Melly"; "Camelot"]
+let m_names = ref ["Drew"; "Ivan"; "Jose"; "Mary"; "Ivan II"]
+let h_names = ref ["Clarkson"; "Chirag"; "Remy"; "M. George"; "Amber"]
 
-let gen_name d =
+let rec gen_name d s =
   if d = 1
     then let n = List.nth (!e_names) (Random.int (List.length (!e_names))) in
-         e_names := List.filter (fun x -> x <> n) (!e_names); n
+         e_names := List.filter (fun x -> x <> n) (!e_names);
+         if n <> s then n else gen_name d s
   else if d = 2
     then let n = List.nth (!m_names) (Random.int (List.length (!m_names))) in
-         m_names := List.filter (fun x -> x <> n) (!m_names); n
+         m_names := List.filter (fun x -> x <> n) (!m_names);
+         if n <> s then n else gen_name d s
   else let n = List.nth (!h_names) (Random.int (List.length (!h_names))) in
-         h_names := List.filter (fun x -> x <> n) (!h_names); n
+         h_names := List.filter (fun x -> x <> n) (!h_names);
+         if n <> s then n else gen_name d s
 
 (* Creates an initial state for the game in which all cards have been passed
  * out
@@ -72,7 +83,7 @@ let init_game_state s dlist =
     match ds with
     | [] -> (plist, deck)
     | hd::tl -> let deal = deal_hand deck in
-                let p = {state = CPU hd; hand = (fst deal); name = (gen_name hd)} in
+                let p = {state = CPU hd; hand = (fst deal); name = (gen_name hd s)} in
                 create_bots (snd deal) tl (plist @ [p]) ) in
   let deal_all = create_bots (snd h1) dlist [] in
   { deck = (snd deal_all);
@@ -413,9 +424,9 @@ let rec same_elements lst1 = function
 
 (* makes the next player the active player *)
 let pass (g : state) : state =
-  let g' = {g with passed = g.active::g.passed} in
+  let g' = {g with passed = (g.active::g.passed)} in
   if (same_elements g'.attackers g'.passed) && all_answered g'
-    then new_turn g' (last_attacker g'.attackers) else
+    then new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
   let active' =
     if g'.active = g'.defender
       then last_attacker g'.attackers
@@ -534,7 +545,7 @@ let sample_state () : state =
   let winners = [] in
   let passed = [] in
   {deck=deck; trump=trump; attackers=attackers; defender=defender;
-    table=table; active=active; discard=discard; winners=winners; passed = passed}
+    table=table; active=active; discard=discard; winners=winners; passed=passed}
 
 module Sample_state2 = struct
   let deck = [(Heart, 11); (Diamond, 6);  (Club, 10); (Club, 9)]
@@ -818,7 +829,12 @@ let test_place_defense () =
   ()
 
 let test_pass () =
-(*   let gs1 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
+  let g0 = Sample_state2.game in
+  let g1 = pass g0 in
+  let g1' = { g0 with active = Sample_state2.defender;
+                      passed = [Sample_state2.active] } in
+  field_compare g1 g1';
+  let gs2 = {deck = [(Club, 8); (Spade, 13); (Spade, 12); (Spade, 10);
                       (Diamond, 6); (Club, 9); (Club, 6); (Spade, 11);
                       (Spade, 9); (Diamond, 12); (Club, 7)];
              trump = Club;
@@ -853,34 +869,28 @@ let test_pass () =
                            hand = [(Club, 14); (Club, 13); (Club, 10);
                                    (Heart, 8); (Spade, 7); (Heart, 9)];
                            name = "Jose"};];} in
-  assert (pass gs1 =
-          {gs1 with passed = [];
-                    attackers = [
-                                 {state = CPU 2;
+  let gs3 = {gs2 with  passed = [];
+                    attackers = [{state = CPU 2;
                                   hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
                                    (Diamond, 8); (Diamond, 7); (Heart, 12)];
                                   name = "Mary"};
+                                  {state = Human;
+                                  hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                                  name = "testplayer"};
                                   {state = CPU 2;
                                    hand = [(Club, 14); (Club, 13); (Club, 10);
                                    (Heart, 8); (Spade, 7); (Heart, 9)];
-                                   name = "Jose"};
-                                 {state = Human;
-                                  hand = [(Heart, 13); (Spade, 6); (Spade, 8);
-                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
-                                  name = "testplayer"};];
+                                   name = "Jose"};];
                     defender =   {state = CPU 2;
                                   hand = [(Club, 11); (Diamond, 13); (Club, 12);
                                    (Heart, 10); (Heart, 7); (Heart, 6)];
                                   name = "Ivan"};
-                    active = {state = CPU 2;
+                    active =     {state = CPU 2;
                                   hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
                                    (Diamond, 8); (Diamond, 7); (Heart, 12)];
-                                  name = "Mary"} }); *)
-  let g0 = Sample_state2.game in
-  let g1 = pass g0 in
-  let g1' = { g0 with active = Sample_state2.defender;
-    passed = [Sample_state2.active] } in
-  field_compare g1 g1';
+                                  name = "Mary"};} in
+  field_compare (pass gs2) gs3;
   ()
 
 let run_tests () =
