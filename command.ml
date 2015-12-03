@@ -1,6 +1,5 @@
 (*
 * Mary's to do list:
-* players allowed to take and then attack, should start a new turn instead!
 * table not clearing properly all the time & not sure if discard pile is always updated
 * Something funky going on with pass, still not getting attackers/defenders right - seem
 * to be clearing the passed field too soon maybe?
@@ -252,22 +251,18 @@ let new_turn g (d : player) : state =
  * Precondition: There must be at least two elements in the list, and el
  * cannot be the first element *)
 let rec before (el: 'a) (plist: 'a list) =
-  print_endline "BITCH WE'RE IN BEFORE NOW";
   match plist with
-  | [] -> print_endline "Bithc wat"; failwith "crashed on before"
-  | h::[] -> print_endline "Bitljkads;lfkja"; raise (Invalid_action "The next player is the defender")
-  | e1::e2::t -> Printf.printf "OK HERE WER FUCKING GO %b\n" (e2 = el);
-                 if e2.name = el.name then e1 else before el (e2::t)
+  | [] -> failwith "crashed on before"
+  | h::[] -> raise (Invalid_action "The next player is the defender")
+  | e1::e2::t -> if e2.name = el.name then e1 else before el (e2::t)
 
 (* returns the player who comes after the active player in the attacker list.
  * raise Invalid_action if the next player should be the defender
  * Raises Invalid_action if the active player is not an attacker *)
 let next_attacker (g : state) : player =
-  print_endline "BITCH WE'RE IN NEXT ATTACKER NOW";
   if not (List.exists (fun x -> x.name = g.active.name) g.attackers)
-    then raise (Invalid_action "The current player isn't an attacker!") else
-    print_endline "BITCH WERE LEAVING NEXT ATTACKER NOW";
-  before g.active g.attackers
+    then raise (Invalid_action "The current player isn't an attacker!")
+  else before g.active g.attackers
 
 
 (* returns a new gamestate with attack c added to the table *)
@@ -371,7 +366,6 @@ let valid_attack (g : state) ((s : suit) , (r : int)) : bool =
  * or to the defender, if the active player is the last attacker
  * and a bool telling whether the game has ended *)
 let attack (g : state) (c : card) : state*bool*bool =
-  print_endline "BITCH ATTACK IS STARTING";
   if not (List.mem g.active g.attackers)
     then raise (Invalid_action "You are not an attacker!")
   else if not (valid_attack g c)
@@ -380,12 +374,10 @@ let attack (g : state) (c : card) : state*bool*bool =
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' g'.active else (g',false) in
   let table' = (c,None)::g''.table in
-  print_endline "BITCH ATTACK IS ENDING SOON";
   let active' =
     if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
       else next_attacker g'' in
-  print_endline "BITCH ATTACK JUST ENDED";
   ( {g'' with table=table'; active=active'; passed = []}, won,ended)
 
 
@@ -477,12 +469,9 @@ let pass (g : state) : state =
  * a string describing what was done *)
 let step (g:state) (c:command) : state*string*bool =
   try
-  print_endline "BITCH STEP IS HAPPENING ";
     match c with
     | Attack c -> begin
-        print_endline "BITCH ATTACK IS GETTING MATCHED 1";
         let (g',w,ended) = attack g c in
-        print_endline "BITCH ATTACK IS GETTING MATCHED 2";
         let win_m = if w then g.active.name ^ " won! " else "" in
         let m=g.active.name^" attacked with "^string_of_card c^". " ^ win_m in
         (g',m,ended)
@@ -495,12 +484,9 @@ let step (g:state) (c:command) : state*string*bool =
       end
     | Take -> begin
         let g' = take_all g in
-        print_endline "JUST TOOK GS"; print_state g';
         let g'' = new_turn g' (penultimate g.attackers) in
-        print_endline "NEW TURN GS"; print_state g'';
         let skip_taker = next_attacker g'' in
         let g3 = {g'' with active = skip_taker} in
-        print_endline "SKIPPED TAKER GS"; print_state g3;
         let m = g.active.name ^ " chose to take." in
         (g3,m,false)
       end

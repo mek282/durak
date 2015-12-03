@@ -192,14 +192,13 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   Printf.printf "step done\n%!";
   let m' = message ^ " " ^ m in
   (* Gui.draw g'; *)
-  Printf.printf "message done\n%!";
   Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
   Cards.print_command c';
   print_state g';
   if g.active.state = Human
-    then (print_endline "first repl!!!"; repl g' c' "")
-    else (print_endline "second repl!!!!!!"; repl g' c' m')
+    then (repl g' c' "")
+    else (repl g' c' m')
 (*
   | Attack c -> failwith "unimplemented"
   | Defend (c1,c2) -> failwith "unimplemented"

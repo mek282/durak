@@ -129,10 +129,19 @@ let isValidDef (attack:card) (defend:card) (trump:suit) : bool =
 
 (*returns true if def is a valid deflection, given state g*)
 let isValidDeflect (def:card) (g:state) =
-  if g.active <> g.defender then false
-  else if List.length g.table <> 1 then false
-  else if (snd def) <> (snd (fst (List.hd g.table))) then false
-  else true
+  if g.active <> g.defender
+    then false
+  else if g.table = []
+    then false
+  else if (snd def) <> (snd (fst (List.hd g.table)))
+    then false
+  else
+    let rec all_vals_eq lst tabl = (match tabl with
+    | [] -> not (List.mem false (List.map (fun x -> x = List.hd lst) lst))
+    | ((_,v), None)::tl -> all_vals_eq (v::lst) tl
+    | ((_,_), Some def)::tl -> false)
+    in all_vals_eq [] g.table
+
 
 (*returns true if Pass is a valid command given state g*)
 let isValidPass (g:state) =
@@ -786,6 +795,41 @@ let test_lowestValidDefOf () =
   assert (lowestValidDefOf testHand6 testAttack testTrump = Some (Club, 9));
   ()
 
+let test_isValidDeflect () =
+  let gs1 = {deck = [(Spade, 13); (Spade, 12); (Spade, 10);
+                      (Diamond, 6); (Club, 6); (Spade, 11);
+                      (Spade, 9); (Diamond, 12); (Club, 7)];
+             trump = Club;
+             attackers = [{state = Human;
+                           hand = [(Heart, 13); (Spade, 6); (Spade, 8);
+                                   (Diamond, 11); (Diamond, 9); (Heart, 14)];
+                           name = "testplayer"};
+                          {state = CPU 2;
+                           hand = [(Club, 14); (Club, 13); (Club, 10);
+                                   (Heart, 8); (Spade, 7); (Heart, 9)];
+                           name = "Jose"};
+                          {state = CPU 2;
+                           hand = [(Club, 11); (Diamond, 13); (Club, 12);
+                                   (Heart, 10); (Heart, 7); (Heart, 6)];
+                           name = "Ivan"}];
+             defender =   {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             table = [((Club, 8), Some (Club, 9)); ((Heart, 8), None)];
+             active =     {state = CPU 2;
+                           hand = [(Heart, 11); (Spade, 14); (Diamond, 10);
+                                   (Diamond, 8); (Diamond, 7); (Heart, 12)];
+                           name = "Mary"};
+             discard = [];
+             winners = []; passed = []} in
+  assert (not (isValidDeflect (Spade, 8) gs1));
+  let gs2 = {gs1 with table = [((Club, 8), None)]} in
+  assert (isValidDeflect (Spade, 8) gs2);
+  let gs3 = {gs1 with table = [((Club, 8), None); ((Spade, 8), None)]} in
+  assert (isValidDeflect (Heart, 8) gs3);
+  ()
+
 let test_easy_defend () =
   let deck = [] in
   let trump = Diamond in
@@ -1108,6 +1152,7 @@ let run_ai_tests () =
   test_easy_defend ();
   test_med_defend ();
   test_med_attack ();
+  test_isValidDeflect ();
   (*test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
