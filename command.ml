@@ -237,7 +237,8 @@ let rec remove_last = function
 
 (* returns a new state in which d is the defender, and the attackers have
  * been changed accordingly.  Attackers from the previous round are dealt
- * cards from the deck if need be. *)
+ * cards from the deck if need be. The primary attacker is set to be the
+ * active player.  The table is cleared. *)
 let new_turn g (d : player) : state =
   let g' = deal g in
   let a = g'.defender::(remove_last g'.attackers) in
@@ -245,7 +246,8 @@ let new_turn g (d : player) : state =
     then a
     else (last_attacker g'.attackers)::(remove_last a)
     in
-  { g' with attackers = a'; defender = d; passed = []}
+  let g'' = { g' with attackers = a'; defender = d; passed = []} in
+  { g'' with active = List.hd g''.attackers; table = [] }
 
 
 (* [before el lst] returns the element in lst that comes before el.
@@ -335,7 +337,7 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
       let g' = new_turn g''' next_p in
       let g'' = add_attack g' (s2,r2) in
       let (g'''',ended) = if won then do_win g'' active else (g'',false) in
-      (change_active g'''' next_p,won,ended)
+      ({(change_active g'''' next_p) with table = ((s2,r2),None)::l},won,ended)
     else raise (Invalid_action "Can't deflect")
   end
 
@@ -432,7 +434,7 @@ let place_defense (g : state) (c1 : card) (c2 : card) : state =
  * Also returns a bool telling whether or not g.active won and a bool telling
  * whether or not the game has ended *)
 let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
-  if g.active <> g.defender
+  if g.active.name <> g.defender.name
     then raise (Invalid_action "Only the defender can defend.") else
   if not (List.mem (c1,None) g.table)
     then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
@@ -461,14 +463,22 @@ let rec same_elements lst1 = function
       same_elements lst1' t
       else false
 
-(* makes the next player the active player *)
+(* makes the next player the active player. Raises Invalid_action if the
+ * primary attacker tries to pass before any cards have been played. *)
 let pass (g : state) : state =
+  if g.table = [] && (print_endline "You will not pass!!"; g.active.name = (List.hd g.attackers).name) then
+    let () = print_endline "Primary attacker tried to pass!" in
+    raise (Invalid_action "You must attack. ") else
   let g' = {g with passed = (g.active::g.passed)} in
   if (same_elements g'.attackers g'.passed) && all_answered g'
-    then new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
+    then
+      let () = (print_endline "In pass, about to start new turn") in
+      new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
   let active' =
     if g'.active = g'.defender
-      then last_attacker g'.attackers
+      then
+        let () = print_endline "In pass, active player is defender" in
+        last_attacker g'.attackers
       else try next_attacker g' with Invalid_action _ -> g'.defender
   in { g' with active = active' }
 
@@ -477,7 +487,7 @@ let pass (g : state) : state =
  * a string describing what was done *)
 let step (g:state) (c:command) : state*string*bool =
   try
-  print_endline "BITCH STEP IS HAPPENING ";
+  print_endline "BITCH STEPPING ON COMMAND: " ; print_command c;
     match c with
     | Attack c -> begin
         print_endline "BITCH ATTACK IS GETTING MATCHED 1";
