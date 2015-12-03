@@ -4,6 +4,7 @@
 * table not clearing properly all the time & not sure if discard pile is always updated
 * Something funky going on with pass, still not getting attackers/defenders right - seem
 * to be clearing the passed field too soon maybe?
+* Make med AI deflect multiples
 *)
 
 open Cards
@@ -97,9 +98,11 @@ let init_game_state s dlist =
     passed = [];
   }
 
+
 (* ========================================================================== *)
-(* =========================COMMAND PROCESSING=============================== *)
+(* =========================STRING & PRINT FUNS============================== *)
 (* ========================================================================== *)
+
 
 (* Some helpers for strings manipulation - Vanya *)
 (* returns string representation of a suit *)
@@ -124,6 +127,42 @@ let rank_to_string (rank: int) : string =
 (* returns the string representation of card (s,r)*)
 let string_of_card (s,r) : string =
   (rank_to_string r) ^ " of " ^ (suit_to_string s)
+
+let rec string_of_deck = function
+  | [] -> ""
+  | h::t -> (string_of_card h) ^ "; " ^ (string_of_deck t)
+
+let string_of_player (p : player) =
+  let s = match p.state with Human -> "Human" | CPU i -> "CPU" ^ (string_of_int i) in
+  let hand = string_of_deck p.hand in
+  "(" ^ p.name ^ ": " ^ s ^ ", " ^ hand ^ ")"
+
+let rec string_of_attackers = function
+  | [] -> ""
+  | h::t -> (string_of_player h) ^ "; " ^ (string_of_attackers t)
+
+let rec string_of_table = function
+  | [] -> ""
+  | (a,Some d)::t ->
+    "(" ^ string_of_card a ^ ", " ^ string_of_card d ^ ") " ^ string_of_table t
+  | (a,None)::t ->
+    "(" ^ string_of_card a ^ ", None) " ^ string_of_table t
+
+let print_state (g : state) : unit =
+  print_endline("deck: " ^ string_of_deck g.deck);
+  print_endline("trump: " ^ suit_to_string g.trump);
+  print_endline("attackers: " ^ string_of_attackers g.attackers);
+  print_endline("defender: " ^ string_of_player g.defender);
+  print_endline("table: " ^ string_of_table g.table);
+  print_endline("active: " ^ string_of_player g.active);
+  print_endline("discard: " ^ string_of_deck g.discard);
+  print_endline("winners: " ^ string_of_attackers g.winners);
+  print_endline("passed: " ^ string_of_attackers g.passed)
+
+
+(* ========================================================================== *)
+(* =========================COMMAND PROCESSING=============================== *)
+(* ========================================================================== *)
 
 
 (* play_card p c removes card c from the hand of player p and returns a new
@@ -456,9 +495,14 @@ let step (g:state) (c:command) : state*string*bool =
       end
     | Take -> begin
         let g' = take_all g in
+        print_endline "JUST TOOK GS"; print_state g';
         let g'' = new_turn g' (penultimate g.attackers) in
+        print_endline "NEW TURN GS"; print_state g'';
+        let skip_taker = next_attacker g'' in
+        let g3 = {g'' with active = skip_taker} in
+        print_endline "SKIPPED TAKER GS"; print_state g3;
         let m = g.active.name ^ " chose to take." in
-        (g'',m,false)
+        (g3,m,false)
       end
     | Pass -> let m = g.active.name ^ " passed." in (pass g, m,false)
     | Deflect (c1,c2) -> begin
@@ -474,36 +518,6 @@ let step (g:state) (c:command) : state*string*bool =
 (* ========================================================================== *)
 (* ==============================TESTING===================================== *)
 (* ========================================================================== *)
-let rec string_of_deck = function
-  | [] -> ""
-  | h::t -> (string_of_card h) ^ "; " ^ (string_of_deck t)
-
-let string_of_player (p : player) =
-  let s = match p.state with Human -> "Human" | CPU i -> "CPU" ^ (string_of_int i) in
-  let hand = string_of_deck p.hand in
-  "(" ^ p.name ^ ": " ^ s ^ ", " ^ hand ^ ")"
-
-let rec string_of_attackers = function
-  | [] -> ""
-  | h::t -> (string_of_player h) ^ "; " ^ (string_of_attackers t)
-
-let rec string_of_table = function
-  | [] -> ""
-  | (a,Some d)::t ->
-    "(" ^ string_of_card a ^ ", " ^ string_of_card d ^ ") " ^ string_of_table t
-  | (a,None)::t ->
-    "(" ^ string_of_card a ^ ", None) " ^ string_of_table t
-
-let print_state (g : state) : unit =
-  print_endline("deck: " ^ string_of_deck g.deck);
-  print_endline("trump: " ^ suit_to_string g.trump);
-  print_endline("attackers: " ^ string_of_attackers g.attackers);
-  print_endline("defender: " ^ string_of_player g.defender);
-  print_endline("table: " ^ string_of_table g.table);
-  print_endline("active: " ^ string_of_player g.active);
-  print_endline("discard: " ^ string_of_deck g.discard);
-  print_endline("winners: " ^ string_of_attackers g.winners);
-  print_endline("passed: " ^ string_of_attackers g.passed)
 
 let field_compare g1 g2 =
   assert (g1.deck = g2.deck);
