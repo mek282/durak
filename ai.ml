@@ -90,7 +90,7 @@ let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
   let rec matchResult lst =
     match lst with
     | [] -> None
-    | (a,b)::tl -> if b >= (snd attack)
+    | (a,b)::tl -> if b > (snd attack)
                 then Some (a,b)
                 else
                   (if a = trump
@@ -544,12 +544,14 @@ module Easy = struct
     let table = gameState.table in
     let trump = gameState.trump in
     let attack = firstUndefended table in
-    let result = lowestValidDefOf (hand) (attack) (trump) in
-    match result with
-    | None -> Take
-    | Some (a,b) -> if isValidDeflect (a,b) gameState
-                      then Deflect (attack, (a,b))
-                    else Defend (attack, (a,b))
+    let result1 = getValidDeflections gameState in
+    let result2 = lowestValidDefOf (hand) (attack) (trump) in
+    match result1 with
+    | [] -> (match result2 with
+             | None -> Take
+             | Some (a,b) -> Defend (attack, (a,b)))
+    | c::tl -> c
+
 
 
   (*The easy AI's attacking function*)
@@ -780,7 +782,7 @@ let test_lowestValidDefOf () =
   assert (lowestValidDefOf testHand3 testAttack testTrump = None);
   assert (lowestValidDefOf testHand4 testAttack testTrump = Some (Heart, 10));
   assert (lowestValidDefOf testHand5 testAttack testTrump = None);
-  assert (lowestValidDefOf testHand6 testAttack testTrump = Some (Club, 9));
+  assert (lowestValidDefOf testHand6 testAttack testTrump = Some (Heart, 10));
   ()
 
 let test_isValidDeflect () =
