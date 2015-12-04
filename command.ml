@@ -385,7 +385,7 @@ let attack (g : state) (c : card) : state*bool*bool =
     then raise (Invalid_action "You are not an attacker!")
   else if not (valid_attack g c)
     then raise (Invalid_action "That is not a valid attack!")
-  else if List.length g.table > 6
+  else if List.length g.table = 6
     then raise (Invalid_action "There are already 6 attacks on the table!")
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
@@ -414,9 +414,10 @@ let rec penultimate = function
 let all_answered (g : state) : bool =
   not (List.exists (fun (_,x) -> x = None) g.table)
 
+
 (* if c1 is unpaired on the table, and if c2 is a valid defense, return a new
  * gamestate with c2 paired to c1 on the table and with c2 removed from the
- * active player's hand.
+ * active player's hand.  Does not change the active player.
  * Raise Invalid_action otherwise. *)
 let place_defense (g : state) (c1 : card) (c2 : card) : state =
   if not (List.mem (c1,None) g.table)
@@ -427,8 +428,8 @@ let place_defense (g : state) (c1 : card) (c2 : card) : state =
     raise (Invalid_action (s2 ^ " can't  defend against " ^ s1 ^ "! "))
   else let g' = game_play_card g c2 in
   let tabl = List.remove_assoc c1 g'.table in
-  { g' with table = (c1,Some c2)::tabl;
-           active = last_attacker g'.attackers}
+  { g' with table = (c1,Some c2)::tabl }
+
 
 (* Carries out "defend against c1 with c2" --
  * if the active player is the defender, c1 is an unanswered attack on the
@@ -457,7 +458,7 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
                   discard = (tablepairs_to_list g.table)@g.discard;
                   passed = [] } in
       (new_turn g'' (last_attacker g''.attackers) , won)
-    else*) ({g' with passed = []}, won,false)
+    else*) ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
 
 
 (* returns true iff the two lists have exactly the same elements, though
@@ -529,7 +530,11 @@ let step (g:state) (c:command) : state*string*bool =
         (g',m,e)
       end
   with
-  | Invalid_action a -> (g, "\nThere was a problem: " ^ a, false)
+  | Invalid_action a -> begin
+      match g.active.state with
+      | Human -> (g, "\nThere was a problem: " ^ a, false)
+      | CPU _ -> (g, g.active.name ^ " is a Durak! Surprise bonus win! ", true)
+    end
 
 
 (* ========================================================================== *)
