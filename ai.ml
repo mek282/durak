@@ -486,8 +486,10 @@ let rec simulate g2 =
       match moves with
       | [] -> g2
       | _ -> (let () = print_endline ("ACTIVE: "^g2.active.name); in
-              let () = (print_endline (printCommList moves)); in
-              simulate (GameState.doMove (randomMove moves) g2))
+              let () = (print_endline ("MOVES: "^printCommList moves)); in
+              let move = randomMove moves in
+              let () = print_endline (move_to_string move g2.active); in
+              simulate (GameState.doMove move g2))
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
@@ -1156,8 +1158,8 @@ let run_ai_tests () =
   test_expand ();
   test_simulate ();
   test_backPropogate ();
-*)
   test_iSMCTS ();
+*)
   print_endline "all AI tests pass";
   ()
 
