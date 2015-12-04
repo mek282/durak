@@ -460,8 +460,7 @@ let rec same_elements lst1 = function
 (* makes the next player the active player. Raises Invalid_action if the
  * primary attacker tries to pass before any cards have been played. *)
 let pass (g : state) : state =
-  if g.table = [] && (print_endline "You will not pass!!"; g.active.name = (List.hd g.attackers).name) then
-    let () = print_endline "Primary attacker tried to pass!" in
+  if g.table = [] && (g.active.name = (List.hd g.attackers).name) then
     raise (Invalid_action "You must attack. ") else
   let g' = {g with passed = (g.active::g.passed)} in
   if (same_elements g'.attackers g'.passed) && all_answered g'
@@ -510,7 +509,7 @@ let step (g:state) (c:command) : state*string*bool =
         (g',m,e)
       end
   with
-  | Invalid_action a -> (g, "There was a problem: " ^ a, false)
+  | Invalid_action a -> (g, "\nThere was a problem: " ^ a, false)
 
 
 (* ========================================================================== *)

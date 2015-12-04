@@ -149,9 +149,17 @@ let parse (s : string) : command =
   | _ -> raise (Cannot_parse s)
 
 
+let print_player_prompt gs =
+  match gs.active.state with
+  | CPU _ -> ()
+  | Human -> if gs.active.name = gs.defender.name
+               then print_endline "It is your turn to defend."
+             else print_endline "It is your turn to attack."
+
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
   Gui.draw g;
+  print_player_prompt g;
   print_endline prompt;
   read_line ()
 
@@ -182,20 +190,15 @@ let end_game (g : state) : unit =
     else print_endline "You lost--You're the durak!" in
   exit 0
 
-
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
   print_state g;
-  Printf.printf "starting repl\n%!";
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
-  Printf.printf "step done\n%!";
   let m' = message ^ " " ^ m in
   (* Gui.draw g'; *)
-  Printf.printf "%b\n%!" (g'.active = g'.defender);
   let c' = parse_no_fail m' g' in
   Cards.print_command c';
-  print_state g';
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
@@ -439,7 +442,5 @@ let _ =
 (*   Gui.draw gs;
   print_endline "starting fuck ";
   let com = read_line () in *)
-  print_endline "starting initial command";
   let initial_command = parse_no_fail "" gs in
-  print_endline "got innitial command!";
   repl gs initial_command ""
