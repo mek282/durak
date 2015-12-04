@@ -145,7 +145,7 @@ let isValidDeflect (def:card) (g:state) =
 
 (*returns true if Pass is a valid command given state g*)
 let isValidPass (g:state) =
-  (List.mem g.active g.attackers)
+  (List.mem g.active g.attackers) && (g.table <> [])
 
 (*returns true if Take is a valid command, given state g*)
 let isValidTake (g:state) =
@@ -348,7 +348,7 @@ let rec getUndefended (table:(card * card option) list) : card list =
     (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
       (if g.active <> g.defender || g.attackers = []
         then [] else [Take]) @
-      (if not (List.mem g.active g.attackers) || g.attackers = []
+      (if not (isValidPass g) || g.attackers = []
         then [] else [Pass])
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
