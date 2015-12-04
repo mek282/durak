@@ -372,6 +372,8 @@ let attack (g : state) (c : card) : state*bool*bool =
     then raise (Invalid_action "You are not an attacker!")
   else if not (valid_attack g c)
     then raise (Invalid_action "That is not a valid attack!")
+  else if List.length g.table > 6
+    then raise (Invalid_action "There are already 6 attacks on the table!")
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' g'.active else (g',false) in
