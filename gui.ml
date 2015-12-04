@@ -168,15 +168,15 @@ let draw_opponent_row (hand: deck) : unit =
 
 (* Draws the hands of all opponents which are not the active player. If the
  * opponent has already won, prints "Not and Idiot" instead.*)
-let draw_opponents (attackers: player list) (defender: player)
-  (winners: player list) (active: player): unit =
+let draw_opponents (attackers: player list) (defender: player) (active: player): unit =
   let players = defender :: attackers in
   let players_filtered = List.filter (fun x -> x <> active) players in
   List.iter (fun x ->  Printf.printf "\n%s\n%!" x.name;
-                      if List.mem x winners then
-                        Printf.printf "Not an Idiot\n%!"
-                      else
-                        draw_opponent_row x.hand) players_filtered
+                      draw_opponent_row x.hand) players_filtered
+
+let draw_winners (winners: player list) : unit =
+  List.iter (fun x -> Printf.printf "\n%s\n%!" x.name;
+                      Printf.printf "Not a complete Idiot\n%!") winners
 
 
 (*============================================================================*)
@@ -192,7 +192,8 @@ let draw (s: state) : unit =
 (*   Printf.printf "\nDEFENDER HAND\n%!";
   draw_hand s.defender.hand; *)
   Printf.printf "\nOPPONENT'S HANDS\n%!";
-  draw_opponents s.attackers s.defender s.winners s.active;
+  draw_opponents s.attackers s.defender s.active;
+  draw_winners s.winners;
   Printf.printf "\nTHE TABLE\n%!";
   draw_table s.table;
   Printf.printf "\nTHE DECK\n%!";
