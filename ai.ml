@@ -1158,11 +1158,10 @@ let run_ai_tests () =
   test_expand ();
   test_simulate ();
   test_backPropogate ();
-  test_iSMCTS ();
 *)
+  test_iSMCTS ();
   print_endline "all AI tests pass";
   ()
 
-(*let _ =
+let _ =
   run_ai_tests ()
-*)

@@ -172,7 +172,7 @@ let play_card (p : player) (c : card) : player =
     raise (Invalid_action ("Card is not in "^p.name^"'s hand"))
   else
     let () = (match new_hand with
-              | [] -> print_endline "BITCH U GOT NO MORE CARDS"
+              | [] -> print_endline "U GOT NO MORE CARDS"
               | h :: t -> Cards.print_card h) in
     {p with hand = new_hand}
 
@@ -183,7 +183,7 @@ let game_play_card (g : state) (c : card) : state =
   let replace = fun x -> if x.name = g.active.name then p else x in
   let attackers' = List.map replace g.attackers in
   let defender' = if g.defender.name = g.active.name then
-    let () = print_endline "BITCH WE SHOULD BE HERE" in
+    let () = print_endline "WE SHOULD BE HERE" in
     p
   else
     let () = print_endline "BUT WE PROBABLY HERE" in
@@ -310,15 +310,15 @@ let end_game (g : state) : state =
  * longer represented in state except as a winner.
  * Returns the gamestate in which p is a winner and [the game has ended] *)
 let do_win (g : state) (p : player) : state*bool =
-  print_endline " BITCH WERE IN DO WIN NOW";
+  print_endline "WERE IN DO WIN NOW";
   if (List.length g.attackers = 1) && p.name = g.defender.name then
     ({g with attackers = []; active = last_attacker g.attackers;
         winners = p::g.winners},true)
   else
     if g.defender.name = p.name then
       let g' = new_turn g (last_attacker g.attackers) in
-      print_endline "BITCH I WON WITH A DEFENSE BUT GAME ISNT FULLY OVER WOOOOOO";
-      Printf.printf "BITCH WERE IN DO WIN NOW LETS CHECK ATTACKER LENGTH ---->%d/n%!" (List.length g'.attackers);
+      print_endline "I WON WITH A DEFENSE BUT GAME ISNT FULLY OVER WOOOOOO";
+      Printf.printf "WE'RE IN DO WIN NOW LETS CHECK ATTACKER LENGTH ---->%d/n%!" (List.length g'.attackers);
       ({ g' with winners = p::(g'.winners);
                attackers = List.tl g'.attackers;
                   active = List.hd (List.tl g'.attackers)}, false) (*THIS MIGHT BE ERROR CAUSE LATER!!!!!!!!!*)
@@ -326,7 +326,7 @@ let do_win (g : state) (p : player) : state*bool =
       if List.length g.attackers = 1 then
         ({g with attackers = []; active = g.defender; winners = p::g.winners},true)
       else
-        let () = print_endline "BITCH I WON WITH AN ATTACK" in
+        let () = print_endline "I WON WITH AN ATTACK" in
         let active' = if g.active.name = p.name then
                         if p.name = (List.hd g.attackers).name then
                           g.defender
