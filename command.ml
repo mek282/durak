@@ -593,7 +593,6 @@ end
 let test_step () =
   let g1 = Sample_state2.game in
   let (g1',m,_) = step g1 (Attack (Spade, 7)) in
-
   let hand2' = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14);
    (Club,11); (Spade,10); (Diamond, 8); (Heart, 10)] in
   let player2' = { Sample_state2.player2 with hand = hand2' } in
@@ -768,7 +767,7 @@ let test_remove_last () =
   assert (remove_last lst2 = [player1])
 
 let test_new_turn () =
-  let state = sample_state () in
+  (*let state = sample_state () in
   let defender = state.defender in
   let attacker1 = List.nth state.attackers 0 in
   let attacker2 = List.nth state.attackers 1 in
@@ -776,7 +775,8 @@ let test_new_turn () =
   let new_state = new_turn state attacker3 in
 
   assert (new_state.defender  = attacker3);
-  assert (new_state.attackers = [defender; attacker1; attacker2])
+  assert (new_state.attackers = [defender; attacker1; attacker2])*)
+  let g0 = Sample_state2.game
 
 let test_before () =
   ()
