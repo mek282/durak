@@ -776,7 +776,7 @@ let test_new_turn () =
 
   assert (new_state.defender  = attacker3);
   assert (new_state.attackers = [defender; attacker1; attacker2])*)
-  let g0 = Sample_state2.game
+  (*let g0 = Sample_state2.game in*) ()
 
 let test_before () =
   ()
