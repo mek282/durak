@@ -547,8 +547,7 @@ module Easy = struct
     let result = lowestValidDefOf (hand) (attack) (trump) in
     match result with
     | None -> Take
-    | Some (a,b) -> if List.length table = 1 &&
-                       b = (snd attack)
+    | Some (a,b) -> if isValidDeflect (a,b) gameState
                       then Deflect (attack, (a,b))
                     else Defend (attack, (a,b))
 
@@ -612,14 +611,8 @@ module Medium = struct
                                              else get_best_def tl current_def)
     ) in get_best_def filtered_hand None
 
-(*   let can_defl (hand:deck) (table:(card*card option) list) : bool =
-    if List.length table = 0
-      then false
-    else let val = fst (List.hd table) in *)
-
-
   let best_deflection (hand:deck) (att:card) (gs:state): card option =
-    let possible_defls = List.filter (fun (a,b) -> (snd att) = b) hand in
+    let possible_defls = List.filter (fun c -> isValidDeflect c gs) hand in
     let rec get_best_defl filt_hand current_defl =
       match filt_hand with
       | [] -> current_defl
@@ -628,9 +621,8 @@ module Medium = struct
                       | Some (s',v') -> if s' = gs.trump
                                           then get_best_defl tl (Some (s,v))
                                         else get_best_defl tl current_defl) in
-    if List.length gs.table = 1
-      then get_best_defl possible_defls None
-    else None
+    get_best_defl possible_defls None
+
 
   (* [def_all_attacks h c g l] returns list of defenses in response to cards in
   * [c] from [h]. Not necessarily in the correct order. If a card cannot be
@@ -665,26 +657,22 @@ module Medium = struct
              if (float_of_int (List.length (List.filter is_high def_list)) /.
                 float_of_int (List.length def_list)) >= 0.5
                then Take (*Take if more than >= half are high or trump*)
-             else let first = List.hd cs in
-                  (match best_def (gs.active).hand first (gs.trump) with
-                   | None -> Take
-                   | Some c -> Defend (first, c)) (*Defend low cards if can*)
+             else let at = List.hd cs in (
+                  match best_deflection (gs.active).hand at gs with
+                  | None -> (match best_def (gs.active).hand at (gs.trump) with
+                             | None -> Take
+                             | Some (a,b) -> Defend (at, (a,b)))
+                  | Some c -> Deflect (at, c))(*Defend/deflect low cards if can*)
          else Take (*Take if not valid moves for all cards on table*)
 
   (* Medium AI defense calculator for late game*)
   let late_def (cs:card list) (gs:state) : command =
-    if List.length cs = 1
-      then let at = List.hd cs in
-        match best_deflection (gs.active).hand at gs with
-             | None -> (match best_def (gs.active).hand at (gs.trump) with
-                        | None -> Take
-                        | Some (a,b) -> Defend (at, (a,b)))
-             | Some c -> Deflect (at, c)
-    else let first = List.hd cs in
-         (match best_def (gs.active).hand first (gs.trump) with
-          | None -> Take
-          | Some c -> Defend (first, c))
-
+    let at = List.hd cs in
+      match best_deflection (gs.active).hand at gs with
+      | None -> (match best_def (gs.active).hand at (gs.trump) with
+                 | None -> Take
+                 | Some (a,b) -> Defend (at, (a,b)))
+      | Some c -> Deflect (at, c)
 
   let med_defend (gs:state) : command =
     let attacks = getUndefended (gs.table) in

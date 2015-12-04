@@ -495,10 +495,10 @@ let step (g:state) (c:command) : state*string*bool =
     | Take -> begin
         let g' = take_all g in
         let g'' = new_turn g' (penultimate g.attackers) in
-        let skip_taker = next_attacker g'' in
-        let g3 = {g'' with active = skip_taker} in
+(*         let skip_taker = next_attacker g'' in
+        let g3 = {g'' with active = skip_taker} in *)
         let m = g.active.name ^ " chose to take." in
-        (g3,m,false)
+        (g'',m,false)
       end
     | Pass -> let m = g.active.name ^ " passed." in (pass g, m,false)
     | Deflect (c1,c2) -> begin
