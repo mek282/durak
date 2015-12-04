@@ -321,7 +321,7 @@ let do_win (g : state) (p : player) : state*bool =
       Printf.printf "BITCH WERE IN DO WIN NOW LETS CHECK ATTACKER LENGTH ---->%d/n%!" (List.length g'.attackers);
       ({ g' with winners = p::(g'.winners);
                attackers = List.tl g'.attackers;
-                  active = List.hd (List.tl g'.attackers)}, false)
+                  active = List.hd (List.tl g'.attackers)}, false) (*THIS MIGHT BE ERROR CAUSE LATER!!!!!!!!!*)
     else
       if List.length g.attackers = 1 then
         ({g with attackers = []; active = g.defender; winners = p::g.winners},true)
