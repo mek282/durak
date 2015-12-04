@@ -40,6 +40,15 @@ let command_to_string c : string =
   | Attack a -> "Attack with"^(card_to_string a)^"\n"
   | Defend (a,b) -> "Defend "^(card_to_string a)^"with"^(card_to_string b)^"\n"
 
+let move_to_string c p : string =
+  match c with
+  | Pass -> p.name^" Passes\n"
+  | Take -> p.name^" Takes\n"
+  | Deflect (a,b) ->
+     p.name^" Deflects "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+  | Attack a -> p.name^" Attacks with"^(card_to_string a)^"\n"
+  | Defend (a,b) -> p.name^" Defends "^(card_to_string a)^"with"^(card_to_string b)^"\n"
+
 let rec printCardList d : string =
   match d with
   | [] -> ""
@@ -56,7 +65,7 @@ let rec printPlayers lst : string =
   | [] -> ""
   | hd::tl -> hd.name^", "^(printPlayers tl)
 
-let rec printCommList lst : string =
+let rec printCommList lst: string =
   match lst with
   | [] -> ""
   | hd::tl -> (command_to_string hd)^(printCommList tl)
@@ -69,7 +78,6 @@ let unwrap o =
 
 (*version of Pervasives.compare which ignores card suits*)
 let cardCompare ((a,b):card) ((c,d):card) = compare b d
-
 
 (* [sortHand a h t] outputs [h] sorted in increasing order, filtered by suit
 * of [a] and [t], and by rank of [a] *)
@@ -106,10 +114,14 @@ let rec getUndefended (t:(card*card option) list) : card list =
                  then a::(getUndefended tl)
                  else getUndefended tl
 
-(*returns true if att is a valid attack, given table inPlay*)
-let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
-  if List.length inPlay = 0
+(*returns true if att is a valid attack, given state g*)
+let isValidAtt (g:state) (att:card) : bool =
+  if List.length g.table = 0
     then true
+  else if List.length g.defender.hand = List.length (getUndefended g.table)
+    then false
+  else if List.length g.table = 6
+    then false
   else
     begin
       let rec compRanks pairlst =
@@ -117,7 +129,7 @@ let isValidAtt (inPlay:(card*card option) list) (att:card) : bool =
         | [] -> []
         | (a,None)::tl -> (snd a)::(compRanks tl)
         | (a, Some b)::tl -> (snd a)::(snd b)::(compRanks tl) in
-      List.mem (snd att) (compRanks inPlay)
+      List.mem (snd att) (compRanks g.table)
     end
 
 (*[isValidDef a d t] returns true if d is a valid defense against a. Does not
@@ -189,7 +201,7 @@ let rec getValidAttacks (g:state) : command list =
       let rec itrHand lst1 =
         match lst1 with
         | [] -> []
-        | hd::tl -> if isValidAtt g.table hd
+        | hd::tl -> if isValidAtt g hd
                       then (Attack hd)::(itrHand tl)
                     else itrHand tl in
       itrHand g.active.hand
@@ -219,15 +231,6 @@ let rec firstUndefended (table:(card * card option) list) =
   | (a,b)::tl -> if b = None
                  then a
                  else firstUndefended tl
-
-
-(*returns a list of the undefended card pairs*)
-let rec getUndefended (table:(card * card option) list) : card list =
-  match table with
-  | [] -> []
-  | (a,b)::tl -> if b = None
-                 then a::(getUndefended tl)
-                 else getUndefended tl
 
 
 (*Provides functions for manipulating game states.
@@ -482,8 +485,9 @@ let rec simulate g2 =
       let moves = GameState.getMoves g2 in
       match moves with
       | [] -> g2
-      | _ -> (let () = (print_endline (printCommList moves)); in
-        simulate (GameState.doMove (randomMove moves) g2))
+      | _ -> (let () = print_endline ("ACTIVE: "^g2.active.name); in
+              let () = (print_endline (printCommList moves)); in
+              simulate (GameState.doMove (randomMove moves) g2))
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
@@ -559,11 +563,12 @@ module Easy = struct
     let sortedHand = List.sort cardCompare gameState.active.hand in
     let table = gameState.table in
     let len = List.length table in
-    let inPlay = List.map (fun ((a,b),c) -> b) (table) in
     let rec validAttack lst =
       match lst with
       | [] -> Pass
-      | hd::tl -> if List.mem (snd hd) inPlay then Attack hd else validAttack tl in
+      | hd::tl -> if isValidAtt gameState hd
+                    then Attack hd
+                  else validAttack tl in
     if len = 6 then Pass
     else if len = 0 then Attack (List.hd sortedHand)
     else validAttack sortedHand
@@ -698,7 +703,7 @@ module Medium = struct
     if List.length (gs.table) = 0
       then Attack (List.hd sorted_hand)
     else if List.length (gs.table) < 6
-      then let valid_attacks = List.filter (isValidAtt gs.table) sorted_hand in
+      then let valid_attacks = List.filter (isValidAtt gs) sorted_hand in
            match valid_attacks with
            | [] -> Pass
            | (s,v)::tl -> if (s = gs.trump) || (v >= 12)
@@ -711,7 +716,7 @@ module Medium = struct
     if List.length (gs.table) = 0
       then Attack (List.hd sorted_hand)
     else if List.length (gs.table) < 6
-      then let valid_attacks = List.filter (isValidAtt gs.table) sorted_hand in
+      then let valid_attacks = List.filter (isValidAtt gs) sorted_hand in
            match valid_attacks with
            | [] -> Pass
            | hd::tl -> Attack hd
@@ -908,8 +913,8 @@ let test_gameState_doMove () =
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
   print_endline (printPlayerHands g1.attackers);
-  print_endline (printCommList moveList);
   print_endline ("ACTIVE: "^g1.active.name);
+  print_endline (printCommList moveList);
   let g2 = GameState.doMove (Attack (Spade,7)) g1 in
   print_endline ("DECK: "^(printCardList g2.deck));
   print_endline ("DEFENDER: "^(printCardList g2.defender.hand));
@@ -1022,7 +1027,7 @@ let test_iSMCTS () =
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
   print_endline (printPlayerHands g1.attackers);
   let m = iSMCTS g1 5 in print_endline
-    ("GRANDMASTERMOVE: "^(command_to_string m));
+    ("GRANDMASTERMOVE: "^(move_to_string m g1.active));
   ()
 
 let test_med_defend () =
@@ -1147,11 +1152,12 @@ let run_ai_tests () =
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
   test_gameState_getMoves ();*)
-(*   test_select ();
+(*test_select ();
   test_expand ();
   test_simulate ();
-  test_backPropogate (); *)
-  (*test_iSMCTS ();*)
+  test_backPropogate ();
+*)
+  test_iSMCTS ();
   print_endline "all AI tests pass";
   ()
 

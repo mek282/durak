@@ -242,8 +242,8 @@ let new_turn g (d : player) : state =
   let g' = deal g in
   let a = g'.defender::(remove_last g'.attackers) in
   let a' = if d.name = (last_attacker g'.attackers).name
-    then (print_endline "BITCH NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
-    else (print_endline "BITCH DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
+    then (print_endline "NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
+    else (print_endline "DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
   let g'' = { g' with attackers = a'; defender = d; passed = []} in
   { g'' with active = List.hd g''.attackers; table = [] }
