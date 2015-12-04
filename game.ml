@@ -369,8 +369,8 @@ let test_parse () =
   assert (parse e = e');
   ()
 
-let test_init_deck () =
-(*
+(* let test_init_deck () =
+
   Printf.printf "\n\nDECK 1 TEST:\n\n";
   let d1 = init_deck () in
   print_deck (fst d1) (snd d1);
@@ -389,8 +389,8 @@ let test_init_deck () =
   Printf.printf "\n\nDECK 6 TEST:\n\n";
   let d6 = init_deck () in
   print_deck (fst d6) (snd d6);
-*)
-  ()
+
+  () *)
 
 let test_init_game_state () =
 
@@ -424,6 +424,7 @@ let rec check_valid_difficulty () =
 
 
 let _ =
+  run_tests ();
   title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
@@ -441,5 +442,4 @@ let _ =
   print_endline "starting initial command";
   let initial_command = parse_no_fail "" gs in
   print_endline "got innitial command!";
-  repl gs initial_command "";
-  run_tests ()
+  repl gs initial_command ""
