@@ -466,6 +466,13 @@ let rec same_elements lst1 = function
       same_elements lst1' t
       else false
 
+
+(* [list_contains l1 l2]returns true iff all elements of l2 are members of l1*)
+let rec list_contains l1 = function
+  | [] -> true
+  | h::t -> (List.mem h l1) && (list_contains l1 t)
+
+
 (* makes the next player the active player. Raises Invalid_action if the
  * primary attacker tries to pass before any cards have been played. *)
 let pass (g : state) : state =
@@ -473,12 +480,12 @@ let pass (g : state) : state =
     let () = print_endline "Primary attacker tried to pass!" in
     raise (Invalid_action "You must attack. ") else
   let g' = {g with passed = (g.active::g.passed)} in
-  if (same_elements g'.attackers g'.passed) && all_answered g'
+  if (list_contains g'.passed g'.attackers) && all_answered g'
     then
       let () = (print_endline "In pass, about to start new turn") in
       new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
   let active' =
-    if g'.active = g'.defender
+    if g'.active.name = g'.defender.name
       then
         let () = print_endline "In pass, active player is defender" in
         last_attacker g'.attackers
