@@ -189,16 +189,16 @@ let draw (s: state) : unit =
   clear_screen ();
   Printf.printf "YOUR HAND\n%!";
   draw_hand s.active.hand;
-  Printf.printf "\nDEFENDER HAND\n%!";
-  draw_hand s.defender.hand;
+(*   Printf.printf "\nDEFENDER HAND\n%!";
+  draw_hand s.defender.hand; *)
   Printf.printf "\nOPPONENT'S HANDS\n%!";
   draw_opponents s.attackers s.defender s.winners s.active;
   Printf.printf "\nTHE TABLE\n%!";
   draw_table s.table;
   Printf.printf "\nTHE DECK\n%!";
-  draw_deck s.deck s.trump;
-  Printf.printf "\nWhat will you do?:\n%!"
-
+  draw_deck s.deck s.trump
+(*   Printf.printf "\nWhat will you do?:\n%!"
+ *)
 (* ========================================================================== *)
 (* ================================TESTING====================================*)
 (* ========================================================================== *)

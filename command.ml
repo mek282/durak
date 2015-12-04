@@ -171,16 +171,25 @@ let play_card (p : player) (c : card) : player =
   if List.length new_hand = List.length p.hand then
     raise (Invalid_action ("Card is not in "^p.name^"'s hand"))
   else
+    let () = (match new_hand with
+              | [] -> print_endline "BITCH U GOT NO MORE CARDS"
+              | h :: t -> Cards.print_card h) in
     {p with hand = new_hand}
 
 
 (* returns a new gamestate in which the active player has played card c *)
 let game_play_card (g : state) (c : card) : state =
   let p = play_card g.active c in
-  let replace = fun x -> if x = g.active then p else x in
+  let replace = fun x -> if x.name = g.active.name then p else x in
   let attackers' = List.map replace g.attackers in
-  let defender' = if g.defender = g.active then p else g.defender in
-  { g with attackers = attackers'; defender = defender'}
+  let defender' = if g.defender.name = g.active.name then
+    let () = print_endline "BITCH WE SHOULD BE HERE" in
+    p
+  else
+    let () = print_endline "BUT WE PROBABLY HERE" in
+    g.defender
+  in
+  { g with attackers = attackers'; defender = defender'; active = p}
 
 
 (* returns true iff d is a valid defense to attack a *)
@@ -309,8 +318,10 @@ let do_win (g : state) (p : player) : state*bool =
     if g.defender.name = p.name then
       let g' = new_turn g (last_attacker g.attackers) in
       print_endline "BITCH I WON WITH A DEFENSE BUT GAME ISNT FULLY OVER WOOOOOO";
+      Printf.printf "BITCH WERE IN DO WIN NOW LETS CHECK ATTACKER LENGTH ---->%d/n%!" (List.length g'.attackers);
       ({ g' with winners = p::(g'.winners);
-               attackers = List.tl g'.attackers}, false)
+               attackers = List.tl g'.attackers;
+                  active = List.hd (List.tl g'.attackers)}, false)
     else
       if List.length g.attackers = 1 then
         ({g with attackers = []; active = g.defender; winners = p::g.winners},true)
@@ -447,9 +458,12 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
   if not (List.mem (c1,None) g.table)
     then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
   let g' = place_defense g c1 c2 in
-  let won = g'.active.hand = [] in
+  let won = (List.length g'.active.hand) = 0 in
+  Printf.printf "YO DOAwg THIS WIN CONDIDTION IS FUCKED ---> %d\n%!" (List.length g'.active.hand);
+  Printf.printf "YO DAWg did THE CONDITION SAY WE WON? ----> %b\n%!" won;
   if won
     then let (g'',ended) = do_win g' g'.active in
+    let () = print_endline "WE WON WOOOOO on THE D-FENCE" in
     ({ g'' with table = []; passed = [] },won,ended) else
   (*if all_answered g'
     then
