@@ -296,7 +296,10 @@ let end_game (g : state) : state =
   exit 0 *)
 
 
-(* makes player p a winner. Ends the game if only one player is left. *)
+(* makes player p a winner. Ends the game if only one player is left.
+ * changes active player, attackers, and defender as necessary so that p is no
+ * longer represented in state except as a winner.
+ * Returns the gamestate in which p is a winner and [the game has ended] *)
 let do_win (g : state) (p : player) : state*bool =
   print_endline " BITCH WERE IN DO WIN NOW";
   if (List.length g.attackers = 1) && p.name = g.defender.name then
@@ -308,7 +311,7 @@ let do_win (g : state) (p : player) : state*bool =
       ({ g' with winners = p::(g'.winners);
                attackers = List.tl g'.attackers}, false)
     else
-      if List.length g.attackers = 0 then
+      if List.length g.attackers = 1 then
         ({g with attackers = []},true)
       else
         let () = print_endline "BITCH I WON WITH AN ATTACK" in
@@ -319,7 +322,7 @@ let do_win (g : state) (p : player) : state*bool =
                       else g.active in
         ({ g with
          active = active';
-         attackers = List.filter (fun x -> x<>p) g.attackers;
+         attackers = List.filter (fun x -> x.name<>p.name) g.attackers;
          winners = p::(g.winners);
         }, false)
 
@@ -852,6 +855,15 @@ let test_change_active () =
 
 
 let test_do_win () =
+  let player3 = { Sample_state2.player3 with hand = [] } in
+  let g0 = { Sample_state2.game with active = player3;
+            attackers = [Sample_state2.player2; player3] } in
+  let (g1,done1) = do_win g0 player3 in
+  let g1' = { g0 with attackers = [Sample_state2.player2];
+            active = Sample_state2.player2;
+            winners = [player3; Sample_state2.player4]} in
+  assert (not done1);
+  field_compare g1 g1' ;
   ()
 
 let test_deflect () =
@@ -936,6 +948,7 @@ let test_pass () =
   ()
 
 let run_tests () =
+  test_do_win ();
   test_string_of_card ();
   test_init_deck ();
   test_init_game_state ();
