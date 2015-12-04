@@ -303,7 +303,8 @@ let end_game (g : state) : state =
 let do_win (g : state) (p : player) : state*bool =
   print_endline " BITCH WERE IN DO WIN NOW";
   if (List.length g.attackers = 1) && p.name = g.defender.name then
-    ({g with attackers = []},true)
+    ({g with attackers = []; active = last_attacker g.attackers;
+        winners = p::g.winners},true)
   else
     if g.defender.name = p.name then
       let g' = new_turn g (last_attacker g.attackers) in
@@ -312,7 +313,7 @@ let do_win (g : state) (p : player) : state*bool =
                attackers = List.tl g'.attackers}, false)
     else
       if List.length g.attackers = 1 then
-        ({g with attackers = []},true)
+        ({g with attackers = []; active = g.defender; winners = p::g.winners},true)
       else
         let () = print_endline "BITCH I WON WITH AN ATTACK" in
         let active' = if g.active.name = p.name then
@@ -448,7 +449,7 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
   let won = g'.active.hand = [] in
   if won
     then let (g'',ended) = do_win g' g'.active in
-    ({ g'' with table = [] },won,ended) else
+    ({ g'' with table = []; passed = [] },won,ended) else
   (*if all_answered g'
     then
       let g'' = { g' with
@@ -862,8 +863,13 @@ let test_do_win () =
   let g1' = { g0 with attackers = [Sample_state2.player2];
             active = Sample_state2.player2;
             winners = [player3; Sample_state2.player4]} in
+  let (g2,done2) = do_win g1 Sample_state2.player2 in
+  let g2' = { g1 with attackers = []; active = Sample_state2.player1;
+            winners = Sample_state2.player2::g1.winners } in
   assert (not done1);
   field_compare g1 g1' ;
+  assert done2;
+  field_compare g2 g2' ;
   ()
 
 let test_deflect () =
