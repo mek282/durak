@@ -310,6 +310,8 @@ let end_game (g : state) : state =
  * longer represented in state except as a winner.
  * Returns the gamestate in which p is a winner and [the game has ended] *)
 let do_win (g : state) (p : player) : state*bool =
+  print_state g;
+  print_endline (string_of_player p );
   print_endline " BITCH WERE IN DO WIN NOW";
   if (List.length g.attackers = 1) && p.name = g.defender.name then
     ({g with attackers = []; active = last_attacker g.attackers;
@@ -330,7 +332,7 @@ let do_win (g : state) (p : player) : state*bool =
         let active' = if g.active.name = p.name then
                         if p.name = (List.hd g.attackers).name then
                           g.defender
-                        else next_attacker g
+                        else let () = print_endline ("ATTACKERS ARE: " ^ (string_of_attackers g.attackers)) in next_attacker g
                       else g.active in
         ({ g with
          active = active';
@@ -401,6 +403,7 @@ let attack (g : state) (c : card) : state*bool*bool =
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' g'.active else (g',false) in
+  if ended then (g'',won,ended) else
   let table' = (c,None)::g''.table in
   let active' =
     if g''.active.name = (List.hd g''.attackers).name
@@ -547,7 +550,12 @@ let step (g:state) (c:command) : state*string*bool =
   | Invalid_action a -> begin
       match g.active.state with
       | Human -> (g, "\nThere was a problem: " ^ a, false)
-      | CPU _ -> (g, g.active.name ^ " is a Durak! Surprise bonus win! ", true)
+      | CPU _ -> begin
+          print_endline ("Invalid command: " ); print_command c;
+          print_endline ("Problem: " ^ a);
+          print_endline (g.active.name ^ " is a Durak! Surprise bonus win! ");
+          exit 2;
+        end
     end
 
 
@@ -994,4 +1002,4 @@ let run_tests () =
   print_endline "all tests pass";
   ()
 
-let _ = run_tests ()
+(*let _ = run_tests ()*)

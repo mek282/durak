@@ -276,12 +276,36 @@ let test_parse () =
   ()
 
 
+let test_winning () =
+  let deck = [] in
+  let trump = Heart in
+  let ivanII = {state = CPU 2; name = "Ivan II"; hand = [(Club,14)]} in
+  let melly = {state=CPU 1; name = "Melly";
+    hand = [(Diamond,11); (Diamond,12); (Club,11); (Club,10); (Heart,10);
+    (Diamond,10); (Spade,10); (Diamond,13)]} in
+  let pig = {state = Human; name = "Pigeon"; hand = [(Heart,14); (Diamond,8); (Diamond,14)]} in
+  let attackers = [ivanII; melly] in
+  let defender = pig in
+  let table = [((Club,12),None); ((Spade,12),Some (Spade,14))] in
+  let active = ivanII in
+  let discard = [] in
+  let winners = [{state = CPU 2; name = "Jose"; hand = []}] in
+  let passed = [] in
+  let g0 = {deck=deck; trump=trump; attackers=attackers; defender=defender;
+            table=table; active=active; discard=discard; winners=winners; passed=passed} in
+  Gui.draw g0 ;
+  let (g1,message,done1) = step g0 (Attack (Club,14)) in
+  let mels_response = response g1 in
+  print_endline message ;
+  print_command mels_response
+
 let run_tests () =
-  test_split ();
+  (*test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
-  test_parse ();
+  test_parse ();*)
+  test_winning ();
   print_endline "all tests pass";
   ()
 
