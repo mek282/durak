@@ -241,9 +241,9 @@ let rec remove_last = function
 let new_turn g (d : player) : state =
   let g' = deal g in
   let a = g'.defender::(remove_last g'.attackers) in
-  let a' = if d = (last_attacker g'.attackers)
-    then a
-    else (last_attacker g'.attackers)::(remove_last a)
+  let a' = if d.name = (last_attacker g'.attackers).name
+    then (print_endline "BITCH NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
+    else (print_endline "BITCH DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
   let g'' = { g' with attackers = a'; defender = d; passed = []} in
   { g'' with active = List.hd g''.attackers; table = [] }
@@ -298,21 +298,30 @@ let end_game (g : state) : state =
 
 (* makes player p a winner. Ends the game if only one player is left. *)
 let do_win (g : state) (p : player) : state*bool =
-  if (List.length g.attackers = 1) && p = g.defender
-    then ({g with attackers = []},true) else
-  if g.defender = p
-    then let g' = new_turn g (last_attacker g.attackers) in
-    ({ g' with winners = p::(g'.winners) }, false)
+  print_endline " BITCH WERE IN DO WIN NOW";
+  if (List.length g.attackers = 1) && p.name = g.defender.name then
+    ({g with attackers = []},true)
   else
-  if List.length g.attackers = 0 then ({g with attackers = []},true) else
-  let active' = if g.active = p
-      then if p.name = (List.hd g.attackers).name then g.defender else next_attacker g
-    else g.active in
-  ({ g with
-   active = active';
-   attackers = List.filter (fun x -> x<>p) g.attackers;
-   winners = p::(g.winners);
-  }, false)
+    if g.defender.name = p.name then
+      let g' = new_turn g (last_attacker g.attackers) in
+      print_endline "BITCH I WON WITH A DEFENSE BUT GAME ISNT FULLY OVER WOOOOOO";
+      ({ g' with winners = p::(g'.winners);
+               attackers = List.tl g'.attackers}, false)
+    else
+      if List.length g.attackers = 0 then
+        ({g with attackers = []},true)
+      else
+        let () = print_endline "BITCH I WON WITH AN ATTACK" in
+        let active' = if g.active.name = p.name then
+                        if p.name = (List.hd g.attackers).name then
+                          g.defender
+                        else next_attacker g
+                      else g.active in
+        ({ g with
+         active = active';
+         attackers = List.filter (fun x -> x<>p) g.attackers;
+         winners = p::(g.winners);
+        }, false)
 
 (* carry out the command "deflect against c1 with c2"
  * raise Invalid_action if appropriate
@@ -457,18 +466,25 @@ let rec same_elements lst1 = function
       same_elements lst1' t
       else false
 
+
+(* [list_contains l1 l2]returns true iff all elements of l2 are members of l1*)
+let rec list_contains l1 = function
+  | [] -> true
+  | h::t -> (List.mem h l1) && (list_contains l1 t)
+
+
 (* makes the next player the active player. Raises Invalid_action if the
  * primary attacker tries to pass before any cards have been played. *)
 let pass (g : state) : state =
   if g.table = [] && (g.active.name = (List.hd g.attackers).name) then
     raise (Invalid_action "You must attack. ") else
   let g' = {g with passed = (g.active::g.passed)} in
-  if (same_elements g'.attackers g'.passed) && all_answered g'
+  if (list_contains g'.passed g'.attackers) && all_answered g'
     then
       let () = (print_endline "In pass, about to start new turn") in
       new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
   let active' =
-    if g'.active = g'.defender
+    if g'.active.name = g'.defender.name
       then
         let () = print_endline "In pass, active player is defender" in
         last_attacker g'.attackers
@@ -740,6 +756,21 @@ let test_deal () =
   assert (attacker1'.hand = (Heart, 9)::attacker1.hand);
   assert (attacker2'.hand = (Spade, 9)::(Club, 9)::(Diamond, 9)::attacker2.hand);
   assert (attacker3'.hand = attacker3.hand)
+
+(*   let state3 = Sample_state2.game in
+  let defender = state3.defender in
+  let attacker1 = List.nth state3.attackers 0 in
+  let attacker2 = List.nth state3.attackers 1 in
+  let dealt_state3 = deal state3 in
+  let defender' = dealt_state3.defender in
+  let attacker1' = List.nth dealt_state3.attackers 0 in
+  let attacker2' = List.nth dealt_state3.attackers 1 in
+
+  assert(dealt_state3.deck = []);
+  assert(defender'.hand = (Club, 10)::(Diamond, 6)::(Heart, 11)::defender.hand);
+  assert(attacker1'.hand = attacker1.hand);
+  assert(attacker2'.hand = (Club, 9)::attacker2.hand) *)
+
 
 let test_last_attacker () =
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
