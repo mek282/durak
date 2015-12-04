@@ -159,8 +159,8 @@ let print_player_prompt gs =
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
   Gui.draw g;
-  print_player_prompt g;
   print_endline prompt;
+  print_player_prompt g;
   read_line ()
 
 
@@ -202,107 +202,10 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
-(*
-  | Attack c -> failwith "unimplemented"
-  | Defend (c1,c2) -> failwith "unimplemented"
-  | Take -> failwith "unimplemented"
-  | Pass -> pass g
-  | Deflect (c1,c2) -> begin
-      let (g',won) = deflect g c1 c2 in
-      if g'.active.state = Human
-      then
-        let prev_player = g.active.name in
-        let prompt = prev_player ^ " deflected. You can deflect, take, or defend." in
-        let prompt' = if won then prev_player ^ " is out of the game. " ^ prompt
-                    else prompt in
-        let c' = parse_no_fail prompt' g in repl g' c'
-  end
-
-
-(* changes state as necessary for pass.  Keeps track of who has passed
- * until one attacker doesn't pass or until all attackers have passed *)
-and pass (g : state) : unit =
-  if g.active = g.defender then raise (Invalid_action "Only attackers can pass.") else
-  if g.active = last_attacker g.attackers
-    then let g' = change_active g g.defender in
-      let prompt = g.active.name ^ " passed. You can take or defend." in
-      let response = parse_no_fail prompt g' in
-      repl g' response else
-  let g',c = pass' g in repl g' c
-*)
 
 (*TEST CASES*)
 
-let test_play_card () =
-  ()
-(*
-  let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
-  let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
-  let test_hand1 = [(Diamond, 7);  (Club,14); (Spade, 14)] in
-  let test_hand2 = [(Heart, 7);  (Club,14); (Spade, 14)] in
-
-  assert (play_card player1 (Heart,7) = {player1 with hand = test_hand1});
-  assert (play_card player1 (Diamond, 7) = {player1 with hand = test_hand2});
-  assert (let p1 = play_card player1 (Club,14) in
-          let p2 = play_card p1 (Spade, 14) in
-          let p3 = play_card p2 (Diamond, 7) in
-          let p4 = play_card p3 (Heart, 7) in
-          p4 = {player1 with hand = []})
-  (* Need test case for error, but I think it works. -Vanya*)
-*)
-
-let test_game_play_card () =
-  ()
-
-let test_next_attacker () =
-  ()
-
-let test_valid_defense () =
-  ()
-
-let test_deal () =
-  ()
-
-let test_last_attacker () =
-  ()
-
-let test_remove_last () =
-  ()
-
-let test_new_turn () =
-  ()
-
-let test_add_attack () =
-  ()
-
-let test_deflectable () =
-  ()
-
-let test_change_active () =
-  ()
-
-let test_do_win () =
-  ()
-
-let test_deflect () =
-  ()
-
 let test_parse_no_fail () =
-  ()
-
-let test_take_all () =
-  ()
-
-let test_place_defense () =
-  ()
-
-let test_valid_defense () =
-  ()
-
-let test_pass' () =
-  ()
-
-let test_pass () =
   ()
 
 let test_split () =
@@ -372,40 +275,6 @@ let test_parse () =
   assert (parse e = e');
   ()
 
-(* let test_init_deck () =
-
-  Printf.printf "\n\nDECK 1 TEST:\n\n";
-  let d1 = init_deck () in
-  print_deck (fst d1) (snd d1);
-  Printf.printf "\n\nDECK 2 TEST:\n\n";
-  let d2 = init_deck () in
-  print_deck (fst d2) (snd d2);
-  Printf.printf "\n\nDECK 3 TEST:\n\n";
-  let d3 = init_deck () in
-  print_deck (fst d3) (snd d3);
-  Printf.printf "\n\nDECK 4 TEST:\n\n";
-  let d4 = init_deck () in
-  print_deck (fst d4) (snd d4);
-  Printf.printf "\n\nDECK 5 TEST:\n\n";
-  let d5 = init_deck () in
-  print_deck (fst d5) (snd d5);
-  Printf.printf "\n\nDECK 6 TEST:\n\n";
-  let d6 = init_deck () in
-  print_deck (fst d6) (snd d6);
-
-  () *)
-
-let test_init_game_state () =
-
-  let g1 = init_game_state "jane" [1;2;3] in
-  assert (List.length (g1.deck) = 12);
-  assert ((g1.defender).state = CPU 1);
-  assert (List.length ((g1.defender).hand) = 6);
-  assert ((g1.active).state = Human);
-  assert ((g1.active).name = "jane");
-  assert (List.length ((g1.active).hand) = 6);
-
-  ()
 
 let run_tests () =
   test_split ();
