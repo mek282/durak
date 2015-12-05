@@ -149,17 +149,46 @@ let parse (s : string) : command =
   | _ -> raise (Cannot_parse s)
 
 
+(* returns true iff all the attacks on the table have rank r and have no
+ * defending card *)
+let rec deflectable' (r : int) = function
+  | [] -> true
+  | ((_,r'), None)::[] -> r = r'
+  | ((_,r') ,None)::t -> r = r' && deflectable' r t
+  | _ -> false
+
+
+(* returns true iff all cards on the table are undefended and have the same rank
+ * the table is nonempty *)
+let deflectable (gs : state) =
+  match gs.table with
+  | [] -> false
+  | ((_,r),None)::t -> deflectable' r t
+  | _ -> false
+
+
 let print_player_prompt gs =
   let def_message =
-    "You are the defender.  Defend against an unmatched attack [c1] on the table by
-    typing \"defend against [c1] with [c2]\", where c2 is of the same suit and higher
-    rank than c1. You may also \"take\" to add all the cards to your hand and end
-    your turn, or \"pass\" to allow more people to attack." in
+    "You are the defender.  Defend against an unmatched attack [c1] on the table by typing
+    \"defend against [c1] with [c2]\", where c2 is of the same suit and higher rank than c1
+    OR, if c1 is not a trump, c2 can be any trump card. You may also \"take\" to add all
+    the cards to your hand and end your turn, or \"pass\" to allow more people to attack." in
+  let deflect_message =
+    "If you have a card [c2] of the same rank as all the cards on the table, you can
+    successfully end your turn by typing \"deflect against [c1] with [c2]\"." in
+  let primary_att_message =
+    "You are the primary attacker. Type \"attack with [card]\"" in
+  let secondary_att_message =
+    "You can attack with any card of the same rank as a card already on the table by typing
+    \"attack with [card]\". You can also \"pass\"." in
   match gs.active.state with
   | CPU _ -> ()
   | Human -> if gs.active.name = gs.defender.name
-               then print_endline def_message
-             else print_endline "It is your turn to attack."
+               then if deflectable gs then
+                  let () = print_endline def_message in print_endline deflect_message
+               else print_endline def_message
+             else if gs.table = [] then print_endline primary_att_message
+                  else print_endline secondary_att_message
 
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
