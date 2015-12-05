@@ -309,35 +309,34 @@ let end_game (g : state) : state =
  * changes active player, attackers, and defender as necessary so that p is no
  * longer represented in state except as a winner.
  * Returns the gamestate in which p is a winner and [the game has ended] *)
-let do_win (g : state) (p : player) : state*bool =
+let do_win (g : state) : state*bool =
   print_state g;
-  print_endline (string_of_player p );
-  print_endline "WERE IN DO WIN NOW";
-  if (List.length g.attackers = 1) && p.name = g.defender.name then
+  print_endline "WE'RE IN DO WIN NOW";
+  if (List.length g.attackers = 1) && g.active.name = g.defender.name then
     ({g with attackers = []; active = last_attacker g.attackers;
-        winners = p::g.winners},true)
+        winners = g.active::g.winners},true)
   else
-    if g.defender.name = p.name then
+    if g.defender.name = g.active.name then
       let g' = new_turn g (last_attacker g.attackers) in
       print_endline "I WON WITH A DEFENSE BUT GAME ISNT FULLY OVER WOOOOOO";
       Printf.printf "WE'RE IN DO WIN NOW LETS CHECK ATTACKER LENGTH ---->%d/n%!" (List.length g'.attackers);
-      ({ g' with winners = p::(g'.winners);
+      ({ g' with winners = g.active::(g'.winners);
                attackers = List.tl g'.attackers;
                   active = List.hd (List.tl g'.attackers)}, false) (*THIS MIGHT BE ERROR CAUSE LATER!!!!!!!!!*)
     else
       if List.length g.attackers = 1 then
-        ({g with attackers = []; active = g.defender; winners = p::g.winners},true)
+        ({g with attackers = []; active = g.defender; winners = g.active::g.winners},true)
       else
         let () = print_endline "I WON WITH AN ATTACK" in
-        let active' = if g.active.name = p.name then
-                        if p.name = (List.hd g.attackers).name then
-                          g.defender
-                        else let () = print_endline ("ATTACKERS ARE: " ^ (string_of_attackers g.attackers)) in next_attacker g
-                      else g.active in
+        let active' =
+                      if g.active.name = (List.hd g.attackers).name then
+                        g.defender
+                      else let () = print_endline ("ATTACKERS ARE: " ^ (string_of_attackers g.attackers)) in next_attacker g
+        in
         ({ g with
          active = active';
-         attackers = List.filter (fun x -> x.name<>p.name) g.attackers;
-         winners = p::(g.winners);
+         attackers = List.filter (fun x -> x.name<>g.active.name) g.attackers;
+         winners = g.active::(g.winners);
         }, false)
 
 (* carry out the command "deflect against c1 with c2"
@@ -353,12 +352,11 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
     then
       let g''' = game_play_card g (s2,r2) in
       let won = g'''.active.hand = [] in
-      let active = g'''.active in
+      if won then let (gfinal,ended) = do_win g''' in (gfinal,won,ended) else
       let next_p = last_attacker g'''.attackers in
       let g' = new_turn g''' next_p in
       let g'' = add_attack g' (s2,r2) in
-      let (g'''',ended) = if won then do_win g'' active else (g'',false) in
-      ({(change_active g'''' next_p) with table = ((s2,r2),None)::l},won,ended)
+      ({(change_active g'' next_p) with table = ((s2,r2),None)::l},won,false)
     else raise (Invalid_action "Can't deflect")
   end
 
@@ -402,9 +400,10 @@ let attack (g : state) (c : card) : state*bool*bool =
     then raise (Invalid_action "There are already 6 attacks on the table!")
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
-  let (g'',ended) = if won then do_win g' g'.active else (g',false) in
+  let (g'',ended) = if won then do_win g' else (g',false) in
   if ended then (g'',won,ended) else
   let table' = (c,None)::g''.table in
+  if won then ({g'' with table=table'; passed = []}, won, ended) else
   let active' =
     if g''.active.name = (List.hd g''.attackers).name
       then g''.defender
@@ -465,7 +464,7 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
   Printf.printf "YO DOAwg THIS WIN CONDIDTION IS FUCKED ---> %d\n%!" (List.length g'.active.hand);
   Printf.printf "YO DAWg did THE CONDITION SAY WE WON? ----> %b\n%!" won;
   if won
-    then let (g'',ended) = do_win g' g'.active in
+    then let (g'',ended) = do_win g' in
     let () = print_endline "WE WON WOOOOO on THE D-FENCE" in
     ({ g'' with table = []; passed = [] },won,ended) else
   (*if all_answered g'
@@ -886,11 +885,11 @@ let test_do_win () =
   let player3 = { Sample_state2.player3 with hand = [] } in
   let g0 = { Sample_state2.game with active = player3;
             attackers = [Sample_state2.player2; player3] } in
-  let (g1,done1) = do_win g0 player3 in
+  let (g1,done1) = do_win g0 in
   let g1' = { g0 with attackers = [Sample_state2.player2];
             active = Sample_state2.player2;
             winners = [player3; Sample_state2.player4]} in
-  let (g2,done2) = do_win g1 Sample_state2.player2 in
+  let (g2,done2) = do_win g1 in
   let g2' = { g1 with attackers = []; active = Sample_state2.player1;
             winners = Sample_state2.player2::g1.winners } in
   assert (not done1);
