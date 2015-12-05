@@ -162,6 +162,14 @@ let print_state (g : state) : unit =
 (* ========================================================================== *)
 
 
+(* Converts a list of type ('a,'a Option) to a list of type 'a with each
+ * non-None member of a pair made into its own element *)
+let rec tablepairs_to_list = function
+  | [] -> []
+  | (c1,Some c2)::t -> c1::c2::(tablepairs_to_list t)
+  | (c1, None)::t -> c1::(tablepairs_to_list t)
+
+
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
 let play_card (p : player) (c : card) : player =
@@ -252,9 +260,14 @@ let new_turn g (d : player) : state =
     then (print_endline "NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
     else (print_endline "DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
+<<<<<<< HEAD
   let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
   let g'' = { g' with attackers = a'; defender = d'; passed = []} in
   { g'' with active = List.hd g''.attackers; table = [] }
+=======
+  let g'' = { g' with attackers = a'; defender = d; passed = []} in
+  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard }
+>>>>>>> 666d165097e03cd47d5808bd2abca26975a047ce
 
 
 (* [before el lst] returns the element in lst that comes before el.
@@ -355,17 +368,9 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
       let next_p = last_attacker g'''.attackers in
       let g' = new_turn g''' next_p in
       let g'' = add_attack g' (s2,r2) in
-      ({(change_active g'' next_p) with table = ((s2,r2),None)::l},won,false)
+      ({(change_active g'' next_p) with table = ((s2,r2),None)::l; discard=g.discard},won,false)
     else raise (Invalid_action "Can't deflect")
   end
-
-
-(* Converts a list of type ('a,'a Option) to a list of type 'a with each
- * non-None member of a pair made into its own element *)
-let rec tablepairs_to_list = function
-  | [] -> []
-  | (c1,Some c2)::t -> c1::c2::(tablepairs_to_list t)
-  | (c1, None)::t -> c1::(tablepairs_to_list t)
 
 
 (* returns a new gamestate in which all cards on the table have been added
@@ -400,7 +405,9 @@ let attack (g : state) (c : card) : state*bool*bool =
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' else (g',false) in
-  if ended then (g'',won,ended) else
+  if ended
+    then ({g'' with table=[];
+        discard = (tablepairs_to_list g''.table)@g''.discard}, won, ended) else
   let table' = (c,None)::g''.table in
   if won then ({g'' with table=table'; passed = []}, won, ended) else
   let active' =
@@ -460,20 +467,11 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
     then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
   let g' = place_defense g c1 c2 in
   let won = (List.length g'.active.hand) = 0 in
-  Printf.printf "YO DOAwg THIS WIN CONDIDTION IS FUCKED ---> %d\n%!" (List.length g'.active.hand);
-  Printf.printf "YO DAWg did THE CONDITION SAY WE WON? ----> %b\n%!" won;
   if won
     then let (g'',ended) = do_win g' in
     let () = print_endline "WE WON WOOOOO on THE D-FENCE" in
     ({ g'' with table = []; passed = [] },won,ended) else
-  (*if all_answered g'
-    then
-      let g'' = { g' with
-                  table = [];
-                  discard = (tablepairs_to_list g.table)@g.discard;
-                  passed = [] } in
-      (new_turn g'' (last_attacker g''.attackers) , won)
-    else*) ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
+  ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
 
 
 (* returns true iff the two lists have exactly the same elements, though
@@ -531,7 +529,8 @@ let step (g:state) (c:command) : state*string*bool =
       end
     | Take -> begin
         let g' = take_all g in
-        let g'' = new_turn g' (penultimate g.attackers) in
+        let next_defender = if List.length g'.attackers = 1 then g'.defender else (penultimate g'.attackers) in
+        let g'' = new_turn g' next_defender in
 (*         let skip_taker = next_attacker g'' in
         let g3 = {g'' with active = skip_taker} in *)
         let m = g.active.name ^ " chose to take." in

@@ -319,7 +319,8 @@ let rec check_valid_difficulty () =
 
 
 let _ =
-(*   run_tests (); *)
+  Random.self_init ();
+  run_tests ();
   title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
