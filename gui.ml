@@ -1,5 +1,184 @@
 open Cards
 
+
+(* ===========================================================================*)
+(* ================================DRAWINGS===================================*)
+(* ========================================================================== *)
+
+let title_screen () =
+  Printf.printf "
+  Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
+  Welcome to Durak. The object of the game is to get rid of all your cards
+  before your opponents do the same. There are no winners, only one loser:
+  the 'DURAK', or Idiot!
+
+  You will receive a hand of six cards from a standard deck with all cards
+  numbered five or below removed. Aces are high. A random suit will be chosen
+  and known as the 'trump suit.'
+
+  When it is your turn to attack the next player, choose a card from your hand
+  and type 'attack with [value] of [suit]'.
+
+  The defender may 'deflect' an attack by placing down a card of the
+  same value: 'deflect [attack value] of [attack suit] with [deflect value] of
+  [deflect suit]'. This transfers the attack to the next player. You may
+  only deflect either an initial attack or a string of deflections.
+
+  Alternatively, the defender may play a card of the same suit as and a higher
+  value than the attacking card. In addition, any card of the trump suit can
+  defend against any card not of the trump suit. To defend, type 'defend against
+  [attack value] of [attack suit] with [defense value] of [defense suit]'.
+  The defender's final option is to take all cards on the table. This includes
+  those they have already defended. If the defender cannot defend or deflect an
+  attack, their only option is to 'take'.
+
+  If the defender chooses to defend against the first attack, then all players
+  will have a chance to attack the defender each round until there
+  are a maximum of six attacks in play. Each new attacker may only attack with
+  cards of the same values already in play. For example, if the initial attack
+  is a six of hearts and this is defended with a seven of hearts, the next
+  attacker may only attack with either a six or a seven.\n
+  Press 'Enter' to begin. \n"
+
+let title () =
+    Printf.printf
+ " ,,::########.
+  #@@##@@@@@@#@@;
+   .@@@@+::;#@@@@@`
+    @@@@`    `+@@@@ ,:``,''    '.'''''''''';          `':     ''''''  '''''
+    @@@@`     `#@@@@  @@@@.    `@@@:.@@@@@@@@@`       @@@:     .@@@:   #@@.
+    @@@@`      `@@@@. @@@'      @@+  @@@;  `@@@`     :@@@@`     @@@   @@:
+    @@@@`       +@@@# @@@,      @@#  @@@:   @@@.     @@@@@'     @@@ .@'`
+    @@@@`       `@@@@ ;@@,      @@#  +@@;   @@@`    .@+`@@@`    @@@@@,
+    @@@@`       .@@@@ ;@@,      @@#  +@@'`,@@@,     @@` #@@'    @@@@@`
+    @@@@`       `@@@@ ;@@,      @@#  :@@@#@@@:     ;@@@@@@@@`   @@@@@@:
+    @@@@`       `@@@@ ;@@'      @@+  +@@,  @@@`    @@@###@@@'   @@@`,@@@`
+    @@@@`       ,#@@:  @@@      @@.  @@@,   @@@   '@@     @@@.  @@@   ,@@@
+    @@@@`       @#@@   .@@@'  ;@@'   @@@#   `@@@` @@:     +@@@ :@@@`    @@@;
+    @@@@`      .#@@@     `;@@@@'    ;@@@@+    ;@@@@@+    :+@@@#'###'`    '@#,
+    @@@@`     ,#@@@
+   `#@@@@;::+##@@@`
+  ;#@@@@@@@@@@@@+                                    `+#@#.
+  ,##########+'                                     ,#######.
+                          ``,####                  ##########@
+                      +#####++##@                 #############'
+                     ############@            ;###################.
+                     .############           #######################
+                           .@#####+        ###########################
+                             ######.      #############################
+                             :######+   +###############################
+                              ###################################@######
+                               ##################################@#####'#
+                                @###############################@@#####'#`
+                                 #############################@@@@#####' #@
+                                  `########@######@########## @@@@@##### ##.
+                                       `  .@@#############'  '@@@@@#####  #
+                                          @@@@`+####`         @@@@:#####'
+                                          @@@'  ###'          #@@@  #####
+                                          @@@   ####           @@@   +###@
+                                          @@#   `###           @@@:   #####
+                                         @@@     ###           +@@#     ####
+                                        :@@#     ####          @@@@      ###
+                                        @@@       ###         :@@#       '##
+                                        @@`        ##         '@@         ##
+                                       #@+         ##         @@#         ;##
+                                       #@          +#.        @@           ##
+                                      .@;          `##        @@          +##'
+                                     `@@:          ,##       ;@@:         ;##,
+                                    ;@@@.          ###.     #@@@'        #####
+                                    @@@@:         #####    `,@`          #@#@#
+
+  Press Enter to continue:\n %!"
+
+let win () =
+  Printf.printf
+  "
+
+
+                             ;@@@@@,
+                         '@@@@@@@@@@@@#                                     `@@@@+`
+                       +@@@@@@@@@@@@@@@@                                   :@@@@@@@@@@@@@@@;
+                    ,#@@@@@@@@@@@@@@@@@@@#.                              `#@@@@@@@@@@@@@@@@@@+
+                  `@@@@@@@@@@@@@@@@@@@@@@@@##@#:.                        '@@@@@@@@@@@@@@@@@@@+
+              `#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#`                 :@@@@@@@@#,
+            @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`               @@@@@@@@#
+          '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,             +@@@@@@@@
+         @@@@@@@@@@@@@@@@@___@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@:          @@@@@@@@@`
+      :+@@@@#   |    @  .@   @@'     @@'     +@@'    @:    @@@+'''''@@@@@@@@@@`
+     :@@@@@@@     .  .  @@   @   +;  '#  `+   @  ,@  #`  '+@@@@@@@@@@@@@@@@@@`
+    :@@@@@@@@@    @    @@@   @   @'  #;  @@   #  `@@+@   @@@@@@@@@@@@@@@@@@@;
+    .@@@@@@@@@   `@`  .@@@   @   @'  @:  @@  `@.     @  `@@@@@@@@@@@@@@@@@@`
+     +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@;
+     :@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#''.
+     .@@@@@@@@@@@@,`;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@;,,.`
+     `@@@@@@@@@@@@.   `:+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#:
+     .@@@@@@@@@@@@        ,,:@@@@@@@@@@@@@@@@@@@@@@@@@#.
+     `@@@@@@@@@@@@              ````..`````````#@@@@@@,
+      @@@@@@@@@@@                             ,@@@@@@#
+      @@@@@@@@@,                              +@@@@@@`
+    `:@@@@@@@@@                              ,@@@@@@@
+     #@@@@@@@@+                              #@@@@@@@
+    +@@@@@@@@@                              :@@@@@@@;
+    @@@@@@@@@@                             #@@@@@@@@`
+   @@@@@#@@@@@                             @@@@#@@@@.
+   `@@@@;,@@@@                             @@@;'@@@@
+    @@@@. :@@@`                            @@# ,@@@;
+    `@@@   .@@@                            @@,  #@@
+     ,@@`    #@#                          '@#   '@@
+      @@'     #@;                         @@+   '@@
+      @@@      @@+`                      ;@@#   '@@
+      #@@`     ;@@#',`                   `@@#   +@@:
+      +@@@      ;@@@@@#                  #@@@@@#+@@@
+      ;@@@@@.                                   '@@@@#.
+      .:;:::                                      ....:
+
+
+                                                                                            "
+
+let lose () =
+  Printf.printf
+  "
+                                         ,:,,`
+                                         ;:,,.
+                                        :::,..
+                                        ;;,,..
+                                       :;,,...
+                                       ':,,...
+                                       ',,,..
+                                      ;;,,..`
+                                     .':,...`
+                                     '',,...`
+                                    :+;:..``
+                                    '';....`                                                          .':                            ,.
+                                   `+',,,..                                       +@@#            `@@@@@@@@:                     ;@@@@@@
+               .                   .+;....`                                  `@@@@@@@@@:         @@@@@@@@@@@@          .@'      @@@@@@@@
+           `'''';;,##'++;;:,;+;,:,.;'.`..`                   `@@@@@@@@#    :@@@@@@@@@@.         `@@@@@   @@@@@        @@@@@:  @@@@@@@
+           '';'+'':,,+':,,.`+:,,,.``......                 +@@@@@@@@@@@@  `@@@@@                `@@@@,   .@@@@        @@@@@:@@@@@@@
+          +#:#;'':,,..:,,,..':,,,...``..``                `@@@@@.  @@@@@' ,@@@@@@@`             `@@@@'   ;@@@@        @@@@@@@@@@@@
+         ''++;+';,,,...,,...',,,....`...``                :@@@@     @@@@#  `@@@@@@@@@@@@@`       @@@@@@@@@@@@       @@@@@@@@@@@@.
+        +;;+#++;::,,.,,.....;,,,...,,..```                @@@@@     @@@@#      '@@@@@@@@@@@@@    @@@@@@@@@+       :@@@@;@@@@@@@@
+       ';;';'##;:,,..::,,...;:,,.......```                @@@@@    @@@@@#            #@@@@@@@@;   @@@@@@@        @@@@@  @@@@@@@
+      ';;::;;'#+;::,.;:,,..,;::,...,,,...`                ,@@@@:  @@@@@@    `@@@;      +@@@@@@@    ;@@@@@@@   @@@@@@#   @@@@@@,
+     `';::,:,,+#;::,,;::,,.';;:,..,,..`.`                  @@@@@@@@@@@@     @@@@@@@@@@@@@@@@@@       `@@@@@@@@@@@@#      @@@@@
+     ';;,,,:,..+;:,,,'::,,.'';::,.,.```.`                   @@@@@@@@@        @@@@@@@@@@@@@@.            ;@@@@@@@         @@@@@
+    ''';'';:,..,:::::';:,,,';;::,....`.``                     @@@@@                .,`                                    .'
+  ,'++;:;:,...`.;,.`,;:,.`:;,.`..,,,...``
+`+++'';;::,,.````.,,'::,.``+,..`,,,,......
+`+''::;::,,.`````..,,,;;,:,,:';,,,,,,,,...`
+`;:::;:::,..`````...,,,.,,,...,..,,,,.,..,..
+`,.,,,,:,,,..``..,,,,,.,,,,.............,,.,,,,
+`,,,,,,...,,....,,,,,,,,.....`.``.`......`.`...,.,,::';;:;:,,,
+ ,,,,.....``...,,:,,,,,,,,...`...````..``.`````...,,,:;::::,,,,.
+ .....``.....`..,:,,,,,,,..........`.......````....,,,:,,,.,.,...
+ .....`..........::::::,,,............,,,,,,,..,,,::,,.,,.
+ ..```..........,.,,;;;::,,.,,,.,..`                  `
+ `````.............,.`  ,,,,
+ .`.............
+ .....,,,.
+`,,::,;
+`,
+                                                                                                                                                 "
+
 (* ===========================================================================*)
 (* ================================HELPERS====================================*)
 (* ========================================================================== *)
@@ -175,103 +354,33 @@ let draw_opponents (attackers: player list) (defender: player) (active: player):
 
 let draw_winners (winners: player list) : unit =
   List.iter (fun x -> Printf.printf "\n%s\n%!" x.name;
-                      Printf.printf "Not a complete Idiot\n%!") winners
+                      Printf.printf "Not a complete Idiot:\n%!") winners
 
 
 (*============================================================================*)
 (* =================================MAIN======================================*)
 (* ========================================================================== *)
 
-let title () =
+(* Draws title and waits for user response *)
+let draw_title () =
   clear_screen ();
-  Printf.printf
- " ,,::########.
-  #@@##@@@@@@#@@;
-   .@@@@+::;#@@@@@`
-    @@@@`    `+@@@@ ,:``,''    '.'''''''''';          `':     ''''''  '''''
-    @@@@`     `#@@@@  @@@@.    `@@@:.@@@@@@@@@`       @@@:     .@@@:   #@@.
-    @@@@`      `@@@@. @@@'      @@+  @@@;  `@@@`     :@@@@`     @@@   @@:
-    @@@@`       +@@@# @@@,      @@#  @@@:   @@@.     @@@@@'     @@@ .@'`
-    @@@@`       `@@@@ ;@@,      @@#  +@@;   @@@`    .@+`@@@`    @@@@@,
-    @@@@`       .@@@@ ;@@,      @@#  +@@'`,@@@,     @@` #@@'    @@@@@`
-    @@@@`       `@@@@ ;@@,      @@#  :@@@#@@@:     ;@@@@@@@@`   @@@@@@:
-    @@@@`       `@@@@ ;@@'      @@+  +@@,  @@@`    @@@###@@@'   @@@`,@@@`
-    @@@@`       ,#@@:  @@@      @@.  @@@,   @@@   '@@     @@@.  @@@   ,@@@
-    @@@@`       @#@@   .@@@'  ;@@'   @@@#   `@@@` @@:     +@@@ :@@@`    @@@;
-    @@@@`      .#@@@     `;@@@@'    ;@@@@+    ;@@@@@+    :+@@@#'###'`    '@#,
-    @@@@`     ,#@@@
-   `#@@@@;::+##@@@`
-  ;#@@@@@@@@@@@@+                                    `+#@#.
-  ,##########+'                                     ,#######.
-                          ``,####                  ##########@
-                      +#####++##@                 #############'
-                     ############@            ;###################.
-                     .############           #######################
-                           .@#####+        ###########################
-                             ######.      #############################
-                             :######+   +###############################
-                              ###################################@######
-                               ##################################@#####'#
-                                @###############################@@#####'#`
-                                 #############################@@@@#####' #@
-                                  `########@######@########## @@@@@##### ##.
-                                       `  .@@#############'  '@@@@@#####  #
-                                          @@@@`+####`         @@@@:#####'
-                                          @@@'  ###'          #@@@  #####
-                                          @@@   ####           @@@   +###@
-                                          @@#   `###           @@@:   #####
-                                         @@@     ###           +@@#     ####
-                                        :@@#     ####          @@@@      ###
-                                        @@@       ###         :@@#       '##
-                                        @@`        ##         '@@         ##
-                                       #@+         ##         @@#         ;##
-                                       #@          +#.        @@           ##
-                                      .@;          `##        @@          +##'
-                                     `@@:          ,##       ;@@:         ;##,
-                                    ;@@@.          ###.     #@@@'        #####
-                                    @@@@:         #####    `,@`          #@#@#
-
-  Press Enter to continue:\n %!";
+  title ();
   let s = read_line () in (fun x -> ()) s
 
 
-(* Prints title and instructions *)
-let title_screen () =
+(* Draws instructions and waits for user reponse*)
+let draw_title_screen () =
   clear_screen();
-  Printf.printf "
-  Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
-  Welcome to Durak. The object of the game is to get rid of all your cards
-  before your opponents do the same. There are no winners, only one loser:
-  the 'DURAK', or Idiot!
-
-  You will receive a hand of six cards from a standard deck with all cards
-  numbered five or below removed. Aces are high. A random suit will be chosen
-  and known as the 'trump suit.'
-
-  When it is your turn to attack the next player, choose a card from your hand
-  and type 'attack with [value] of [suit]'.
-
-  The defender may 'deflect' an attack by placing down a card of the
-  same value: 'deflect [attack value] of [attack suit] with [deflect value] of
-  [deflect suit]'. This transfers the attack to the next player. You may
-  only deflect either an initial attack or a string of deflections.
-
-  Alternatively, the defender may play a card of the same suit as and a higher
-  value than the attacking card. In addition, any card of the trump suit can
-  defend against any card not of the trump suit. To defend, type 'defend against
-  [attack value] of [attack suit] with [defense value] of [defense suit]'.
-  The defender's final option is to take all cards on the table. This includes
-  those they have already defended. If the defender cannot defend or deflect an
-  attack, their only option is to 'take'.
-
-  If the defender chooses to defend against the first attack, then all players
-  will have a chance to attack the defender each round until there
-  are a maximum of six attacks in play. Each new attacker may only attack with
-  cards of the same values already in play. For example, if the initial attack
-  is a six of hearts and this is defended with a seven of hearts, the next
-  attacker may only attack with either a six or a seven.\n
-  Press 'Enter' to begin. \n";
+  title_screen ();
   let s = read_line () in (fun x -> ()) s
+
+let draw_win () =
+  clear_screen();
+  win()
+
+let draw_lose () =
+  clear_screen();
+  lose ()
 
 (* Draws the game state, including active player hand, opponent's hands, table,
  * and deck. *)
