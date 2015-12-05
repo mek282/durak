@@ -1167,6 +1167,5 @@ let run_ai_tests () =
   print_endline "all AI tests pass";
   ()
 
-(*let _ =
+let _ =
   run_ai_tests ()
-*)
