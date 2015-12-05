@@ -181,8 +181,8 @@ let parse_no_fail (p : string) (g : state) : command =
 let end_game (g : state) : unit =
   let _ =
     if List.exists (fun x -> x.state = Human) g.winners
-    then print_endline "Congratulations! You didn't lose!"
-    else print_endline "You lost--You're the durak!" in
+    then Gui.draw_win ()
+    else Gui.draw_lose () in
   exit 0
 
 (* Calls itself recursively to update the state in response to commands *)
@@ -316,8 +316,8 @@ let rec check_valid_difficulty () =
 let _ =
   Random.self_init ();
   run_tests ();
-  Gui.title ();
-  Gui.title_screen ();
+  Gui.draw_title ();
+  Gui.draw_title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
   print_endline ("Hi " ^ name ^
