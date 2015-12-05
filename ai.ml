@@ -1149,11 +1149,11 @@ let test_med_attack () =
   ()
 
 let run_ai_tests () =
-  test_lowestValidDefOf ();
+  (*test_lowestValidDefOf ();
   test_easy_defend ();
   test_med_defend ();
   test_med_attack ();
-  test_isValidDeflect ();
+  test_isValidDeflect ();*)
   (*test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
@@ -1167,6 +1167,5 @@ let run_ai_tests () =
   print_endline "all AI tests pass";
   ()
 
-(*let _ =
+let _ =
   run_ai_tests ()
-*)
