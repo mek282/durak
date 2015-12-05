@@ -352,9 +352,23 @@ let draw_opponents (attackers: player list) (defender: player) (active: player):
   let players_filtered = List.filter (fun x -> x <> active) players in
   List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
 
+let gen_quip_winning () =
+  let qlist = ["\"What a bunch of DURAKS!\"";
+               "\"You shouldn't have played that card, you'll never win now.\"";
+               "\"I can't believe you just did that!\"";
+               "\"*YAWN* You guys aren't done yet?!\"";
+               "\"If I were you I'd just quit now. Hint: Press Ctrl + Z ;)\"";
+               "\"This is precious.\"";
+               "\"Hurry and finish so I can find myself a more worthy opponent.\"";
+               "\"ZZZzZZZzzzzzzZZZZzzzzZZZZ\"";
+               "\"This game has three winners and yet somehow you won't be one of them.\"";
+               "\"Psst, need help? Too bad! HAHAHAHA\"";] in
+  let qnum = Random.int (List.length qlist) in
+  List.nth qlist qnum
+
 let draw_winners (winners: player list) : unit =
-  List.iter (fun x -> Printf.printf "\n%s\n%!" x.name;
-                      Printf.printf "Not a complete Idiot:\n%!") winners
+  List.iter (fun x -> Printf.printf "%\ns%!" (gen_quip_winning ());
+                      Printf.printf "\n- %s (not a complete idiot)\n%!" x.name;) winners
 
 
 (*============================================================================*)
@@ -378,9 +392,28 @@ let draw_win () =
   clear_screen();
   win()
 
+<<<<<<< HEAD
 let draw_lose () =
   clear_screen();
   lose ()
+=======
+  If the defender chooses to defend against the first attack, then all players
+  will have a chance to attack the defender each round until there
+  are a maximum of six attacks in play. Each new attacker may only attack with
+  cards of the same values already in play. For example, if the initial attack
+  is a six of hearts and this is defended with a seven of hearts, the next
+  attacker may only attack with either a six or a seven.
+
+  When a turn ends, i.e. all attacks have been defended or the defender
+  chooses to take, as long as there are cards in the deck all players with
+  fewer than six cards will be dealt cards until their hands are back to six.
+
+  Careful! Don't play all of your high cards too early. When the deck runs out,
+  you'll wish you had them.
+  \n
+  Press 'Enter' to begin. \n";
+  let s = read_line () in (fun x -> ()) s
+>>>>>>> 29353c046492713ff27e22380845ee05e5b8fd81
 
 (* Draws the game state, including active player hand, opponent's hands, table,
  * and deck. *)
