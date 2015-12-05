@@ -260,14 +260,9 @@ let new_turn g (d : player) : state =
     then (print_endline "NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
     else (print_endline "DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
-<<<<<<< HEAD
   let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
   let g'' = { g' with attackers = a'; defender = d'; passed = []} in
   { g'' with active = List.hd g''.attackers; table = [] }
-=======
-  let g'' = { g' with attackers = a'; defender = d; passed = []} in
-  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard }
->>>>>>> 666d165097e03cd47d5808bd2abca26975a047ce
 
 
 (* [before el lst] returns the element in lst that comes before el.
