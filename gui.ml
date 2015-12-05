@@ -173,6 +173,8 @@ let draw_opponents (attackers: player list) (defender: player) (active: player):
   let players_filtered = List.filter (fun x -> x <> active) players in
   List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
 
+(* Generates a random quip from pre-compiled list that will print above
+ * a winning AI's name in place of their hand.*)
 let gen_quip_winning () =
   let qlist = ["\"What a bunch of DURAKS!\"";
                "\"You shouldn't have played that card, you'll never win now.\"";
