@@ -173,9 +173,23 @@ let draw_opponents (attackers: player list) (defender: player) (active: player):
   let players_filtered = List.filter (fun x -> x <> active) players in
   List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
 
+let gen_quip_winning () =
+  let qlist = ["\"What a bunch of DURAKS!\"";
+               "\"You shouldn't have played that card, you'll never win now.\"";
+               "\"I can't believe you just did that!\"";
+               "\"*YAWN* You guys aren't done yet?!\"";
+               "\"If I were you I'd just quit now. Hint: Press Ctrl + Z ;)\"";
+               "\"This is precious.\"";
+               "\"Hurry and finish so I can find myself a more worthy opponent.\"";
+               "\"ZZZzZZZzzzzzzZZZZzzzzZZZZ\"";
+               "\"This game has three winners and yet somehow you won't be one of them.\"";
+               "\"Psst, need help? Too bad! HAHAHAHA\"";] in
+  let qnum = Random.int (List.length qlist) in
+  List.nth qlist qnum
+
 let draw_winners (winners: player list) : unit =
-  List.iter (fun x -> Printf.printf "\n%s\n%!" x.name;
-                      Printf.printf "Not a complete Idiot\n%!") winners
+  List.iter (fun x -> Printf.printf "%\ns%!" (gen_quip_winning ());
+                      Printf.printf "\n- %s (not a complete idiot)\n%!" x.name;) winners
 
 
 (*============================================================================*)
