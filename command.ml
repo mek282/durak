@@ -401,7 +401,7 @@ let attack (g : state) (c : card) : state*bool*bool =
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' else (g',false) in
-  if ended then (g'',won,ended) else
+  if ended then (g'', won, ended) else
   let table' = (c,None)::g''.table in
   if won then ({g'' with table=table'; passed = []}, won, ended) else
   let active' =
@@ -532,7 +532,8 @@ let step (g:state) (c:command) : state*string*bool =
       end
     | Take -> begin
         let g' = take_all g in
-        let g'' = new_turn g' (penultimate g.attackers) in
+        let next_defender = if List.length g'.attackers = 1 then g'.defender else (penultimate g'.attackers) in
+        let g'' = new_turn g' next_defender in
 (*         let skip_taker = next_attacker g'' in
         let g3 = {g'' with active = skip_taker} in *)
         let m = g.active.name ^ " chose to take." in
