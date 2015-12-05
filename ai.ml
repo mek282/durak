@@ -344,7 +344,7 @@ let rec firstUndefended (table:(card * card option) list) =
 
   (*DoMove c g] updates gameState [g] by executing command [c] *)
   let doMove command gameState =
-    let (m,_,_) = step gameState command in m
+    let (m,_,ended) = step gameState command in (m,ended)
 
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
@@ -461,7 +461,7 @@ let rec select g1 n =
       if moves <> [] && (Node.getUntriedMoves moves n) = []
         then begin
           let newNode = (Node.uCBSelectChild moves n) in
-          let newState = (GameState.doMove (unwrap newNode.thisMove) g1) in
+          let newState = fst (GameState.doMove (unwrap newNode.thisMove) g1) in
           select newState newNode
         end
       else (g1,n)
@@ -475,21 +475,25 @@ let expand g1_1 n untried =
       let plyr = g1_1.active in
       let newNode =
         List.hd (Node.addChild m n plyr).children in
-        let new_state = GameState.doMove m g1_1 in
+        let new_state = fst (GameState.doMove m g1_1) in
       (new_state,newNode)
     end
   else (g1_1,n)
 
 (*simulate a game, through to completion, making random choices, return *)
-let rec simulate g2 =
+let rec simulate g2 (ended:bool) =
       let moves = GameState.getMoves g2 in
-      match moves with
-      | [] -> g2
-      | _ -> (let () = print_endline ("ACTIVE: "^g2.active.name); in
-              let () = (print_endline ("MOVES: "^printCommList moves)); in
-              let move = randomMove moves in
-              let () = print_endline (move_to_string move g2.active); in
-              simulate (GameState.doMove move g2))
+      if ended
+        then g2
+      else
+        match moves with
+        | [] -> g2
+        | _ -> (let () = print_endline ("ACTIVE: "^g2.active.name); in
+                let () = (print_endline ("MOVES: "^printCommList moves)); in
+                let move = randomMove moves in
+                let () = print_endline (move_to_string move g2.active); in
+                let (g3,ended') = GameState.doMove move g2 in
+                simulate g3 ended')
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
@@ -531,7 +535,7 @@ let iSMCTS g itermax =
         (*EXPAND*)
         let (state,node) = expand state node untriedMoves in
         (*SIMULATE*)
-        let state = (simulate state) in
+        let state = (simulate state false) in
         (*BACK PROPOGATE*)
         let node = backPropogate state node in
         forLoop node (itermax1 - 1)
@@ -917,7 +921,7 @@ let test_gameState_doMove () =
   print_endline (printPlayerHands g1.attackers);
   print_endline ("ACTIVE: "^g1.active.name);
   print_endline (printCommList moveList);
-  let g2 = GameState.doMove (Attack (Spade,7)) g1 in
+  let g2 = fst (GameState.doMove (Attack (Spade,7)) g1) in
   print_endline ("DECK: "^(printCardList g2.deck));
   print_endline ("DEFENDER: "^(printCardList g2.defender.hand));
   print_endline (printPlayerHands g2.attackers);
