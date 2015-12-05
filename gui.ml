@@ -171,8 +171,7 @@ let draw_opponent_row (hand: deck) : unit =
 let draw_opponents (attackers: player list) (defender: player) (active: player): unit =
   let players = defender :: attackers in
   let players_filtered = List.filter (fun x -> x <> active) players in
-  List.iter (fun x ->  Printf.printf "\n%s\n%!" x.name;
-                      draw_opponent_row x.hand) players_filtered
+  List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
 
 let draw_winners (winners: player list) : unit =
   List.iter (fun x -> Printf.printf "\n%s\n%!" x.name;
@@ -277,15 +276,15 @@ let title_screen () =
  * and deck. *)
 let draw (s: state) : unit =
   clear_screen ();
-  Printf.printf "YOUR HAND\n%!";
-  draw_hand s.active.hand;
-  Printf.printf "\nOPPONENT'S HANDS\n%!";
+  Printf.printf "OPPONENT'S HANDS\n%!";
   draw_opponents s.attackers s.defender s.active;
   draw_winners s.winners;
   Printf.printf "\nTHE TABLE\n%!";
   draw_table s.table;
-  Printf.printf "\nTHE DECK\n%!";
-  draw_deck s.deck s.trump
+  Printf.printf "\nTHE DECK%!";
+  draw_deck s.deck s.trump;
+  Printf.printf "\nYOUR HAND\n%!";
+  draw_hand s.active.hand
 
 (* ========================================================================== *)
 (* ================================TESTING====================================*)
