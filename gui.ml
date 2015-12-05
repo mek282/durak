@@ -392,28 +392,10 @@ let draw_win () =
   clear_screen();
   win()
 
-<<<<<<< HEAD
 let draw_lose () =
   clear_screen();
   lose ()
-=======
-  If the defender chooses to defend against the first attack, then all players
-  will have a chance to attack the defender each round until there
-  are a maximum of six attacks in play. Each new attacker may only attack with
-  cards of the same values already in play. For example, if the initial attack
-  is a six of hearts and this is defended with a seven of hearts, the next
-  attacker may only attack with either a six or a seven.
 
-  When a turn ends, i.e. all attacks have been defended or the defender
-  chooses to take, as long as there are cards in the deck all players with
-  fewer than six cards will be dealt cards until their hands are back to six.
-
-  Careful! Don't play all of your high cards too early. When the deck runs out,
-  you'll wish you had them.
-  \n
-  Press 'Enter' to begin. \n";
-  let s = read_line () in (fun x -> ()) s
->>>>>>> 29353c046492713ff27e22380845ee05e5b8fd81
 
 (* Draws the game state, including active player hand, opponent's hands, table,
  * and deck. *)
