@@ -364,7 +364,7 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
       let next_p = last_attacker g'''.attackers in
       let g' = new_turn g''' next_p in
       let g'' = add_attack g' (s2,r2) in
-      ({(change_active g'' next_p) with table = ((s2,r2),None)::l},won,false)
+      ({(change_active g'' next_p) with table = ((s2,r2),None)::l; discard=g.discard},won,false)
     else raise (Invalid_action "Can't deflect")
   end
 
