@@ -150,10 +150,15 @@ let parse (s : string) : command =
 
 
 let print_player_prompt gs =
+  let def_message =
+    "You are the defender.  Defend against an unmatched attack [c1] on the table by
+    typing \"defend against [c1] with [c2]\", where c2 is of the same suit and higher
+    rank than c1. You may also \"take\" to add all the cards to your hand and end
+    your turn, or \"pass\" to allow more people to attack." in
   match gs.active.state with
   | CPU _ -> ()
   | Human -> if gs.active.name = gs.defender.name
-               then print_endline "It is your turn to defend."
+               then print_endline def_message
              else print_endline "It is your turn to attack."
 
 (* Draws and prompts the user*)
