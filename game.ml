@@ -337,8 +337,5 @@ let _ =
   print_endline "Choose the difficulty of your third opponent. Type 1 for easy, 2 for medium, or 3 for hard.";
   let d3 = check_valid_difficulty () in
   let gs = init_game_state name [d1; d2; d3] in
-(*   Gui.draw gs;
-  print_endline "starting fuck ";
-  let com = read_line () in *)
   let initial_command = parse_no_fail "" gs in
   repl gs initial_command ""
