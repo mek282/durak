@@ -255,7 +255,7 @@ let new_turn g (d : player) : state =
     else (print_endline "DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
   let g'' = { g' with attackers = a'; defender = d; passed = []} in
-  { g'' with active = List.hd g''.attackers; table = [] }
+  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard }
 
 
 (* [before el lst] returns the element in lst that comes before el.
@@ -401,7 +401,9 @@ let attack (g : state) (c : card) : state*bool*bool =
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
   let (g'',ended) = if won then do_win g' else (g',false) in
-  if ended then (g'', won, ended) else
+  if ended
+    then ({g'' with table=[];
+        discard = (tablepairs_to_list g''.table)@g''.discard}, won, ended) else
   let table' = (c,None)::g''.table in
   if won then ({g'' with table=table'; passed = []}, won, ended) else
   let active' =
