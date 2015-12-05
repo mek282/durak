@@ -367,7 +367,7 @@ let gen_quip_winning () =
   List.nth qlist qnum
 
 let draw_winners (winners: player list) : unit =
-  List.iter (fun x -> Printf.printf "%\ns%!" (gen_quip_winning ());
+  List.iter (fun x -> Printf.printf "\n%s%!" (gen_quip_winning ());
                       Printf.printf "\n- %s (not a complete idiot)\n%!" x.name;) winners
 
 
