@@ -164,6 +164,14 @@ let print_state (g : state) : unit =
 (* ========================================================================== *)
 
 
+(* Converts a list of type ('a,'a Option) to a list of type 'a with each
+ * non-None member of a pair made into its own element *)
+let rec tablepairs_to_list = function
+  | [] -> []
+  | (c1,Some c2)::t -> c1::c2::(tablepairs_to_list t)
+  | (c1, None)::t -> c1::(tablepairs_to_list t)
+
+
 (* play_card p c removes card c from the hand of player p and returns a new
  * player object. Raises Invalid_action if the card is not in p's hand*)
 let play_card (p : player) (c : card) : player =
@@ -359,14 +367,6 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
       ({(change_active g'' next_p) with table = ((s2,r2),None)::l},won,false)
     else raise (Invalid_action "Can't deflect")
   end
-
-
-(* Converts a list of type ('a,'a Option) to a list of type 'a with each
- * non-None member of a pair made into its own element *)
-let rec tablepairs_to_list = function
-  | [] -> []
-  | (c1,Some c2)::t -> c1::c2::(tablepairs_to_list t)
-  | (c1, None)::t -> c1::(tablepairs_to_list t)
 
 
 (* returns a new gamestate in which all cards on the table have been added
