@@ -461,20 +461,11 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
     then raise (Invalid_action (string_of_card c1 ^ " is not on the table!")) else
   let g' = place_defense g c1 c2 in
   let won = (List.length g'.active.hand) = 0 in
-  Printf.printf "YO DOAwg THIS WIN CONDIDTION IS FUCKED ---> %d\n%!" (List.length g'.active.hand);
-  Printf.printf "YO DAWg did THE CONDITION SAY WE WON? ----> %b\n%!" won;
   if won
     then let (g'',ended) = do_win g' in
     let () = print_endline "WE WON WOOOOO on THE D-FENCE" in
     ({ g'' with table = []; passed = [] },won,ended) else
-  (*if all_answered g'
-    then
-      let g'' = { g' with
-                  table = [];
-                  discard = (tablepairs_to_list g.table)@g.discard;
-                  passed = [] } in
-      (new_turn g'' (last_attacker g''.attackers) , won)
-    else*) ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
+  ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
 
 
 (* returns true iff the two lists have exactly the same elements, though
