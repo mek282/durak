@@ -251,9 +251,10 @@ let title_screen () =
   When it is your turn to attack the next player, choose a card from your hand
   and type 'attack with [value] of [suit]'.
 
-  The defender may 'deflect' an initial attack by placing down a card of the
+  The defender may 'deflect' an attack by placing down a card of the
   same value: 'deflect [attack value] of [attack suit] with [deflect value] of
-  [deflect suit]'.
+  [deflect suit]'. This transfers the attack to the next player. You may
+  only deflect either an initial attack or a string of deflections.
 
   Alternatively, the defender may play a card of the same suit as and a higher
   value than the attacking card. In addition, any card of the trump suit can

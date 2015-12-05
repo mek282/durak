@@ -15,3 +15,9 @@ cs3110 run game.ml
 
 The game works best full screen. All instructions and commands 
 are outlined on the title screen.
+
+1920 x 1080 is the recommended screen resolution.
+If you cannot see everything on the first card screen without 
+scrolling up, reducing the font size on the terminal may 
+improve your user experience. Please go to Edit > Preferences. 
+Size 8 works for most screens.
