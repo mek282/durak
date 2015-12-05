@@ -262,7 +262,7 @@ let new_turn g (d : player) : state =
     in
   let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
   let g'' = { g' with attackers = a'; defender = d'; passed = []} in
-  { g'' with active = List.hd g''.attackers; table = [] }
+  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard }
 
 
 (* [before el lst] returns the element in lst that comes before el.
