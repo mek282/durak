@@ -102,8 +102,6 @@ let init_game_state s dlist =
 (* =========================STRING & PRINT FUNS============================== *)
 (* ========================================================================== *)
 
-
-(* Some helpers for strings manipulation - Vanya *)
 (* returns string representation of a suit *)
 let suit_to_string (suit: suit) : string =
   match suit with
@@ -254,7 +252,8 @@ let new_turn g (d : player) : state =
     then (print_endline "NEW TURN DEFENDER IS LAST ATTACKER?!?!?"; a)
     else (print_endline "DEFENDER IS NOT LAST ATTACKER?!?!"; (last_attacker g'.attackers)::(remove_last a))
     in
-  let g'' = { g' with attackers = a'; defender = d; passed = []} in
+  let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
+  let g'' = { g' with attackers = a'; defender = d'; passed = []} in
   { g'' with active = List.hd g''.attackers; table = [] }
 
 
