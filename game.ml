@@ -295,9 +295,8 @@ let test_winning () =
             table=table; active=active; discard=discard; winners=winners; passed=passed} in
   Gui.draw g0 ;
   let (g1,message,done1) = step g0 (Attack (Club,14)) in
-  let mels_response = response g1 in
-  print_endline message ;
-  print_command mels_response
+  print_endline message
+
 
 let run_tests () =
   (*test_split ();
@@ -320,8 +319,8 @@ let rec check_valid_difficulty () =
 
 
 let _ =
-  (*run_tests ();*)
-  title_screen ();
+  run_tests ();
+  (*title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
   print_endline ("Hi " ^ name ^
@@ -337,3 +336,4 @@ let _ =
   let com = read_line () in *)
   let initial_command = parse_no_fail "" gs in
   repl gs initial_command ""
+*)
