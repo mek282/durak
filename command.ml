@@ -97,6 +97,24 @@ let init_game_state s dlist =
     passed = [];
   }
 
+let gen_quip_winning pname =
+  let qlist = [pname^" says, 'HA!'\n";
+               pname^" says, 'I'm the best.\n";
+               pname^" says, 'Can't believe you just did that!\n";
+               pname^" says, 'Playing right into my hands...'\n";
+               pname^" says, 'Even a camel could beat you at this game.\n";] in
+  let qnum = Random.int (List.length qlist) in
+  List.nth qlist qnum
+
+let gen_quip_losing pname =
+  let qlist = [pname^" says, 'This is all part of my plan.'\n";
+               pname^" says, 'I meant to do that.'\n";
+               pname^" says, 'Just you wait.'\n";
+               pname^" says, '....:('\n";
+               pname^" says, 'Maybe you're not such a DURAK after all.'\n";] in
+  let qnum = Random.int (List.length qlist) in
+  List.nth qlist qnum
+
 
 (* ========================================================================== *)
 (* =========================STRING & PRINT FUNS============================== *)
@@ -262,7 +280,8 @@ let new_turn g (d : player) : state =
     in
   let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
   let g'' = { g' with attackers = a'; defender = d'; passed = []} in
-  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard }
+  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard}
+
 
 
 (* [before el lst] returns the element in lst that comes before el.
