@@ -5,7 +5,9 @@ open Cards
 (* ================================DRAWINGS===================================*)
 (* ========================================================================== *)
 
+(* Prints title and instructions *)
 let title_screen () =
+  clear_screen();
   Printf.printf "
   Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
   Welcome to Durak. The object of the game is to get rid of all your cards
@@ -37,8 +39,17 @@ let title_screen () =
   are a maximum of six attacks in play. Each new attacker may only attack with
   cards of the same values already in play. For example, if the initial attack
   is a six of hearts and this is defended with a seven of hearts, the next
-  attacker may only attack with either a six or a seven.\n
-  Press 'Enter' to begin. \n"
+  attacker may only attack with either a six or a seven.
+
+  When a turn ends, i.e. all attacks have been defended or the defender
+  chooses to take, as long as there are cards in the deck all players with
+  fewer than six cards will be dealt cards until their hands are back to six.
+
+  Careful! Don't play all of your high cards too early. When the deck runs out,
+  you'll wish you had them.
+  \n
+  Press 'Enter' to begin. \n";
+  let s = read_line () in (fun x -> ()) s
 
 let title () =
     Printf.printf
@@ -352,6 +363,8 @@ let draw_opponents (attackers: player list) (defender: player) (active: player):
   let players_filtered = List.filter (fun x -> x <> active) players in
   List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
 
+(* Generates a random quip from pre-compiled list that will print above
+ * a winning AI's name in place of their hand.*)
 let gen_quip_winning () =
   let qlist = ["\"What a bunch of DURAKS!\"";
                "\"You shouldn't have played that card, you'll never win now.\"";
