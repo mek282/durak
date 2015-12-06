@@ -349,7 +349,8 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
       let won = g'''.active.hand = [] in
       if won then let (gfinal,ended) = do_win g''' in (gfinal,won,ended)
       else
-        let next_p = last_attacker g'''.attackers in
+        let next_p = if List.length g.attackers = 1
+                  then g'''.defender else  last_attacker g'''.attackers in
         let g' = new_turn g''' next_p in
         let g'' = add_attack g' (s2,r2) in
         ({(change_active g'' next_p) with table = ((s2,r2),None)::l;
