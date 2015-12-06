@@ -745,7 +745,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    iSMCTS gameState 500
+    iSMCTS gameState 100
 end
 
 
