@@ -91,21 +91,6 @@ let sortHand (hand:deck) (attack:card) (trump:suit) : deck =
       hand)
 
 
-(* [lowestValidDefOf h a t] outputs the card in [h] of rank >= rank of [a] that
-* matches either suit of [a] or suit of [t] *)
-let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
-  let result = sortHand hand attack trump in
-  let rec matchResult lst =
-    match lst with
-    | [] -> None
-    | (a,b)::tl -> if b > (snd attack)
-                then Some (a,b)
-                else
-                  (if a = trump
-                   then Some (a,b)
-                   else matchResult tl) in
-  matchResult result
-
 (*returns a list of the undefended card pairs*)
 let rec getUndefended (t:(card*card option) list) : card list =
   match t with
@@ -223,6 +208,18 @@ let rec getValidDeflections (g:state) : command list =
                     else itrHand atk tl in
       itrHand (fst (List.hd g.table)) g.active.hand
     end
+
+(* [lowestValidDefOf h a t] outputs the card in [h] of rank >= rank of [a] that
+* matches either suit of [a] or suit of [t] *)
+let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
+  let result = sortHand hand attack trump in
+  let rec matchResult lst =
+    match lst with
+    | [] -> None
+    | hd::tl -> if isValidDef attack hd trump
+                  then Some hd
+                else matchResult tl in
+  matchResult result
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
 let rec firstUndefended (table:(card * card option) list) =
@@ -360,10 +357,14 @@ let rec firstUndefended (table:(card * card option) list) =
     if (List.mem p g.winners) then 1 else 0
 end
 
+
+(* field data is an array of size 3, initialized to 0, corresponding to wins, visits
+ * and avails
+ *)
 type node = {
                thisMove: command option;
-               parent: node option;
-               children: node list;
+               parent: node ref option;
+               mutable children: node ref list;
                wins: int ref;
                visits: int ref;
                avails: int ref;
@@ -380,8 +381,8 @@ module Node = struct
   let getUntriedMoves (legalMoves:command list) (n:node) : command list =
     let rec triedMoves = function
       | [] -> []
-      | hd::tl -> (unwrap hd.thisMove)::(triedMoves tl) in
-    List.filter (fun a -> not (List.mem a (triedMoves n.children))) legalMoves
+      | hd::tl -> (unwrap (!hd).thisMove)::(triedMoves tl) in
+    List.filter (fun a -> not (List.mem a (triedMoves (n.children)))) legalMoves
 
   let uCBFunction (n:node) =
      (float_of_int !(n.wins)) /. (float_of_int !(n.visits)) +.
@@ -392,23 +393,23 @@ module Node = struct
   let rec incrAvails n =
     let rec helper lst =
       match lst with
-      | [] -> ()
-      | hd::tl -> incr hd.avails; helper tl in
-    helper n.children
+      | [] -> []
+      | hd::tl -> (incr (!hd).avails); hd::(helper tl) in
+    n.children <- helper (n.children)
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
-  let uCBSelectChild (legalMoves:command list) n =
+  let uCBSelectChild (legalMoves:command list) n : node ref =
     let rec legalChildren lst =
       match lst with
       | [] -> []
-      | hd::tl -> if List.mem (unwrap hd.thisMove) legalMoves
+      | hd::tl -> if List.mem (unwrap (!hd).thisMove) legalMoves
                   then hd::(legalChildren tl)
                  else legalChildren tl in
     let rec choice maxSoFar lst =
       match lst with
       | [] -> maxSoFar
-      | hd::tl -> if (uCBFunction hd > uCBFunction maxSoFar)
+      | hd::tl -> if (uCBFunction !hd > uCBFunction !maxSoFar)
                     then choice hd tl
                   else choice maxSoFar tl in
     incrAvails n; choice (List.hd (legalChildren n.children))
@@ -416,26 +417,26 @@ module Node = struct
 
   (*[AddChild m n p] adds a new child node to Node [n] for the move [m] with
    *playerJustMoved set to [p]*)
-  let addChild (m:command) n p : node =
+  let addChild (m:command) n p : node ref =
     let newChild = {thisMove = Some m;
-                    parent = Some n;
+                    parent = Some (n);
                     children = [];
                     wins = ref 0;
                     visits = ref 0;
                     avails = ref 0;
                     playerJustMoved = Some p;
                     } in
-    let newChildren = (newChild::n.children) in
-    {n with children=newChildren}
+    (!n).children <- (ref newChild)::(!n).children;
+    n
 
 
   (*[Update n s] increment the visit count of node [n], increase win count of
    *[n] by the result of [GetResult p] for active player [p] of [g]*)
-  let update n g : unit =
-    incr n.visits;
-    match n.playerJustMoved with
+  let update (n:node ref) g : unit =
+    incr (!n).visits;
+    match (!n).playerJustMoved with
     | None -> ()
-    | Some a -> n.wins := (!(n.wins) + (GameState.getResult g a)); ()
+    | Some a -> (!n).wins := (!((!n).wins) + (GameState.getResult g a)); ()
 
   (*string representation of tree for debugging purposes*)
   let treeToSTring t =
@@ -456,26 +457,26 @@ let randomMove lst =
 
 (*if [g1] is non-terminal, and [n] has no untried moves, select a child and
  *descend the tree*)
-let rec select g1 n =
+let rec select g1 (n:node ref) =
       let moves = (GameState.getMoves g1) in
-      if moves <> [] && (Node.getUntriedMoves moves n) = []
+      if moves <> [] && (Node.getUntriedMoves moves !n) = []
         then begin
-          let newNode = (Node.uCBSelectChild moves n) in
-          let newState = fst (GameState.doMove (unwrap newNode.thisMove) g1) in
+          let newNode = (Node.uCBSelectChild moves !n) in
+          let newState = fst (GameState.doMove (unwrap (!newNode).thisMove) g1) in
           select newState newNode
         end
       else (g1,n)
 
 (*[g1_1 n untried] If [untried] is non_empty, select a random element, step [g1_1], create a new
  *node and return it with associated state*)
-let expand g1_1 n untried =
+let expand g1_1 (n:node ref) untried =
   if untried <> []
     then begin
       let m = randomMove untried in
       let plyr = g1_1.active in
       let newNode =
-        List.hd (Node.addChild m n plyr).children in
-        let new_state = fst (GameState.doMove m g1_1) in
+        List.hd !(Node.addChild m n plyr).children in
+      let new_state = fst (GameState.doMove m g1_1) in
       (new_state,newNode)
     end
   else (g1_1,n)
@@ -484,7 +485,10 @@ let expand g1_1 n untried =
 let rec simulate g2 (ended:bool) =
       let moves = GameState.getMoves g2 in
       if ended
-        then g2
+        then let () = print_endline ("ended!"); in g2
+      else if List.mem g2.active.name (List.map (fun x -> x.name) g2.winners)
+        then failwith "[simulate] active player already won"
+      else if List.length g2.winners = 3 then g2
       else
         match moves with
         | [] -> g2
@@ -497,15 +501,15 @@ let rec simulate g2 (ended:bool) =
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
-      match n1.parent with
+      match (!n1).parent with
       | None -> n1
-      | _ -> Node.update n1 g2_1; backPropogate g2_1 (unwrap n1.parent)
+      | _ -> Node.update n1 g2_1; backPropogate g2_1 (unwrap (!n1).parent)
 
 (*return the child with the most visits*)
 let rec maxChild max lst =
         match lst with
         | [] -> max
-        | hd::tl -> if !(hd.visits) > !(max.visits)
+        | hd::tl -> if !((!hd).visits) > !((!max).visits)
                       then maxChild hd tl
                     else maxChild max tl
 
@@ -524,14 +528,14 @@ let iSMCTS g itermax =
   in
 
   let rec forLoop root itermax1 =
-    if itermax <> 0 then
+    if itermax1 <> 0 then
       begin
         let node = root in
         let state = (GameState.cloneAndRandomize g) in
 
         (*SELECT*)
-        let (state,node)= select state node in
-        let untriedMoves = Node.getUntriedMoves (GameState.getMoves state)  node in
+        let (state,node) = select state node in
+        let untriedMoves = Node.getUntriedMoves (GameState.getMoves state)  !node in
         (*EXPAND*)
         let (state,node) = expand state node untriedMoves in
         (*SIMULATE*)
@@ -541,10 +545,11 @@ let iSMCTS g itermax =
         forLoop node (itermax1 - 1)
       end
     else
-      unwrap ((maxChild (List.hd root.children) root.children).thisMove)
+      let () = Printf.printf "Parent is None: %b\nChildren is not null: %b\n" ((!root).parent = None) (not ((!root).children = [])); in
+      unwrap (!(maxChild (List.hd (!root).children) (!root).children).thisMove)
   in
 
-  forLoop rootnode itermax
+  forLoop (ref rootnode) itermax
 
 
 module Easy = struct
@@ -745,7 +750,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    iSMCTS gameState 100
+    iSMCTS gameState 10
 end
 
 
@@ -978,7 +983,7 @@ let test_select () =
             avails = ref 0;
             playerJustMoved = None;
           } in
-  let _ = (select g1 n); in
+  let _ = (select g1 (ref n)); in
   ()
 
 (*[g1_1 n untried] If [untried] is non_empty, select a random element, step [g1_1], create a new
@@ -996,15 +1001,14 @@ let test_expand () =
             playerJustMoved = None;
           } in
   let untried1 = Node.getUntriedMoves (GameState.getMoves g1) n in
-  let _ = (expand g1 n untried1); in
+  let _ = (expand g1 (ref n) untried1); in
   ()
 
 (*simulate a game, through to completion, making random choices, return *)
 let rec test_simulate () =
   let () = print_endline "testing simulate: " in
   let g1 = testStateInit () in
-  let _ = (simulate g1); in
-  ()
+  simulate g1
 
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec test_backPropogate () =
@@ -1032,7 +1036,7 @@ let test_iSMCTS () =
   print_endline ("DECK: "^(printCardList g1.deck));
   print_endline ("DEFENDER: "^(printCardList g1.defender.hand));
   print_endline (printPlayerHands g1.attackers);
-  let m = iSMCTS g1 5 in print_endline
+  let m = iSMCTS g1 1 in print_endline
     ("GRANDMASTERMOVE: "^(move_to_string m g1.active));
   ()
 
