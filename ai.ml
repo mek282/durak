@@ -101,14 +101,12 @@ let rec getUndefended (t:(card*card option) list) : card list =
 
 (*returns true if att is a valid attack, given state g*)
 let isValidAtt (g:state) (att:card) : bool =
-  if List.length g.table = 0
-    then true
-  else if List.length g.defender.hand = List.length (getUndefended g.table)
+  if g.active = g.defender
     then false
   else if List.length g.table = 6
     then false
-  else if g.active = g.defender
-    then false
+  else if List.length g.table = 0
+    then true
   else
     begin
       let rec compRanks pairlst =
@@ -747,7 +745,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    iSMCTS gameState 100
+    iSMCTS gameState 500
 end
 
 
