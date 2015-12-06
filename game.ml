@@ -136,12 +136,9 @@ let deflectable (gs : state) =
 (* Prints information that might be useful for a player to make a move. *)
 let print_player_prompt gs =
   let def_message =
-    "You are the defender.
-     Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\"" in
+    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\"" in
   let deflect_message =
-    "You are the defender.
-     Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\",
-     \"deflect against [c1] with [c2]\"." in
+    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\", \"deflect against [c1] with [c2]\"." in
   let primary_att_message =
     "You are the primary attacker. Type \"attack with [card]\"" in
   let secondary_att_message =
