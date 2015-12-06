@@ -190,7 +190,7 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   print_state g;
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
-  let m' = message ^ " " ^ m in
+  let m' = if message = "" then m else message ^ " " ^ m in
   (* Gui.draw g'; *)
   let c' = parse_no_fail m' g' in
   Cards.print_command c';
