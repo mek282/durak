@@ -946,21 +946,6 @@ let test_gameState_getMoves () =
   print_endline (printCommList moveList1);
   ()
 
-let test_gameState_getResult () =
-  failwith "TODO"
-
-let test_Node_getUntriedMoves () =
-  failwith "TODO"
-
-let test_Node_uCBSelectChild () =
-  failwith "TODO"
-
-let test_Node_addChild () =
-  failwith "TODO"
-
-let test_Node_update () =
-  failwith "TODO"
-
 (*if [g1] is non-terminal, and [n] has no untried moves, select a child and
  *descend the tree*)
 let test_select () =
@@ -1003,11 +988,7 @@ let test_expand () =
 let rec test_simulate () =
   let () = print_endline "testing simulate: " in
   let g1 = testStateInit () in
-  simulate g1
-
-(*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
-let rec test_backPropogate () =
-  ()
+  let _ = simulate g1 false; in ()
 
 let test_iSMCTS () =
   let () = print_endline "testing ISMCTS: " in
@@ -1148,20 +1129,18 @@ let test_med_attack () =
   ()
 
 let run_ai_tests () =
-  (*test_lowestValidDefOf ();
+  test_lowestValidDefOf ();
   test_easy_defend ();
   test_med_defend ();
   test_med_attack ();
-  test_isValidDeflect ();*)
-  (*test_gameState_shuffle ();
+  test_isValidDeflect ();
+  test_gameState_shuffle ();
   test_gameState_cloneAndRandomize ();
   test_gameState_doMove ();
-  test_gameState_getMoves ();*)
-(*test_select ();
+  test_gameState_getMoves ();
+  test_select ();
   test_expand ();
   test_simulate ();
-  test_backPropogate ();
-*)
   test_iSMCTS ();
   print_endline "all AI tests pass";
   ()
