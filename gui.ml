@@ -7,7 +7,6 @@ open Cards
 
 (* Prints title and instructions *)
 let title_screen () =
-  clear_screen();
   Printf.printf "
   Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
   Welcome to Durak. The object of the game is to get rid of all your cards
