@@ -70,7 +70,7 @@ let rec printCommList lst: string =
   | [] -> ""
   | hd::tl -> (command_to_string hd)^(printCommList tl)
 
-(*unwrap option*)
+(*unwrap option. nothing logical to use for None. Fails. Highly unlikely*)
 let unwrap o =
   match o with
   | None -> failwith "Something unwrapped poorly"
@@ -745,7 +745,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    iSMCTS gameState 500
+    iSMCTS gameState 250
 end
 
 
