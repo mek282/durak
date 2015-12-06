@@ -190,13 +190,10 @@ let end_game (g : state) : unit =
 
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
-  print_state g;
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
   let m' = message ^ " " ^ m in
-  (* Gui.draw g'; *)
   let c' = parse_no_fail m' g' in
-  Cards.print_command c';
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
@@ -311,7 +308,9 @@ let rec check_valid_difficulty () =
   | "1" -> 1
   | "2" -> 2
   | "3" -> 3
-  | _ -> print_endline "Invalid difficulty. Please type 1 for easy, 2 for medium, or 3 for hard.";
+  | _ -> print_endline
+  "Invalid difficulty.
+Please type 1 for easy, 2 for medium, or 3 for hard.";
          check_valid_difficulty ()
 
 
@@ -321,15 +320,17 @@ let main =
   Gui.draw_title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
-  print_endline ("Hi " ^ name ^
-    "! Choose the difficulty of your first opponent.
-     Type 1 for easy, 2 for medium, or 3 for hard.");
+  print_endline ("\nHi " ^ name ^
+"! Choose the difficulty of your first opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.");
   let d1 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your second opponent.
-                 Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your second opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d2 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your third opponent.
-                 Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your third opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d3 = check_valid_difficulty () in
   let gs = init_game_state name [d1; d2; d3] in
   let initial_command = parse_no_fail "" gs in
