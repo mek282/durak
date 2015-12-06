@@ -390,7 +390,6 @@ let attack (g : state) (c : card) : state*bool*bool =
     then raise (Invalid_action "There are already 6 attacks on the table!")
   else let g' = game_play_card g c in
   let won = g'.active.hand = [] in
-  Printf.printf "[Attack] won: %b\n%!" won;
   let (g'',ended) = if won then do_win g' else (g',false) in
   if ended
     then ({g'' with table=[];

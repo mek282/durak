@@ -302,7 +302,6 @@ let rec firstUndefended (table:(card * card option) list) =
    *randomizing the elements that are invisible to the given player [p]*)
   let cloneAndRandomize (g:state) =
     let p = g.active in
-    let () = print_endline ("PLAYERHAND: "^(string_of_int (List.length p.hand))); in
     let players = g.defender::g.attackers in
     (*let nonActive = List.filter (fun a -> a <> p) players in*)
     let seenCards = p.hand @ g.discard @ (unwrapTable g.table) in
@@ -493,7 +492,6 @@ let rec simulate g2 (ended:bool) =
         match moves with
         | [] -> g2
         | _ -> (let move = randomMove moves in
-                let () = print_endline (move_to_string move g2.active); in
                 let (g3,ended') = GameState.doMove move g2 in
                 simulate g3 ended')
 
@@ -747,7 +745,7 @@ end
 
 module Hard = struct
   let hard (gameState:state) : command =
-    iSMCTS gameState 10
+    iSMCTS gameState 100
 end
 
 
