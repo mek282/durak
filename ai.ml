@@ -107,6 +107,8 @@ let isValidAtt (g:state) (att:card) : bool =
     then false
   else if List.length g.table = 6
     then false
+  else if g.active = g.defender
+    then false
   else
     begin
       let rec compRanks pairlst =
