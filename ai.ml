@@ -485,7 +485,7 @@ let expand g1_1 (n:node ref) untried =
 let rec simulate g2 (ended:bool) =
       let moves = GameState.getMoves g2 in
       if ended
-        then let () = print_endline ("ended!"); in g2
+        then g2
       else if List.mem g2.active.name (List.map (fun x -> x.name) g2.winners)
         then failwith "[simulate] active player already won"
       else if List.length g2.winners = 3 then g2
@@ -1168,5 +1168,6 @@ let run_ai_tests () =
   print_endline "all AI tests pass";
   ()
 
-let _ =
+(*let _ =
   run_ai_tests ()
+*)
