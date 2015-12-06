@@ -7,39 +7,6 @@ open Ai
 exception Cannot_parse of string
 exception Invalid_action of string
 
-
-(* Prints title and instructions *)
-let title_screen () =
-  Printf.printf "\n\n  DURAK \n
-  Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
-  Welcome to Durak. The object of the game is to get rid of all your cards
-  before your opponents do the same. There are no winners, only one loser:
-  the 'DURAK', or Idiot!
-  You will receive a hand of six cards from a standard deck with all cards
-  numbered five or below removed. Aces are high. A random suit will be chosen
-  and known as the 'trump suit.'
-  When it is your turn to attack the next player, choose a card from your hand
-  and type 'attack with [value] of [suit]'.
-  The defender may 'deflect' an initial attack by placing down a card of the
-  same value: 'deflect [attack value] of [attack suit] with [deflect value] of
-  [deflect suit]'.
-  Alternatively, the defender may play a card of the same suit as and a higher
-  value than the attacking card. In addition, any card of the trump suit can
-  defend against any card not of the trump suit. To defend, type 'defend against
-  [attack value] of [attack suit] with [defense value] of [defense suit]'.
-  The defender's final option is to take all cards on the table. This includes
-  those they have already defended. If the defender cannot defend or deflect an
-  attack, their only option is to 'take'.
-  If the defender chooses to defend against the first attack, then all players
-  will have a chance to attack the defender each round until there
-  are a maximum of six attacks in play. Each new attacker may only attack with
-  cards of the same values already in play. For example, if the initial attack
-  is a six of hearts and this is defended with a seven of hearts, the next
-  attacker may only attack with either a six or a seven.\n
-  Press 'Enter' to begin. \n";
-  let s = read_line () in (fun x -> ()) s
-
-
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
  * everything after that space, or none if nothing follows.  Leading and
@@ -149,12 +116,42 @@ let parse (s : string) : command =
   | _ -> raise (Cannot_parse s)
 
 
+(* returns true iff all the attacks on the table have rank r and have no
+ * defending card *)
+let rec deflectable' (r : int) = function
+  | [] -> true
+  | ((_,r'), None)::[] -> r = r'
+  | ((_,r') ,None)::t -> r = r' && deflectable' r t
+  | _ -> false
+
+
+(* returns true iff all cards on the table are undefended and have the same rank
+ * the table is nonempty *)
+let deflectable (gs : state) =
+  match gs.table with
+  | [] -> false
+  | ((_,r),None)::t -> deflectable' r t
+  | _ -> false
+
+(* Prints information that might be useful for a player to make a move. *)
 let print_player_prompt gs =
+  let def_message =
+    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\","^
+    " \"take\", \"pass\"" in
+  let deflect_message =
+    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\","^
+    " \"take\", \"pass\", \"deflect against [c1] with [c2]\"." in
+  let primary_att_message =
+    "You are the primary attacker. Type \"attack with [card]\"" in
+  let secondary_att_message =
+    "You are the attacker. Possible moves: \"attack with [card]\", \"pass\"." in
   match gs.active.state with
   | CPU _ -> ()
   | Human -> if gs.active.name = gs.defender.name
-               then print_endline "It is your turn to defend."
-             else print_endline "It is your turn to attack."
+               then if deflectable gs then print_endline deflect_message
+               else print_endline def_message
+             else if gs.table = [] then print_endline primary_att_message
+                  else print_endline secondary_att_message
 
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
@@ -186,27 +183,21 @@ let parse_no_fail (p : string) (g : state) : command =
 let end_game (g : state) : unit =
   let _ =
     if List.exists (fun x -> x.state = Human) g.winners
-    then print_endline "Congratulations! You didn't lose!"
-    else print_endline "You lost--You're the durak!" in
+    then Gui.draw_win ()
+    else Gui.draw_lose () in
   exit 0
 
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
-  print_state g;
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
-  let m' = message ^ " " ^ m in
-  (* Gui.draw g'; *)
+  let m' = if message = "" then m else message ^ " " ^ m in
   let c' = parse_no_fail m' g' in
-  Cards.print_command c';
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
 
 (*TEST CASES*)
-
-let test_parse_no_fail () =
-  ()
 
 let test_split () =
   let a = "one two" in
@@ -283,7 +274,8 @@ let test_winning () =
   let melly = {state=CPU 1; name = "Melly";
     hand = [(Diamond,11); (Diamond,12); (Club,11); (Club,10); (Heart,10);
     (Diamond,10); (Spade,10); (Diamond,13)]} in
-  let pig = {state = Human; name = "Pigeon"; hand = [(Heart,14); (Diamond,8); (Diamond,14)]} in
+  let pig = {state = Human; name = "Pigeon";
+             hand = [(Heart,14); (Diamond,8); (Diamond,14)]} in
   let attackers = [ivanII; melly] in
   let defender = pig in
   let table = [((Club,12),None); ((Spade,12),Some (Spade,14))] in
@@ -292,18 +284,19 @@ let test_winning () =
   let winners = [{state = CPU 2; name = "Jose"; hand = []}] in
   let passed = [] in
   let g0 = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-            table=table; active=active; discard=discard; winners=winners; passed=passed} in
+            table=table; active=active; discard=discard; winners=winners;
+            passed=passed} in
   Gui.draw g0 ;
   let (g1,message,done1) = step g0 (Attack (Club,14)) in
   print_endline message
 
 
 let run_tests () =
-  (*test_split ();
+  test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
-  test_parse ();*)
+  test_parse ();
   test_winning ();
   print_endline "all tests pass";
   ()
@@ -314,25 +307,31 @@ let rec check_valid_difficulty () =
   | "1" -> 1
   | "2" -> 2
   | "3" -> 3
-  | _ -> print_endline "Invalid difficulty. Please type 1 for easy, 2 for medium, or 3 for hard.";
+  | _ -> print_endline
+  "Invalid difficulty.
+Please type 1 for easy, 2 for medium, or 3 for hard.";
          check_valid_difficulty ()
 
 
-let _ =
-  (*run_tests ();*)
-  title_screen ();
+
+let main =
+  Random.self_init ();
+  Gui.draw_title ();
+  Gui.draw_title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
-  print_endline ("Hi " ^ name ^
-    "! Choose the difficulty of your first opponent. Type 1 for easy, 2 for medium, or 3 for hard.");
+  print_endline ("\nHi " ^ name ^
+"! Choose the difficulty of your first opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.");
   let d1 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your second opponent. Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your second opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d2 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your third opponent. Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your third opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d3 = check_valid_difficulty () in
   let gs = init_game_state name [d1; d2; d3] in
-  Gui.draw gs;
-  print_endline "starting fuck ";
-  (*let com = read_line () in*)
   let initial_command = parse_no_fail "" gs in
   repl gs initial_command ""
