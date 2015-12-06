@@ -133,12 +133,15 @@ let deflectable (gs : state) =
   | ((_,r),None)::t -> deflectable' r t
   | _ -> false
 
-
+(* Prints information that might be useful for a player to make a move. *)
 let print_player_prompt gs =
   let def_message =
-    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\"" in
+    "You are the defender.
+     Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\"" in
   let deflect_message =
-    "You are the defender. Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\" \"deflect against [c1] with [c2]\"." in
+    "You are the defender.
+     Possible moves: \"Defend against [c1] with [c2]\", \"take\", \"pass\",
+     \"deflect against [c1] with [c2]\"." in
   let primary_att_message =
     "You are the primary attacker. Type \"attack with [card]\"" in
   let secondary_att_message =
@@ -187,21 +190,15 @@ let end_game (g : state) : unit =
 
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
-  print_state g;
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
   let m' = if message = "" then m else message ^ " " ^ m in
-  (* Gui.draw g'; *)
   let c' = parse_no_fail m' g' in
-  Cards.print_command c';
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
 
 (*TEST CASES*)
-
-let test_parse_no_fail () =
-  ()
 
 let test_split () =
   let a = "one two" in
@@ -278,7 +275,8 @@ let test_winning () =
   let melly = {state=CPU 1; name = "Melly";
     hand = [(Diamond,11); (Diamond,12); (Club,11); (Club,10); (Heart,10);
     (Diamond,10); (Spade,10); (Diamond,13)]} in
-  let pig = {state = Human; name = "Pigeon"; hand = [(Heart,14); (Diamond,8); (Diamond,14)]} in
+  let pig = {state = Human; name = "Pigeon";
+             hand = [(Heart,14); (Diamond,8); (Diamond,14)]} in
   let attackers = [ivanII; melly] in
   let defender = pig in
   let table = [((Club,12),None); ((Spade,12),Some (Spade,14))] in
@@ -287,18 +285,19 @@ let test_winning () =
   let winners = [{state = CPU 2; name = "Jose"; hand = []}] in
   let passed = [] in
   let g0 = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-            table=table; active=active; discard=discard; winners=winners; passed=passed} in
+            table=table; active=active; discard=discard; winners=winners;
+            passed=passed} in
   Gui.draw g0 ;
   let (g1,message,done1) = step g0 (Attack (Club,14)) in
   print_endline message
 
 
 let run_tests () =
-  (*test_split ();
+  test_split ();
   test_parse_rank ();
   test_parse_suit ();
   test_parse_card ();
-  test_parse ();*)
+  test_parse ();
   test_winning ();
   print_endline "all tests pass";
   ()
@@ -309,23 +308,29 @@ let rec check_valid_difficulty () =
   | "1" -> 1
   | "2" -> 2
   | "3" -> 3
-  | _ -> print_endline "Invalid difficulty. Please type 1 for easy, 2 for medium, or 3 for hard.";
+  | _ -> print_endline
+  "Invalid difficulty.
+Please type 1 for easy, 2 for medium, or 3 for hard.";
          check_valid_difficulty ()
 
 
-let _ =
+let main =
   Random.self_init ();
-  run_tests ();
   Gui.draw_title ();
   Gui.draw_title_screen ();
   print_endline "What is your name?";
   let name = read_line () in
-  print_endline ("Hi " ^ name ^
-    "! Choose the difficulty of your first opponent. Type 1 for easy, 2 for medium, or 3 for hard.");
+  print_endline ("\nHi " ^ name ^
+"! Choose the difficulty of your first opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.");
   let d1 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your second opponent. Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your second opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d2 = check_valid_difficulty () in
-  print_endline "Choose the difficulty of your third opponent. Type 1 for easy, 2 for medium, or 3 for hard.";
+  print_endline
+"\nChoose the difficulty of your third opponent.
+Type 1 for easy, 2 for medium, or 3 for hard.";
   let d3 = check_valid_difficulty () in
   let gs = init_game_state name [d1; d2; d3] in
   let initial_command = parse_no_fail "" gs in

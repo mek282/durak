@@ -400,7 +400,8 @@ let draw_title () =
 let draw_title_screen () =
   clear_screen();
   title_screen ();
-  let s = read_line () in (fun x -> ()) s
+  let s = read_line () in (fun x -> ()) s;
+  clear_screen ()
 
 (* Draws the screen to be displayed if the player won *)
 let draw_win () =
