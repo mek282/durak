@@ -189,7 +189,7 @@ let end_game (g : state) : unit =
 let rec repl (g : state) (c : command) (message : string) : unit =
   let (g',m,ended) = step g c in
   (if ended then end_game g' else ());
-  let m' = message ^ " " ^ m in
+  let m' = if message = "" then m else message ^ " " ^ m in
   let c' = parse_no_fail m' g' in
   if g.active.state = Human
     then (repl g' c' "")
