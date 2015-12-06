@@ -16,4 +16,5 @@ val init_game_state : string -> int list -> state
  * is true iff the game has ended *)
 val step : state -> command -> state*string*bool
 
+(* prints the value of each field in the state *)
 val print_state : state -> unit
