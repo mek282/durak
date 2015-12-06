@@ -7,7 +7,6 @@ open Cards
 
 (* Prints title and instructions *)
 let title_screen () =
-  clear_screen();
   Printf.printf "
   Created by Mary Kaminski | Drew Samuels | Ivan Zaitsev | Jose Castro \n
   Welcome to Durak. The object of the game is to get rid of all your cards
@@ -358,30 +357,33 @@ let draw_opponent_row (hand: deck) : unit =
 
 (* Draws the hands of all opponents which are not the active player. If the
  * opponent has already won, prints "Not and Idiot" instead.*)
-let draw_opponents (attackers: player list) (defender: player) (active: player): unit =
+let draw_opponents (attackers: player list) (defender: player) (active: player)=
   let players = defender :: attackers in
   let players_filtered = List.filter (fun x -> x <> active) players in
-  List.iter (fun x -> draw_opponent_row x.hand; Printf.printf "%s\n%!" x.name) players_filtered
+  List.iter (fun x -> draw_opponent_row x.hand;
+                      Printf.printf "%s\n%!" x.name) players_filtered
 
 (* Generates a random quip from pre-compiled list that will print above
  * a winning AI's name in place of their hand.*)
 let gen_quip_winning () =
-  let qlist = ["\"What a bunch of DURAKS!\"";
-               "\"You shouldn't have played that card, you'll never win now.\"";
-               "\"I can't believe you just did that!\"";
-               "\"*YAWN* You guys aren't done yet?!\"";
-               "\"If I were you I'd just quit now. Hint: Press Ctrl + Z ;)\"";
-               "\"This is precious.\"";
-               "\"Hurry and finish so I can find myself a more worthy opponent.\"";
-               "\"ZZZzZZZzzzzzzZZZZzzzzZZZZ\"";
-               "\"This game has three winners and yet somehow you won't be one of them.\"";
-               "\"Psst, need help? Too bad! HAHAHAHA\"";] in
+  let qlist =
+  ["\"What a bunch of DURAKS!\"";
+   "\"You shouldn't have played that card, you'll never win now.\"";
+   "\"I can't believe you just did that!\"";
+   "\"*YAWN* You guys aren't done yet?!\"";
+   "\"If I were you I'd just quit now. Hint: Press Ctrl + Z ;)\"";
+   "\"This is precious.\"";
+   "\"Hurry and finish so I can find myself a more worthy opponent.\"";
+   "\"ZZZzZZZzzzzzzZZZZzzzzZZZZ\"";
+   "\"This game has three winners and yet somehow you won't be one of them.\"";
+   "\"Psst, need help? Too bad! HAHAHAHA\"";] in
   let qnum = Random.int (List.length qlist) in
   List.nth qlist qnum
 
 let draw_winners (winners: player list) : unit =
   List.iter (fun x -> Printf.printf "\n%s%!" (gen_quip_winning ());
-                      Printf.printf "\n- %s (not a complete idiot)\n%!" x.name;) winners
+                      Printf.printf "\n- %s (not a complete idiot)\n%!" x.name;)
+                      winners
 
 
 (*============================================================================*)
@@ -401,10 +403,12 @@ let draw_title_screen () =
   title_screen ();
   let s = read_line () in (fun x -> ()) s
 
+(* Draws the screen to be displayed if the player won *)
 let draw_win () =
   clear_screen();
   win()
 
+(* Draws the screen to be displayed if the player lost *)
 let draw_lose () =
   clear_screen();
   lose ()
