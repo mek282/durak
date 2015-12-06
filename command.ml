@@ -6,6 +6,8 @@ exception Invalid_action of string
 (* ==============================INITIALIZER================================= *)
 (* ========================================================================== *)
 
+(* Helper for init_deck, [unshuffled_deck [] 0] will create an unshuffled deck of
+ * standard cards > 6. *)
 let rec unshuffled_deck d n =
   if n < 15
   then let new_d = List.append d [(Heart, n); (Diamond, n);
@@ -13,12 +15,14 @@ let rec unshuffled_deck d n =
         unshuffled_deck new_d (n+1)
   else d
 
+(* Helper for init_deck to randomly cut a deck: input [shuffle deck [] []]. *)
 let rec shuffle l1 l2 l3 =
   match l1 with
   | e1::e2::tl -> shuffle tl (e1::l2) (e2::l3)
   | e1::tl -> shuffle tl l2 (e1::l3)
   | [] -> (l2, l3)
 
+(* Helper for init_deck to choose the trump card. *)
 let choose_trump () =
   let n = Random.int 4 in
   if n = 0 then Heart
@@ -28,8 +32,8 @@ let choose_trump () =
 
 (* Creates a randomized 36 card deck in which each card is different. The deck
  * is a standard deck with twos, threes, fours, and fives removed.
- * The suit of the last card, which is the trump suit, is stored in the pair *)
-let init_deck _ =
+ * [init_deck ()] outputs a pair representing (trump, deck). *)
+let init_deck _ : suit * deck =
   let d = unshuffled_deck [] 6 in
   let num_shuffles = 7 + (Random.int 20) in
   let rec shuffle_deck n deck = (
@@ -42,6 +46,9 @@ let init_deck _ =
     else deck ) in
   (choose_trump (), shuffle_deck num_shuffles d)
 
+(* [deal_hand d] will output a hand of length 6 along with the rest of the
+ * deck in the form [(hand, deck)]. Used to initialize game state, NOT to
+ * update hands. *)
 let deal_hand d =
   match d with
   | c1::c2::c3::c4::c5::c6::tl -> ([c1; c2; c3; c4; c5; c6], tl)
@@ -51,6 +58,9 @@ let e_names = ref ["Mr. Camel"; "Camille"; "Cameron"; "Melly"; "Camelot"]
 let m_names = ref ["Drew"; "Ivan"; "Jose"; "Mary"; "Ivan II"]
 let h_names = ref ["Clarkson"; "Chirag"; "Remy"; "M. George"; "Amber"]
 
+(* Randomly generates bot names, ensuring the human player's name does not
+ * match. [gen_name d s] chooses a name for a bot of difficulty d where
+ * s is the player's name. *)
 let rec gen_name d s =
   if d = 1
     then let n = List.nth (!e_names) (Random.int (List.length (!e_names))) in
@@ -65,8 +75,9 @@ let rec gen_name d s =
          if n <> s then n else gen_name d s
 
 (* Creates an initial state for the game in which all cards have been passed
- * out
- * Prec: dlist is a list of at least one int. *)
+ * out. [init_game_state s dlist] outputs a game state with a human player
+ * named s and bots of all the difficulties in dlist.
+ * Precondition: dlist is a list of at least one int. *)
 let init_game_state s dlist =
   let start_deck = init_deck () in
   let h1 = deal_hand (snd start_deck) in
@@ -111,25 +122,29 @@ let rank_to_string (rank: int) : string =
   | 11 -> "Jack"
   | n  -> string_of_int n
 
-
-(* Finished and tested 11/26 - Vanya *)
 (* returns the string representation of card (s,r)*)
 let string_of_card (s,r) : string =
   (rank_to_string r) ^ " of " ^ (suit_to_string s)
 
+(* returns the string representation of a deck *)
 let rec string_of_deck = function
   | [] -> ""
   | h::t -> (string_of_card h) ^ "; " ^ (string_of_deck t)
 
+(* returns string representation of a player *)
 let string_of_player (p : player) =
-  let s = match p.state with Human -> "Human" | CPU i -> "CPU" ^ (string_of_int i) in
+  let s = match p.state with
+          | Human -> "Human"
+          | CPU i -> "CPU" ^ (string_of_int i) in
   let hand = string_of_deck p.hand in
   "(" ^ p.name ^ ": " ^ s ^ ", " ^ hand ^ ")"
 
+(* returns string representation of a list of players *)
 let rec string_of_attackers = function
   | [] -> ""
   | h::t -> (string_of_player h) ^ "; " ^ (string_of_attackers t)
 
+(* returns string representation of table *)
 let rec string_of_table = function
   | [] -> ""
   | (a,Some d)::t ->
@@ -137,6 +152,7 @@ let rec string_of_table = function
   | (a,None)::t ->
     "(" ^ string_of_card a ^ ", None) " ^ string_of_table t
 
+(* returns string representation of game state *)
 let print_state (g : state) : unit =
   print_endline("deck: " ^ string_of_deck g.deck);
   print_endline("trump: " ^ suit_to_string g.trump);
@@ -167,7 +183,7 @@ let rec tablepairs_to_list = function
 let play_card (p : player) (c : card) : player =
   let new_hand = List.filter (fun x -> x <> c) p.hand in
   if List.length new_hand = List.length p.hand then
-    raise (Invalid_action ("Card is not in "^p.name^"'s hand"))
+    raise (Invalid_action ("Card is not in " ^ p.name ^ "'s hand"))
   else {p with hand = new_hand}
 
 
@@ -178,8 +194,7 @@ let game_play_card (g : state) (c : card) : state =
   let attackers' = List.map replace g.attackers in
   let defender' = if g.defender.name = g.active.name then p
   else g.defender
-  in
-  { g with attackers = attackers'; defender = defender'; active = p}
+  in { g with attackers = attackers'; defender = defender'; active = p}
 
 
 (* returns true iff d is a valid defense to attack a *)
@@ -220,14 +235,14 @@ let deal (g : state) : state =
                        deck      = newdeck}
 
 
-(* returns the last element of a list. Raises Invalid_action if the list is empty*)
+(* Returns the last element of a list. Raises Invalid_action if the list is [] *)
 let rec last_attacker = function
   | [] -> raise (Invalid_action "the game is over")
   | h::[] -> h
   | h::t -> last_attacker t
 
 
-(* removes the last element of a list.  Leaves the empty list unchanged *)
+(* Removes the last element of a list. Leaves the empty list unchanged *)
 let rec remove_last = function
   | [] -> []
   | _::[] -> []
@@ -245,10 +260,11 @@ let new_turn g (d : player) : state =
     then a
     else (last_attacker g'.attackers)::(remove_last a)
     in
-  let d' = List.find (fun x -> x.name = d.name) (g'.defender::g'.attackers) in
-  let g'' = { g' with attackers = a'; defender = d'; passed = []} in
-  { g'' with active = List.hd g''.attackers; table = []; discard = (tablepairs_to_list g.table)@g.discard}
-
+  let d' = List.find (fun x -> x.name = d.name) (g'.defender :: g'.attackers) in
+  let g'' = { g' with attackers = a'; defender = d'; passed = [] } in
+  { g'' with active = List.hd g''.attackers;
+             table = [];
+             discard = (tablepairs_to_list g.table) @ g.discard }
 
 
 (* [before el lst] returns the element in lst that comes before el.
@@ -295,32 +311,32 @@ let rec change_active g (p : player) =
  * Returns the gamestate in which p is a winner and [the game has ended] *)
 let do_win (g : state) : state*bool =
   if (List.length g.attackers = 1) && g.active.name = g.defender.name then
-    ({g with attackers = []; active = last_attacker g.attackers;
-        winners = g.active::g.winners},true)
+    ({ g with attackers = [];
+              active = last_attacker g.attackers;
+              winners = g.active::g.winners}, true)
   else
     if g.defender.name = g.active.name then
       let g' = new_turn g (last_attacker g.attackers) in
       ({ g' with winners = g.active::(g'.winners);
-               attackers = List.tl g'.attackers;
-                  active = List.hd (List.tl g'.attackers)}, false)
+                 attackers = List.tl g'.attackers;
+                 active = List.hd (List.tl g'.attackers)}, false)
     else
       if List.length g.attackers = 1 then
-        ({g with attackers = []; active = g.defender; winners = g.active::g.winners},true)
+        ({ g with attackers = [];
+                  active = g.defender;
+                  winners = g.active::g.winners},true)
       else
-        let active' =
-                      if g.active.name = (List.hd g.attackers).name then
+        let active' = if g.active.name = (List.hd g.attackers).name then
                         g.defender
-                      else next_attacker g
-        in
+                      else next_attacker g in
         ({ g with
          active = active';
-         attackers = List.filter (fun x -> x.name<>g.active.name) g.attackers;
-         winners = g.active::(g.winners);
-        }, false)
+         attackers = List.filter (fun x -> x.name <> g.active.name) g.attackers;
+         winners = g.active::(g.winners);}, false)
 
 (* carry out the command "deflect against c1 with c2"
  * raise Invalid_action if appropriate
- * returns the new gamestate and {active player won} and {game is over}*)
+ * returns the new state and {active player won} and {game is over}*)
 let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
   if r1 <> r2
   then raise (Invalid_action "You must deflect with a card of the same rank")
@@ -331,11 +347,13 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
     then
       let g''' = game_play_card g (s2,r2) in
       let won = g'''.active.hand = [] in
-      if won then let (gfinal,ended) = do_win g''' in (gfinal,won,ended) else
-      let next_p = last_attacker g'''.attackers in
-      let g' = new_turn g''' next_p in
-      let g'' = add_attack g' (s2,r2) in
-      ({(change_active g'' next_p) with table = ((s2,r2),None)::l; discard=g.discard},won,false)
+      if won then let (gfinal,ended) = do_win g''' in (gfinal,won,ended)
+      else
+        let next_p = last_attacker g'''.attackers in
+        let g' = new_turn g''' next_p in
+        let g'' = add_attack g' (s2,r2) in
+        ({(change_active g'' next_p) with table = ((s2,r2),None)::l;
+                                          discard=g.discard}, won, false)
     else raise (Invalid_action "Can't deflect")
   end
 
@@ -345,10 +363,11 @@ let deflect (g : state) (s1,r1) (s2,r2) : state*bool*bool =
  * Precondition: the active player must be the defender *)
 let take_all (g : state) : state =
   if g.active <> g.defender
-    then raise (Invalid_action "You're not the defender!") else
-  let table = tablepairs_to_list g.table in
-  let p = {g.active with hand = table@g.active.hand} in
-  { g with active = p; defender = p; table = [] }
+    then raise (Invalid_action "You're not the defender!")
+  else
+    let table = tablepairs_to_list g.table in
+    let p = {g.active with hand = table @ g.active.hand} in
+    { g with active = p; defender = p; table = [] }
 
 
 (* returns true iff the table is empty or at least one of the cards on the table
@@ -374,14 +393,16 @@ let attack (g : state) (c : card) : state*bool*bool =
   let (g'',ended) = if won then do_win g' else (g',false) in
   if ended
     then ({g'' with table=[];
-        discard = (tablepairs_to_list g''.table)@g''.discard}, won, ended) else
-  let table' = (c,None)::g''.table in
-  if won then ({g'' with table=table'; passed = []}, won, ended) else
-  let active' =
-    if g''.active.name = (List.hd g''.attackers).name
-      then g''.defender
-      else next_attacker g'' in
-  ( {g'' with table=table'; active=active'; passed = []}, won,ended)
+                    discard = (tablepairs_to_list g''.table) @ g''.discard},
+                    won, ended)
+  else
+    let table' = (c,None)::g''.table in
+      if won then ({g'' with table=table'; passed = []}, won, ended)
+      else
+        let active' =
+          if g''.active.name = (List.hd g''.attackers).name then g''.defender
+          else next_attacker g'' in
+         ({ g'' with table = table'; active = active'; passed = []}, won, ended)
 
 
 (* returns the penultimate element of a list, unless the list only has one
@@ -413,8 +434,8 @@ let place_defense (g : state) (c1 : card) (c2 : card) : state =
     let s2 = string_of_card c2 in
     raise (Invalid_action (s2 ^ " can't  defend against " ^ s1 ^ "! "))
   else let g' = game_play_card g c2 in
-  let tabl = List.remove_assoc c1 g'.table in
-  { g' with table = (c1,Some c2)::tabl }
+    let tabl = List.remove_assoc c1 g'.table in
+    { g' with table = (c1,Some c2)::tabl }
 
 
 (* Carries out "defend against c1 with c2" --
@@ -437,7 +458,7 @@ let defend (g : state) (c1 : card) (c2 : card) : state*bool*bool =
   if won
     then let (g'',ended) = do_win g' in
     ({ g'' with table = []; passed = [] },won,ended) else
-  ({g' with passed = []; active = last_attacker g'.attackers}, won,false)
+  ({g' with passed = []; active = last_attacker g'.attackers}, won, false)
 
 
 (* returns true iff the two lists have exactly the same elements, though
@@ -451,7 +472,7 @@ let rec same_elements lst1 = function
       else false
 
 
-(* [list_contains l1 l2]returns true iff all elements of l2 are members of l1*)
+(* [list_contains l1 l2] returns true iff all elements of l2 are members of l1*)
 let rec list_contains l1 = function
   | [] -> true
   | h::t -> (List.mem h l1) && (list_contains l1 t)
@@ -464,16 +485,12 @@ let pass (g : state) : state =
     raise (Invalid_action "You must attack. ") else
   let g' = {g with passed = (g.active::g.passed)} in
   if (list_contains g'.passed g'.attackers) && all_answered g'
-    then
-      let () = (print_endline "In pass, about to start new turn") in
-      new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
+    then new_turn {g' with active = g.defender} (last_attacker g'.attackers) else
   let active' =
     if g'.active.name = g'.defender.name
-      then
-        let () = print_endline "In pass, active player is defender" in
-        last_attacker g'.attackers
-      else try next_attacker g' with Invalid_action _ -> g'.defender
-  in { g' with active = active' }
+      then last_attacker g'.attackers
+    else try next_attacker g' with Invalid_action _ -> g'.defender
+  in {g' with active = active'}
 
 
 (* returns the state that would result from applying c to g, as well as
@@ -495,7 +512,8 @@ let step (g:state) (c:command) : state*string*bool =
       end
     | Take -> begin
         let g' = take_all g in
-        let next_defender = if List.length g'.attackers = 1 then g'.defender else (penultimate g'.attackers) in
+        let next_defender = if List.length g'.attackers = 1 then g'.defender
+                            else (penultimate g'.attackers) in
         let g'' = new_turn g' next_defender in
         let m = g.active.name ^ " chose to take." in
         (g'',m,false)
