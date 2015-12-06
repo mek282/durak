@@ -19,6 +19,7 @@ let suit_to_string (suit: suit) : string =
   | Diamond -> "D"
   | Spade   -> "S"
 
+
 let rank_to_string (rank: int) : string =
   match rank with
   | 14 -> "A"
@@ -27,9 +28,11 @@ let rank_to_string (rank: int) : string =
   | 11 -> "J"
   | n  -> string_of_int n
 
+
 let card_to_string c : string =
   match c with
   | (a,b) -> " |"^(suit_to_string a)^(rank_to_string b)^"| "
+
 
 let command_to_string c : string =
   match c with
@@ -40,6 +43,7 @@ let command_to_string c : string =
   | Attack a -> "Attack with"^(card_to_string a)^"\n"
   | Defend (a,b) -> "Defend "^(card_to_string a)^"with"^(card_to_string b)^"\n"
 
+
 let move_to_string c p : string =
   match c with
   | Pass -> p.name^" Passes\n"
@@ -49,26 +53,31 @@ let move_to_string c p : string =
   | Attack a -> p.name^" Attacks with"^(card_to_string a)^"\n"
   | Defend (a,b) -> p.name^" Defends "^(card_to_string a)^"with"^(card_to_string b)^"\n"
 
+
 let rec printCardList d : string =
   match d with
   | [] -> ""
   | (a,b)::tl -> (suit_to_string a)^":"^
                  (rank_to_string b)^" | "^(printCardList tl)
 
+
 let rec printPlayerHands lst : string =
   match lst with
   | [] -> ""
   | hd::tl -> "ATTACKER: "^(printCardList hd.hand)^"\n"^(printPlayerHands tl)
+
 
 let rec printPlayers lst : string =
   match lst with
   | [] -> ""
   | hd::tl -> hd.name^", "^(printPlayers tl)
 
+
 let rec printCommList lst: string =
   match lst with
   | [] -> ""
   | hd::tl -> (command_to_string hd)^(printCommList tl)
+
 
 (*unwrap option. nothing logical to use for None. Fails. Highly unlikely*)
 let unwrap o =
@@ -76,8 +85,10 @@ let unwrap o =
   | None -> failwith "Something unwrapped poorly"
   | Some a -> a
 
+
 (*version of Pervasives.compare which ignores card suits*)
 let cardCompare ((a,b):card) ((c,d):card) = compare b d
+
 
 (* [sortHand a h t] outputs [h] sorted in increasing order, filtered by suit
 * of [a] and [t], and by rank of [a] *)
@@ -99,6 +110,7 @@ let rec getUndefended (t:(card*card option) list) : card list =
                  then a::(getUndefended tl)
                  else getUndefended tl
 
+
 (*returns true if att is a valid attack, given state g*)
 let isValidAtt (g:state) (att:card) : bool =
   if g.active = g.defender
@@ -117,12 +129,14 @@ let isValidAtt (g:state) (att:card) : bool =
       List.mem (snd att) (compRanks g.table)
     end
 
+
 (*[isValidDef a d t] returns true if d is a valid defense against a. Does not
  *include deflections *)
 let isValidDef (attack:card) (defend:card) (trump:suit) : bool =
   if (fst attack) = (fst defend) then (snd attack) < (snd defend)
   else if (fst defend) = trump then true
   else false
+
 
 (*returns true if def is a valid deflection, given state g*)
 let isValidDeflect (def:card) (g:state) =
@@ -144,15 +158,18 @@ let isValidDeflect (def:card) (g:state) =
 let isValidPass (g:state) =
   (List.mem g.active g.attackers) && (g.table <> [])
 
+
 (*returns true if Take is a valid command, given state g*)
 let isValidTake (g:state) =
   g.active = g.defender
+
 
 (*removes duplicate elements from a list*)
 let rec rem_dups lst =
   match lst with
   | [] -> []
   | hd::tl -> hd::(rem_dups (List.filter (fun a -> a<>hd) tl))
+
 
 (*returns a list of all valid Defend commands given state g*)
 let rec getValidDefenses (g:state) : command list =
@@ -175,6 +192,7 @@ let rec getValidDefenses (g:state) : command list =
       itrAtks (getUndefended g.table)
     end
 
+
 (*returns a list of all valid Attack commands, given state g*)
 let rec getValidAttacks (g:state) : command list =
   if g.attackers = []
@@ -191,6 +209,7 @@ let rec getValidAttacks (g:state) : command list =
                     else itrHand tl in
       itrHand g.active.hand
     end
+
 
 (*returns a list of valid Deflect commands, given state g*)
 let rec getValidDeflections (g:state) : command list =
@@ -209,6 +228,7 @@ let rec getValidDeflections (g:state) : command list =
       itrHand (fst (List.hd g.table)) g.active.hand
     end
 
+
 (* [lowestValidDefOf h a t] outputs the card in [h] of rank >= rank of [a] that
 * matches either suit of [a] or suit of [t] *)
 let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
@@ -220,6 +240,7 @@ let lowestValidDefOf (hand:deck) (attack:card) (trump:suit) : card option =
                   then Some hd
                 else matchResult tl in
   matchResult result
+
 
 (*[firstUndefended t] outputs the first undefended attacking card in [t]*)
 let rec firstUndefended (table:(card * card option) list) =
@@ -233,9 +254,12 @@ let rec firstUndefended (table:(card * card option) list) =
 (*Provides functions for manipulating game states.
  * Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
  module GameState = struct
+
+
   (*[GetNextPlayer g] returns the next player to move in gameState [g]*)
   let getNextPlayer (g:state) =
     failwith "TODO"
+
 
   (*returns a new deck of cards
    *Source: http://stackoverflow.com/questions/15095541/how-to-shuffle-list-in-on-in-ocaml*)
@@ -245,6 +269,7 @@ let rec firstUndefended (table:(card * card option) list) =
                                  (Spade, n); (Club, n)] in
         getCardDeck new_d (n+1)
     else d
+
 
   (*shuffle card deck d*)
   let shuffle d =
@@ -288,15 +313,18 @@ let rec firstUndefended (table:(card * card option) list) =
             active = List.hd (List.tl newPlayers)
             }
 
+
   (*[Clone g] returns a clone of gameState [g]*)
   let clone g =
     failwith "TODO"
+
 
   let rec unwrapTable (lst:(card * card option) list) =
     match lst with
     | [] -> []
     | (a,None)::tl -> a::(unwrapTable tl)
     | (a, Some b)::tl -> a::b::(unwrapTable tl)
+
 
   (*[CloneAndRandomize g p] returns a clone of the given gameState [g], after
    *randomizing the elements that are invisible to the given player [p]*)
@@ -342,6 +370,7 @@ let rec firstUndefended (table:(card * card option) list) =
   let doMove command gameState =
     let (m,_,ended) = step gameState command in (m,ended)
 
+
   (*[GetMoves g] returns all possible moves given gameState g*)
   let getMoves (g:state) : command list =
     (getValidAttacks g) @ (getValidDefenses g) @ (getValidDeflections g) @
@@ -349,6 +378,7 @@ let rec firstUndefended (table:(card * card option) list) =
         then [] else [Take]) @
       (if not (isValidPass g) || g.attackers = []
         then [] else [Pass])
+
 
   (*[GetResult g p] returns the result of gameState [g] from point of view of
    *player [p]*)
@@ -375,6 +405,7 @@ type node = {
  *Stubs sourced from: http://www.aifactory.co.uk/newsletter/ISMCTS.txt*)
 module Node = struct
 
+
   (*[GetUntriedMoves lms] returns the elements of lms for which this node does
    *not have children**)
   let getUntriedMoves (legalMoves:command list) (n:node) : command list =
@@ -383,11 +414,13 @@ module Node = struct
       | hd::tl -> (unwrap (!hd).thisMove)::(triedMoves tl) in
     List.filter (fun a -> not (List.mem a (triedMoves (n.children)))) legalMoves
 
+
   let uCBFunction (n:node) =
      (float_of_int !(n.wins)) /. (float_of_int !(n.visits)) +.
       0.7 *.
       sqrt(log((float_of_int !(n.avails))) /.
       (float_of_int !(n.visits)))
+
 
   let rec incrAvails n =
     let rec helper lst =
@@ -395,6 +428,7 @@ module Node = struct
       | [] -> []
       | hd::tl -> (incr (!hd).avails); hd::(helper tl) in
     n.children <- helper (n.children)
+
 
   (*[UCBSelectChild lms d] uses the UC1 formula to select a child node, filtered
    *by the given list of legal moves [lms] and exploration coefficient [d]*)
@@ -413,6 +447,7 @@ module Node = struct
                   else choice maxSoFar tl in
     incrAvails n; choice (List.hd (legalChildren n.children))
       (legalChildren n.children)
+
 
   (*[AddChild m n p] adds a new child node to Node [n] for the move [m] with
    *playerJustMoved set to [p]*)
@@ -437,6 +472,7 @@ module Node = struct
     | None -> ()
     | Some a -> (!n).wins := (!((!n).wins) + (GameState.getResult g a)); ()
 
+
   (*string representation of tree for debugging purposes*)
   let treeToSTring t =
     failwith "TODO"
@@ -454,6 +490,7 @@ let randomMove lst =
     let sond = List.sort compare nd in
     List.hd (List.map snd sond)
 
+
 (*if [g1] is non-terminal, and [n] has no untried moves, select a child and
  *descend the tree*)
 let rec select g1 (n:node ref) =
@@ -465,6 +502,7 @@ let rec select g1 (n:node ref) =
           select newState newNode
         end
       else (g1,n)
+
 
 (*[g1_1 n untried] If [untried] is non_empty, select a random element, step [g1_1], create a new
  *node and return it with associated state*)
@@ -479,6 +517,7 @@ let expand g1_1 (n:node ref) untried =
       (new_state,newNode)
     end
   else (g1_1,n)
+
 
 (*simulate a game, through to completion, making random choices, return *)
 let rec simulate g2 (ended:bool) =
@@ -495,11 +534,13 @@ let rec simulate g2 (ended:bool) =
                 let (g3,ended') = GameState.doMove move g2 in
                 simulate g3 ended')
 
+
 (*[g2_1 n1] Work back up the tree, updating each node to reflect outcomes*)
 let rec backPropogate g2_1 n1 =
       match (!n1).parent with
       | None -> n1
       | _ -> Node.update n1 g2_1; backPropogate g2_1 (unwrap (!n1).parent)
+
 
 (*return the child with the most visits*)
 let rec maxChild max lst =
@@ -508,6 +549,12 @@ let rec maxChild max lst =
         | hd::tl -> if !((!hd).visits) > !((!max).visits)
                       then maxChild hd tl
                     else maxChild max tl
+
+
+(******************************************************************************)
+(************************************ISMCTS************************************)
+(******************************************************************************)
+
 
 (*Information Set Monte Carlo Tree Search algorithm*)
 let iSMCTS g itermax =
@@ -545,6 +592,10 @@ let iSMCTS g itermax =
   in
 
   forLoop (ref rootnode) itermax
+
+(******************************************************************************)
+(**********************************AI Modules**********************************)
+(******************************************************************************)
 
 
 module Easy = struct
@@ -756,6 +807,7 @@ let response (gameState:state) : command =
   | CPU 3 -> Hard.hard gameState
   | _ -> failwith "[response] error. Invalid active player_state"
 
+
 let testStateInit () =
   let deck = GameState.shuffle (GameState.getCardDeck [] 6) in
   let trump = Heart in
@@ -775,9 +827,12 @@ let testStateInit () =
   } in
   let g1 = GameState.deal g in
   g1
+
+
 (*****************************************************************************)
 (************************************TESTS************************************)
 (*****************************************************************************)
+
 
 let test_lowestValidDefOf () =
   let testTrump = Diamond in
