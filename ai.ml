@@ -492,9 +492,7 @@ let rec simulate g2 (ended:bool) =
       else
         match moves with
         | [] -> g2
-        | _ -> (let () = print_endline ("ACTIVE: "^g2.active.name); in
-                let () = (print_endline ("MOVES: "^printCommList moves)); in
-                let move = randomMove moves in
+        | _ -> (let move = randomMove moves in
                 let () = print_endline (move_to_string move g2.active); in
                 let (g3,ended') = GameState.doMove move g2 in
                 simulate g3 ended')
@@ -545,7 +543,6 @@ let iSMCTS g itermax =
         forLoop node (itermax1 - 1)
       end
     else
-      let () = Printf.printf "Parent is None: %b\nChildren is not null: %b\n" ((!root).parent = None) (not ((!root).children = [])); in
       unwrap (!(maxChild (List.hd (!root).children) (!root).children).thisMove)
   in
 
@@ -1171,6 +1168,5 @@ let run_ai_tests () =
   print_endline "all AI tests pass";
   ()
 
-(*let _ =
+let _ =
   run_ai_tests ()
-*)
