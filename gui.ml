@@ -47,8 +47,7 @@ let title_screen () =
   Careful! Don't play all of your high cards too early. When the deck runs out,
   you'll wish you had them.
   \n
-  Press 'Enter' to begin. \n";
-  let s = read_line () in (fun x -> ()) s
+  Press 'Enter' to begin. \n"
 
 let title () =
     Printf.printf
@@ -450,7 +449,7 @@ let ptest_draw () : unit =
   let hand1 = [(Heart, 7); (Diamond, 7);  (Club,14); (Spade, 14)] in
   let player1 = {state = Human; hand = hand1; name = "Zapdoz"} in
 
-  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Diamond, 14)] in
+  let hand2 = [(Diamond, 6); (Club, 10); (Club, 12); (Spade,13); (Heart, 14)] in
   let player2 = {state= CPU(1); hand = hand2; name = "Rawr"} in
 
   let hand3 = [(Diamond, 11); (Club, 11); (Club, 9)] in
@@ -472,10 +471,11 @@ let ptest_draw () : unit =
   let winners = [] in
   let passed = [] in
   let state = {deck=deck; trump=trump; attackers=attackers; defender=defender;
-    table=table; active=active; discard=discard; winners=winners; passed=passed} in
+               table=table; active=active; discard=discard; winners=winners;
+               passed=passed} in
 
   draw state
 
-let run_tests = (* ptest_draw_hand (); *)
-                (* ptest_draw_table (); *)
-                ptest_draw ()
+(* let run_tests = ptest_draw_hand ();
+                ptest_draw_table ();
+                ptest_draw () *)
