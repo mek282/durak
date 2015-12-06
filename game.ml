@@ -197,6 +197,7 @@ let rec repl (g : state) (c : command) (message : string) : unit =
   (if ended then end_game g' else ());
   let m' = if message = "" then m else message ^ " " ^ m in
   let c' = parse_no_fail m' g' in
+  if List.exists (fun x -> x.state = Human) g'.winners then end_game g' else
   if g.active.state = Human
     then (repl g' c' "")
     else (repl g' c' m')
