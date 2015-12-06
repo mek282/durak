@@ -145,13 +145,17 @@ let print_player_prompt gs =
     "You are the primary attacker. Type \"attack with [card]\"" in
   let secondary_att_message =
     "You are the attacker. Possible moves: \"attack with [card]\", \"pass\"." in
+  let full_att_message =
+    "You are the attacker. Table is full. Possible moves: \"pass\"." in
   match gs.active.state with
   | CPU _ -> ()
   | Human -> if gs.active.name = gs.defender.name
                then if deflectable gs then print_endline deflect_message
                else print_endline def_message
              else if gs.table = [] then print_endline primary_att_message
-                  else print_endline secondary_att_message
+                  else if List.length gs.table = 6
+                        then print_endline full_att_message
+                        else print_endline secondary_att_message
 
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
