@@ -40,9 +40,9 @@ let title_screen () =
   is a six of hearts and this is defended with a seven of hearts, the next
   attacker may only attack with either a six or a seven.
 
-  When a turn ends, i.e. all attacks have been defended or the defender
-  chooses to take, as long as there are cards in the deck all players with
-  fewer than six cards will be dealt cards until their hands are back to six.
+  When a turn ends, i.e. all attacks have been defended, deflected, or the
+  defender chooses to take, as long as there are cards in the deck all players
+  with fewer than six cards will be dealt cards until their hands are back to six.
 
   Careful! Don't play all of your high cards too early. When the deck runs out,
   you'll wish you had them.
