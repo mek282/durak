@@ -7,6 +7,7 @@ open Ai
 exception Cannot_parse of string
 exception Invalid_action of string
 
+
 (* Breaks a string into two parts, where the first is everything before
  * the first space (not including leading whitespace), and the second is
  * everything after that space, or none if nothing follows.  Leading and
@@ -133,6 +134,7 @@ let deflectable (gs : state) =
   | ((_,r),None)::t -> deflectable' r t
   | _ -> false
 
+
 (* Prints information that might be useful for a player to make a move. *)
 let print_player_prompt gs =
   let def_message =
@@ -156,6 +158,7 @@ let print_player_prompt gs =
                   else if List.length gs.table = 6
                         then print_endline full_att_message
                         else print_endline secondary_att_message
+
 
 (* Draws and prompts the user*)
 let game_draw (g : state) (prompt : string) : string =
@@ -191,6 +194,7 @@ let end_game (g : state) : unit =
     else Gui.draw_lose () in
   exit 0
 
+
 (* Calls itself recursively to update the state in response to commands *)
 let rec repl (g : state) (c : command) (message : string) : unit =
   let (g',m,ended) = step g c in
@@ -202,7 +206,11 @@ let rec repl (g : state) (c : command) (message : string) : unit =
     then (repl g' c' "")
     else (repl g' c' m')
 
-(*TEST CASES*)
+
+(* ========================================================================== *)
+(* ==============================TESTING===================================== *)
+(* ========================================================================== *)
+
 
 let test_split () =
   let a = "one two" in
@@ -316,7 +324,6 @@ let rec check_valid_difficulty () =
   "Invalid difficulty.
 Please type 1 for easy, 2 for medium, or 3 for hard.";
          check_valid_difficulty ()
-
 
 
 let main =
